@@ -9,7 +9,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -21,13 +20,13 @@ public class DoWhile extends InsertableStatementTree {
     private final DoWhileLoopTree current;
 
     public DoWhile(TreePath currentPath, MethodSelectionWrapper wrapper,
-            WorkingCopy copy, JavaSourceHelper helper) throws NotFoundException {
+            WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (DoWhileLoopTree) currentPath.getLeaf();
     }
 
     @Override
-    public void insert(Tree tree) throws NotFoundException {
+    public void insert(Tree tree) {
         if (parent == null) {
             return;
         }

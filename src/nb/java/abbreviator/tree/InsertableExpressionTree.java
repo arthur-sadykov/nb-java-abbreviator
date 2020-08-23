@@ -10,7 +10,6 @@ import java.util.EnumSet;
 import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
 import nb.java.abbreviator.TreeFactory;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -22,13 +21,13 @@ public class InsertableExpressionTree extends InsertableTree {
     private final ExpressionTree current;
 
     public InsertableExpressionTree(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) throws NotFoundException {
+            JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (ExpressionTree) currentPath.getLeaf();
     }
 
     @Override
-    public void insert(Tree tree) throws NotFoundException {
+    public void insert(Tree tree) {
         TreePath parentPath = treeUtilities.getPathElementOfKind(
                 EnumSet.of(
                         Tree.Kind.ASSERT,

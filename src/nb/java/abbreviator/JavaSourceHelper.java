@@ -26,9 +26,9 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import static java.util.Objects.requireNonNull;
+import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -41,11 +41,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.swing.ImageIcon;
 import javax.swing.text.Document;
 import nb.java.abbreviator.constants.ConstantDataManager;
-import nb.java.abbreviator.exception.NotFoundException;
-import nb.java.abbreviator.tree.InsertableTree;
 import org.netbeans.api.java.source.ClassIndex;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CodeStyle;
@@ -59,7 +56,7 @@ import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ui.ElementHeaders;
-import org.openide.awt.NotificationDisplayer;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -67,7 +64,6 @@ import org.openide.awt.NotificationDisplayer;
  */
 public class JavaSourceHelper {
 
-    private static final Logger LOG = Logger.getLogger(JavaSourceHelper.class.getName());
     private final Document document;
     private final List<Element> localElements;
     private Types types;
@@ -97,12 +93,12 @@ public class JavaSourceHelper {
         }
     }
 
-    void collectLocalElements(int caretPosition) {
-        if (caretPosition < 0 || caretPosition >= document.getLength()) {
-            throw new IllegalArgumentException(ConstantDataManager.INVALID_CARET_POSITION);
+    void collectLocalElements(int position) {
+        if (position < 0 || position >= document.getLength()) {
+            throw new IllegalArgumentException(ConstantDataManager.INVALID_POSITION);
         }
         localElements.clear();
-        this.caretPosition = caretPosition;
+        this.caretPosition = position;
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(workingCopy -> {
@@ -114,7 +110,7 @@ public class JavaSourceHelper {
                 make = workingCopy.getTreeMaker();
                 elementUtilities = workingCopy.getElementUtilities();
                 elements = workingCopy.getElements();
-                Scope scope = treeUtilities.scopeFor(caretPosition);
+                Scope scope = treeUtilities.scopeFor(position);
                 Iterable<? extends Element> localMembersAndVars =
                         elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
                             return (!e.getSimpleName().toString().equals(ConstantDataManager.THIS)
@@ -125,7 +121,7 @@ public class JavaSourceHelper {
                 localMembersAndVars.forEach(localElements::add);
             }).commit();
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
+            Exceptions.printStackTrace(ex);
         }
     }
 
@@ -159,12 +155,9 @@ public class JavaSourceHelper {
         Iterator<String> names = Utilities.varNamesSuggestions(wrapper.getMethod().getReturnType(),
                 ElementKind.LOCAL_VARIABLE, Collections.emptySet(), null, null, workingCopy.getTypes(),
                 workingCopy.getElements(), localElements, CodeStyle.getDefault(document)).iterator();
-        if (names.hasNext()) {
-            String variableName = names.next();
-            VariableTree variableTree = make.Variable(modifiers, variableName, type, initializer);
-            return variableTree;
-        }
-        return null;
+        String variableName = names.next();
+        VariableTree variableTree = make.Variable(modifiers, variableName, type, initializer);
+        return variableTree;
     }
 
     private boolean isTypeElement(Element element) {
@@ -219,7 +212,7 @@ public class JavaSourceHelper {
                 });
             }, true);
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
+            Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(typeElements);
     }
@@ -248,66 +241,58 @@ public class JavaSourceHelper {
         return abbreviation.toString();
     }
 
-    private VariableElement instanceOf(String typeName, String name) {
-        try {
-            TypeMirror type = type(typeName);
-            VariableElement closest = null;
-            int distance = Integer.MAX_VALUE;
-            if (type != null) {
-                for (Element element : localElements) {
-                    if (VariableElement.class
-                            .isInstance(element)
-                            && !ConstantDataManager.ANGLED_ERROR.contentEquals(element.getSimpleName())
-                            && element.asType().getKind() != TypeKind.ERROR
-                            && types.isAssignable(element.asType(), type)) {
-                        if (name.isEmpty()) {
-                            return (VariableElement) element;
-                        }
-                        int d = ElementHeaders.getDistance(element.getSimpleName().toString()
-                                .toLowerCase(), name.toLowerCase());
-                        if (isSameType(element.asType(), type, types)) {
-                            d -= 1000;
-                        }
-                        if (d < distance) {
-                            distance = d;
-                            closest = (VariableElement) element;
-                        }
+    private Optional<VariableElement> instanceOf(String typeName, String name) {
+        Optional<TypeMirror> type = type(typeName);
+        VariableElement closest = null;
+        int distance = Integer.MAX_VALUE;
+        if (type != null) {
+            for (Element element : localElements) {
+                if (VariableElement.class
+                        .isInstance(element)
+                        && !ConstantDataManager.ANGLED_ERROR.contentEquals(element.getSimpleName())
+                        && element.asType().getKind() != TypeKind.ERROR
+                        && type.map(t -> types.isAssignable(element.asType(), t)).orElse(false)) {
+                    if (name.isEmpty()) {
+                        return Optional.of((VariableElement) element);
+                    }
+                    int d = ElementHeaders.getDistance(element.getSimpleName().toString()
+                            .toLowerCase(), name.toLowerCase());
+                    if (type.map(t -> isSameType(element.asType(), t, types)).orElse(false)) {
+                        d -= 1000;
+                    }
+                    if (d < distance) {
+                        distance = d;
+                        closest = (VariableElement) element;
                     }
                 }
             }
-            return closest;
-        } catch (NotFoundException e) {
         }
-        return null;
+        return Optional.ofNullable(closest);
     }
 
-    private TypeMirror type(String typeName) throws NotFoundException {
+    private Optional<TypeMirror> type(String typeName) {
         String type = typeName.trim();
         if (type.isEmpty()) {
-            throw new NotFoundException("Could not find out type due to typeName parameter is empty.");
+            return Optional.empty();
         }
-        try {
-            Scope scope = treeUtilities.scopeFor(caretPosition);
-            TreePath currentPath = pathFor(caretPosition);
-            TypeElement enclosingClass = scope.getEnclosingClass();
-            SourcePositions[] sourcePositions = new SourcePositions[1];
-            StatementTree statement = treeUtilities.parseStatement("{" + type + " a;}", sourcePositions); //NOI18N
-            if (statement.getKind() == Tree.Kind.BLOCK) {
-                List<? extends StatementTree> statements = ((BlockTree) statement).getStatements();
-                if (!statements.isEmpty()) {
-                    StatementTree variable = statements.get(0);
-                    if (variable.getKind() == Tree.Kind.VARIABLE) {
-                        treeUtilities.attributeTree(statement, scope);
-                        TypeMirror result = getTypeMirror(new TreePath(currentPath,
-                                ((VariableTree) variable).getType()));
-                        return result;
-                    }
+        Scope scope = treeUtilities.scopeFor(caretPosition);
+        Optional<TreePath> currentPath = pathFor(caretPosition);
+        TypeElement enclosingClass = scope.getEnclosingClass();
+        SourcePositions[] sourcePositions = new SourcePositions[1];
+        StatementTree statement = treeUtilities.parseStatement("{" + type + " a;}", sourcePositions); //NOI18N
+        if (statement.getKind() == Tree.Kind.BLOCK) {
+            List<? extends StatementTree> statements = ((BlockTree) statement).getStatements();
+            if (!statements.isEmpty()) {
+                StatementTree variable = statements.get(0);
+                if (variable.getKind() == Tree.Kind.VARIABLE) {
+                    treeUtilities.attributeTree(statement, scope);
+                    return currentPath.flatMap(cp ->
+                            getTypeMirror(new TreePath(cp, ((VariableTree) variable).getType())).or(() ->
+                                    Optional.empty()));
                 }
-                return treeUtilities.parseType(type, enclosingClass);
             }
-        } catch (NotFoundException e) {
         }
-        throw new NotFoundException("Could not find type at current caret position.");
+        return Optional.ofNullable(treeUtilities.parseType(type, enclosingClass));
     }
 
     private boolean isSameType(TypeMirror t1, TypeMirror t2, Types types) {
@@ -347,12 +332,8 @@ public class JavaSourceHelper {
         return -1;
     }
 
-    private TreePath pathFor(int caretPosition) throws NotFoundException {
-        TreePath currentPath = treeUtilities.pathFor(caretPosition);
-        if (currentPath == null) {
-            throw new NotFoundException("Could not get tree path to current caret position.");
-        }
-        return currentPath;
+    private Optional<TreePath> pathFor(int caretPosition) {
+        return Optional.ofNullable(treeUtilities.pathFor(caretPosition));
     }
 
     private JavaSource getJavaSourceForDocument(Document document) {
@@ -366,32 +347,20 @@ public class JavaSourceHelper {
     private void moveStateToResolvedPhase(CompilationController controller) throws IOException {
         Phase phase = controller.toPhase(Phase.RESOLVED);
         if (phase.compareTo(Phase.RESOLVED) < 0) {
-            throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_PHASE_RESOLVED);
+            throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_RESOLVED_PHASE);
         }
     }
 
-    private Element getElement(TreePath path) throws NotFoundException {
-        Element element = trees.getElement(path);
-        if (element == null) {
-            throw new NotFoundException("The element is not available for the given tree path.");
-        }
-        return element;
+    private Optional<Element> getElement(TreePath path) {
+        return Optional.ofNullable(trees.getElement(path));
     }
 
-    private TreePath getPath(TreePath path, Tree tree) throws NotFoundException {
-        TreePath treePath = TreePath.getPath(path, tree);
-        if (treePath == null) {
-            throw new NotFoundException("The tree node is not found.");
-        }
-        return treePath;
+    private Optional<TreePath> getPath(TreePath path, Tree tree) {
+        return Optional.ofNullable(TreePath.getPath(path, tree));
     }
 
-    private TreePath getPath(CompilationUnitTree compilationUnitTree, Tree tree) throws NotFoundException {
-        TreePath treePath = TreePath.getPath(compilationUnitTree, tree);
-        if (treePath == null) {
-            throw new NotFoundException("The tree node is not found.");
-        }
-        return treePath;
+    private Optional<TreePath> getPath(CompilationUnitTree compilationUnitTree, Tree tree) {
+        return Optional.ofNullable(TreePath.getPath(compilationUnitTree, tree));
     }
 
     private int findIndexOfCurrentArgumentInMethod(MethodInvocationTree methodInvocationTree) {
@@ -407,7 +376,7 @@ public class JavaSourceHelper {
         return -1;
     }
 
-    public int getInsertIndexInBlock(BlockTree blockTree, Tree tree) {
+    public int findInsertIndexInBlock(BlockTree blockTree, Tree tree) {
         requireNonNull(blockTree, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "blockTree"));
         requireNonNull(tree, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "tree"));
         List<? extends StatementTree> statements = blockTree.getStatements();
@@ -423,7 +392,7 @@ public class JavaSourceHelper {
         return i;
     }
 
-    public int getInsertIndexInBlock(BlockTree blockTree) {
+    public int findInsertIndexInBlock(BlockTree blockTree) {
         requireNonNull(blockTree, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "blockTree"));
         List<? extends StatementTree> statements = blockTree.getStatements();
         SourcePositions sourcePositions = trees.getSourcePositions();
@@ -486,38 +455,36 @@ public class JavaSourceHelper {
         this.typedAbbreviation = abbreviation;
     }
 
-    boolean insertStaticMethodSelection(List<TypeElement> elements, String methodAbbreviation) throws NotFoundException {
-        return insertMethodSelection(getStaticMethodWrapper(elements, methodAbbreviation));
+    boolean insertStaticMethodSelection(List<TypeElement> elements, String methodAbbreviation) {
+        return insertMethodSelection(findStaticMethodWrapper(elements, methodAbbreviation));
     }
 
-    private MethodSelectionWrapper getStaticMethodWrapper(List<TypeElement> elements, String methodAbbreviation)
-            throws NotFoundException {
-        MethodSelectionWrapper resultWrapper = null;
-        TypeMirror typeInContext = getTypeInContext();
-        List<MethodSelectionWrapper> wrappers = new ArrayList<>();
+    private Optional<MethodSelectionWrapper> findStaticMethodWrapper(List<TypeElement> elements,
+            String methodAbbreviation) {
+        Optional<MethodSelectionWrapper> resultWrapper = null;
+        Optional<TypeMirror> typeInContext = getTypeInContext();
+        List<Optional<MethodSelectionWrapper>> wrappers = new ArrayList<>();
         elements.forEach(element -> {
-            try {
-                List<ExecutableElement> methods = getStaticMethodsInClass(element);
-                methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-                wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
-            } catch (NotFoundException ex) {
-            }
+            List<ExecutableElement> methods = getStaticMethodsInClass(element);
+            methods = getMethodsByAbbreviation(methodAbbreviation, methods);
+            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
         });
         int maxNumberOfResolvedArguments = Integer.MIN_VALUE;
-        for (MethodSelectionWrapper wrapper : wrappers) {
-            ExecutableElement method = wrapper.getMethod();
-            int numberOfResolvedArguments = method.getParameters().size();
+        for (Optional<MethodSelectionWrapper> wrapper : wrappers) {
+            Optional<ExecutableElement> method = wrapper.map(MethodSelectionWrapper::getMethod).or(() ->
+                    Optional.empty());
+            int numberOfResolvedArguments = wrapper.map(MethodSelectionWrapper::getMethod)
+                    .map(ExecutableElement::getParameters).map(List::size).orElse(-1);
             if (numberOfResolvedArguments > maxNumberOfResolvedArguments) {
-                if (typeInContext == null || isTypesAssignable(method.getReturnType(), typeInContext)) {
+                Optional<TypeMirror> returnType = method.map(m -> m.getReturnType()).or(() -> Optional.empty());
+                if (!typeInContext.isPresent() || typeInContext.map(tic ->
+                        returnType.map(rt -> isTypesAssignable(rt, tic)).orElse(false)).orElse(false)) {
                     maxNumberOfResolvedArguments = numberOfResolvedArguments;
                     resultWrapper = wrapper;
                 }
             }
         }
-        if (resultWrapper == null) {
-            throw new NotFoundException("Could not find element or method.");
-        }
-        return resultWrapper;
+        return resultWrapper != null ? resultWrapper : Optional.empty();
     }
 
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
@@ -537,55 +504,55 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    boolean insertCallToMethod(List<Element> elements, String methodAbbreviation) throws NotFoundException {
+    boolean insertMethodSelection(List<Element> elements, String methodAbbreviation) {
         return insertMethodSelection(findMethodWrapper(elements, methodAbbreviation));
     }
 
-    private MethodSelectionWrapper findMethodWrapper(List<Element> elements, String methodAbbreviation)
-            throws NotFoundException {
-        MethodSelectionWrapper resultWrapper = null;
-        TypeMirror typeInContext = getTypeInContext();
-        List<MethodSelectionWrapper> wrappers = new ArrayList<>();
+    private Optional<MethodSelectionWrapper> findMethodWrapper(List<Element> elements, String methodAbbreviation) {
+        Optional<MethodSelectionWrapper> resultWrapper = null;
+        Optional<TypeMirror> typeInContext = getTypeInContext();
+        List<Optional<MethodSelectionWrapper>> wrappers = new ArrayList<>();
         elements.forEach(element -> {
-            try {
-                List<ExecutableElement> methods = getMethodsInClassAndSuperclasses(element);
-                methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-                wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
-            } catch (NotFoundException ex) {
-            }
+            List<ExecutableElement> methods = getMethodsInClassAndSuperclasses(element);
+            methods = getMethodsByAbbreviation(methodAbbreviation, methods);
+            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
         });
         int maxNumberOfResolvedArguments = Integer.MIN_VALUE;
-        for (MethodSelectionWrapper wrapper : wrappers) {
-            ExecutableElement method = wrapper.getMethod();
-            int numberOfResolvedArguments = method.getParameters().size();
+        for (Optional<MethodSelectionWrapper> wrapper : wrappers) {
+            Optional<ExecutableElement> method = wrapper.map(MethodSelectionWrapper::getMethod).or(() ->
+                    Optional.empty());
+            int numberOfResolvedArguments = wrapper.map(MethodSelectionWrapper::getMethod)
+                    .map(ExecutableElement::getParameters).map(List::size).orElse(-1);
             if (numberOfResolvedArguments > maxNumberOfResolvedArguments) {
-                if (typeInContext == null || isTypesAssignable(method.getReturnType(), typeInContext)) {
+                Optional<TypeMirror> returnType = method.map(m -> m.getReturnType()).or(() -> Optional.empty());
+                if (!typeInContext.isPresent() || typeInContext.map(tic ->
+                        returnType.map(rt -> isTypesAssignable(rt, tic)).orElse(false)).orElse(false)) {
                     maxNumberOfResolvedArguments = numberOfResolvedArguments;
                     resultWrapper = wrapper;
                 }
             }
         }
-        if (resultWrapper == null) {
-            throw new NotFoundException("Could not find element or method.");
-        }
-        return resultWrapper;
+        return resultWrapper != null ? resultWrapper : Optional.empty();
     }
 
-    private TypeMirror getTypeInContext() throws NotFoundException {
-        TreePath currentPath = pathFor(caretPosition);
-        Tree currentTree = currentPath.getLeaf();
-        Tree.Kind kind = currentTree.getKind();
-        switch (kind) {
+    private Optional<TypeMirror> getTypeInContext() {
+        Optional<TreePath> currentPath = pathFor(caretPosition);
+        Optional<Tree> currentTree = currentPath.map(cp -> cp.getLeaf()).or(() -> Optional.empty());
+        Optional<Tree.Kind> kind = currentTree.map(ct -> ct.getKind()).or(() -> Optional.empty());
+        switch (kind.map(k -> k).orElse(Tree.Kind.OTHER)) {
             case ASSIGNMENT: {
-                AssignmentTree assignmentTree = (AssignmentTree) currentTree;
-                ExpressionTree variable = assignmentTree.getVariable();
-                TreePath path = getPath(currentPath, variable);
-                Element element = getElement(path);
-                return element.asType();
+                Optional<AssignmentTree> assignmentTree =
+                        currentTree.map(ct -> (AssignmentTree) ct).or(() -> Optional.empty());
+                Optional<ExpressionTree> variable =
+                        assignmentTree.map(AssignmentTree::getVariable).or(() -> Optional.empty());
+                Optional<TreePath> path = currentPath.isPresent() && variable.isPresent()
+                        ? getPath(currentPath.get(), variable.get())
+                        : Optional.empty();
+                return path.flatMap(this::getElement).map(Element::asType).or(() -> Optional.empty());
             }
             case BLOCK:
             case PARENTHESIZED: {
-                return null;
+                return Optional.empty();
             }
             case DIVIDE:
             case EQUAL_TO:
@@ -598,7 +565,7 @@ public class JavaSourceHelper {
             case NOT_EQUAL_TO:
             case PLUS:
             case REMAINDER: {
-                return types.getPrimitiveType(TypeKind.DOUBLE);
+                return Optional.of(types.getPrimitiveType(TypeKind.DOUBLE));
             }
             case AND:
             case AND_ASSIGNMENT:
@@ -618,31 +585,32 @@ public class JavaSourceHelper {
             case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
             case XOR:
             case XOR_ASSIGNMENT: {
-                return types.getPrimitiveType(TypeKind.LONG);
+                return Optional.of(types.getPrimitiveType(TypeKind.LONG));
             }
             case CONDITIONAL_AND:
             case CONDITIONAL_OR:
             case LOGICAL_COMPLEMENT: {
-                return types.getPrimitiveType(TypeKind.BOOLEAN);
+                return Optional.of(types.getPrimitiveType(TypeKind.BOOLEAN));
             }
             case METHOD_INVOCATION: {
-                int insertIndex = findIndexOfCurrentArgumentInMethod((MethodInvocationTree) currentTree);
-                Element element = getElement(currentPath);
-                if (element.getKind() == ElementKind.METHOD) {
-                    ExecutableElement method = (ExecutableElement) element;
-                    List<? extends VariableElement> parameters = method.getParameters();
-                    if (insertIndex != -1) {
-                        VariableElement parameter = parameters.get(insertIndex);
-                        return parameter.asType();
-                    }
+                int insertIndex =
+                        currentTree.map(ct -> findIndexOfCurrentArgumentInMethod((MethodInvocationTree) ct)).orElse(-1);
+                Optional<Element> element = currentPath.flatMap(this::getElement).or(() -> Optional.empty());
+                if (element.map(Element::getKind).orElse(ElementKind.OTHER) == ElementKind.METHOD) {
+                    return element.map(e -> (ExecutableElement) e)
+                            .map(ExecutableElement::getParameters)
+                            .filter(p -> insertIndex != -1)
+                            .map(p -> p.get(insertIndex))
+                            .map(VariableElement::asType)
+                            .or(() -> Optional.empty());
                 }
                 break;
             }
             default: {
-                NotificationDisplayer.getDefault().notify(kind.toString(), new ImageIcon(), "", null);
+                return Optional.empty();
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     private List<ExecutableElement> getMethodsInClassAndSuperclasses(Element element) {
@@ -675,55 +643,52 @@ public class JavaSourceHelper {
         return types.isAssignable(t1, t2);
     }
 
-    private boolean insertMethodSelection(MethodSelectionWrapper wrapper) {
+    private boolean insertMethodSelection(Optional<MethodSelectionWrapper> wrapper) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         try {
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
                 moveStateToResolvedPhase(copy);
                 make = copy.getTreeMaker();
                 treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = pathFor(caretPosition);
-                InsertableTree currentTree = TreeFactory.create(currentPath, wrapper, copy, this);
-                currentTree.insert(null);
+                Optional<TreePath> currentPath = pathFor(caretPosition);
+                wrapper.ifPresent(w -> {
+                    currentPath.map(cp -> TreeFactory.create(cp, w, copy, this)).ifPresent(it -> it.insert(null));
+                });
             });
             modificationResult.commit();
             return !modificationResult.getModifiedFileObjects().isEmpty();
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
+            Exceptions.printStackTrace(ex);
             return false;
         }
     }
 
-    boolean insertSelectionForMethodInCurrentOrSuperclass(String methodAbbreviation) throws NotFoundException {
+    boolean insertSelectionForMethodInCurrentOrSuperclass(String methodAbbreviation) {
         List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses();
         methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-        MethodSelectionWrapper wrapper = findMethodWithLargestNumberOfResolvedArguments(null, methods);
+        Optional<MethodSelectionWrapper> wrapper = findMethodWithLargestNumberOfResolvedArguments(null, methods);
         return insertMethodSelection(wrapper);
     }
 
-    private List<ExecutableElement> getMethodsInCurrentAndSuperclasses() throws NotFoundException {
-        TypeMirror typeMirror = getTypeMirrorOfCurrentClass();
-        Iterable<? extends Element> members = elementUtilities.getMembers(typeMirror, (e, t) -> {
-            return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
-        });
-        return ElementFilter.methodsIn(members);
+    private List<ExecutableElement> getMethodsInCurrentAndSuperclasses() {
+        Optional<TypeMirror> typeMirror = getTypeMirrorOfCurrentClass();
+        return typeMirror.map(tm -> {
+            return elementUtilities.getMembers(tm, (e, t) -> {
+                return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
+            });
+        }).map(ElementFilter::methodsIn).orElse(Collections.emptyList());
     }
 
-    private TypeMirror getTypeMirrorOfCurrentClass() throws NotFoundException {
+    private Optional<TypeMirror> getTypeMirrorOfCurrentClass() {
         Tree tree = compilationUnit.getTypeDecls().get(0);
         if (tree.getKind() == Tree.Kind.CLASS) {
-            TreePath path = getPath(compilationUnit, tree);
-            return getTypeMirror(path);
+            return getPath(compilationUnit, tree).flatMap(this::getTypeMirror).or(() -> Optional.empty());
         }
-        throw new NotFoundException("Could not get a type of current class.");
+        return Optional.empty();
     }
 
-    private TypeMirror getTypeMirror(TreePath path) throws NotFoundException {
-        TypeMirror typeMirror = trees.getTypeMirror(path);
-        if (typeMirror == null) {
-            throw new NotFoundException("Could not get a type at the given tree path.");
-        }
-        return typeMirror;
+    private Optional<TypeMirror> getTypeMirror(TreePath path) {
+        return Optional.ofNullable(trees.getTypeMirror(path));
     }
 
     private List<ExecutableElement> getMethodsByAbbreviation(String methodAbbreviation, List<ExecutableElement> methods) {
@@ -734,7 +699,7 @@ public class JavaSourceHelper {
                 result.add(method);
             }
         });
-        return result;
+        return Collections.unmodifiableList(result);
     }
 
     private String getMethodAbbreviation(String methodName) {
@@ -747,8 +712,8 @@ public class JavaSourceHelper {
         return abbreviation.toString();
     }
 
-    private MethodSelectionWrapper findMethodWithLargestNumberOfResolvedArguments(Element element,
-            List<ExecutableElement> methods) throws NotFoundException {
+    private Optional<MethodSelectionWrapper> findMethodWithLargestNumberOfResolvedArguments(Element element,
+            List<ExecutableElement> methods) {
         List<MethodSelectionWrapper> wrappers = new ArrayList<>();
         methods.forEach(method -> {
             List<ExpressionTree> arguments = evaluateMethodArguments(method);
@@ -769,20 +734,16 @@ public class JavaSourceHelper {
         for (int i = wrappers.size() - 1; i >= 0; i--) {
             MethodSelectionWrapper wrapper = wrappers.get(i);
             if (wrapper.getArgumentsNumber() == wrapper.getResolvedArgumentsNumber()) {
-                return wrapper;
+                return Optional.ofNullable(wrapper);
             }
         }
         Collections.sort(wrappers, (o1, o2) -> {
             return Double.compare(o1.getRelation(), o2.getRelation());
         });
         if (wrappers.isEmpty()) {
-            throw new NotFoundException("Could not find requested method.");
+            return Optional.empty();
         }
-        MethodSelectionWrapper wrapper = wrappers.get(wrappers.size() - 1);
-        if (wrapper.getMethod() == null) {
-            throw new NotFoundException("Could not find requested method.");
-        }
-        return wrapper;
+        return Optional.ofNullable(wrappers.get(wrappers.size() - 1));
     }
 
     private List<ExpressionTree> evaluateMethodArguments(ExecutableElement method) {
@@ -791,45 +752,49 @@ public class JavaSourceHelper {
         parameters.stream()
                 .map(parameter -> parameter.asType())
                 .forEachOrdered(elementType -> {
-                    IdentifierTree identifierTree;
-                    VariableElement variableElement = instanceOf(elementType.toString(), "");
-                    if (variableElement != null) {
-                        identifierTree = make.Identifier(variableElement);
-                        arguments.add(identifierTree);
-                    } else {
+                    AtomicReference<IdentifierTree> identifierTree = new AtomicReference<>();
+                    Optional<VariableElement> variableElement = instanceOf(elementType.toString(), "");
+                    variableElement.ifPresentOrElse(ve -> {
+                        identifierTree.set(make.Identifier(ve));
+                        arguments.add(identifierTree.get());
+                    }, () -> {
                         switch (elementType.getKind()) {
                             case BOOLEAN:
-                                identifierTree = make.Identifier("false");
+                                identifierTree.set(make.Identifier(ConstantDataManager.FALSE));
                                 break;
                             case BYTE:
                             case SHORT:
                             case INT:
-                                identifierTree = make.Identifier("0");
+                                identifierTree.set(make.Identifier(ConstantDataManager.INTEGER_ZERO_LITERAL));
                                 break;
                             case LONG:
-                                identifierTree = make.Identifier("0L");
+                                identifierTree.set(make.Identifier(ConstantDataManager.LONG_ZERO_LITERAL));
                                 break;
                             case FLOAT:
-                                identifierTree = make.Identifier("0.0F");
+                                identifierTree.set(make.Identifier(ConstantDataManager.FLOAT_ZERO_LITERAL));
                                 break;
                             case DOUBLE:
-                                identifierTree = make.Identifier("0.0");
+                                identifierTree.set(make.Identifier(ConstantDataManager.DOUBLE_ZERO_LITERAL));
                                 break;
                             default:
-                                identifierTree = make.Identifier("null");
+                                identifierTree.set(make.Identifier(ConstantDataManager.NULL));
                         }
-                        arguments.add(identifierTree);
-                    }
+                        arguments.add(identifierTree.get());
+                    });
                 });
-        return arguments;
+        return Collections.unmodifiableList(arguments);
     }
 
     private boolean isArgumentResolved(String argument) {
-        return !argument.equals("null")
-                && !argument.equals("0")
-                && !argument.equals("0L")
-                && !argument.equals("0.0")
-                && !argument.equals("0.0F")
-                && !argument.equals("false");
+        return !argument.equals(ConstantDataManager.NULL)
+                && !argument.equals(ConstantDataManager.INTEGER_ZERO_LITERAL)
+                && !argument.equals(ConstantDataManager.LONG_ZERO_LITERAL)
+                && !argument.equals(ConstantDataManager.DOUBLE_ZERO_LITERAL)
+                && !argument.equals(ConstantDataManager.FLOAT_ZERO_LITERAL)
+                && !argument.equals(ConstantDataManager.FALSE);
+    }
+
+    Document getDocument() {
+        return document;
     }
 }

@@ -10,7 +10,6 @@ import com.sun.source.util.TreePath;
 import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
 import nb.java.abbreviator.Utilities;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -22,7 +21,7 @@ public class NewClass extends InsertableExpressionTree {
     private final NewClassTree current;
 
     public NewClass(TreePath currentPath, MethodSelectionWrapper wrapper,
-            WorkingCopy copy, JavaSourceHelper helper) throws NotFoundException {
+            WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (NewClassTree) currentPath.getLeaf();
     }

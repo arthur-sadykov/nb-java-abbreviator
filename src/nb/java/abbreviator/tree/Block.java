@@ -11,7 +11,6 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -22,8 +21,7 @@ public class Block extends InsertableStatementTree {
 
     private final BlockTree current;
 
-    public Block(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy, JavaSourceHelper helper)
-            throws NotFoundException {
+    public Block(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (BlockTree) currentPath.getLeaf();
     }
@@ -32,7 +30,7 @@ public class Block extends InsertableStatementTree {
     public void insert(Tree tree) {
         BlockTree newBlockTree = current;
         if (tree != null) {
-            int insertIndex = helper.getInsertIndexInBlock(newBlockTree);
+            int insertIndex = helper.findInsertIndexInBlock(newBlockTree);
             if (insertIndex == -1) {
                 return;
             }
@@ -40,7 +38,7 @@ public class Block extends InsertableStatementTree {
             newBlockTree = make.removeBlockStatement(newBlockTree, insertIndex);
             newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, (StatementTree) tree);
         } else {
-            int insertIndex = helper.getInsertIndexInBlock(newBlockTree);
+            int insertIndex = helper.findInsertIndexInBlock(newBlockTree);
             if (insertIndex == -1) {
                 return;
             }

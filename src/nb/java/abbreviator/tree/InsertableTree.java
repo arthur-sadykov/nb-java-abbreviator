@@ -12,7 +12,6 @@ import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
 import nb.java.abbreviator.TreeFactory;
 import nb.java.abbreviator.constants.ConstantDataManager;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
@@ -40,7 +39,7 @@ public abstract class InsertableTree {
     protected InsertableTree parent;
 
     protected InsertableTree(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) throws NotFoundException {
+            JavaSourceHelper helper) {
         requireNonNull(currentPath, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "currentPath"));
         requireNonNull(wrapper, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "wrapper"));
         requireNonNull(copy, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "copy"));
@@ -57,5 +56,5 @@ public abstract class InsertableTree {
         }
     }
 
-    public abstract void insert(Tree tree) throws NotFoundException;
+    public abstract void insert(Tree tree);
 }

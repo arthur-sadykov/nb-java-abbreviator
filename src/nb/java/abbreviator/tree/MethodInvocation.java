@@ -7,11 +7,9 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
-import java.util.logging.Logger;
 import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
 import nb.java.abbreviator.Utilities;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -20,11 +18,10 @@ import org.netbeans.api.java.source.WorkingCopy;
  */
 public class MethodInvocation extends InsertableExpressionTree {
 
-    private static final Logger LOG = Logger.getLogger(MethodInvocation.class.getName());
     private final MethodInvocationTree current;
 
     public MethodInvocation(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) throws NotFoundException {
+            JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (MethodInvocationTree) currentPath.getLeaf();
     }

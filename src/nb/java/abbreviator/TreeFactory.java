@@ -6,9 +6,7 @@ package nb.java.abbreviator;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import static java.util.Objects.requireNonNull;
-import java.util.logging.Logger;
 import nb.java.abbreviator.constants.ConstantDataManager;
-import nb.java.abbreviator.exception.NotFoundException;
 import nb.java.abbreviator.tree.Assert;
 import nb.java.abbreviator.tree.Assignment;
 import nb.java.abbreviator.tree.Block;
@@ -37,13 +35,11 @@ import org.netbeans.api.java.source.WorkingCopy;
  */
 public class TreeFactory {
 
-    private static final Logger LOG = Logger.getLogger(TreeFactory.class.getName());
-
     private TreeFactory() {
     }
 
     public static InsertableTree create(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) throws NotFoundException {
+            JavaSourceHelper helper) {
         requireNonNull(currentPath, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "currentPath"));
         requireNonNull(wrapper, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "wrapper"));
         requireNonNull(copy, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "copy"));

@@ -32,7 +32,10 @@ import org.netbeans.api.java.source.CodeStyleUtils;
  *
  * @author Arthur Sadykov
  */
-public final class Utilities {
+public class Utilities {
+
+    private Utilities() {
+    }
 
     public static List<String> varNamesSuggestions(TypeMirror type, ElementKind kind, Set<Modifier> modifiers,
             String suggestedName, String prefix, Types types, Elements elements, Iterable<? extends Element> locals,

@@ -9,7 +9,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import nb.java.abbreviator.JavaSourceHelper;
 import nb.java.abbreviator.MethodSelectionWrapper;
-import nb.java.abbreviator.exception.NotFoundException;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -20,14 +19,13 @@ public class Synchronized extends InsertableStatementTree {
 
     private final SynchronizedTree current;
 
-    public Synchronized(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy, JavaSourceHelper helper)
-            throws NotFoundException {
+    public Synchronized(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (SynchronizedTree) currentPath.getLeaf();
     }
 
     @Override
-    public void insert(Tree tree) throws NotFoundException {
+    public void insert(Tree tree) {
         if (parent == null) {
             return;
         }
