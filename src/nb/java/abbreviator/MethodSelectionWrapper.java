@@ -15,7 +15,7 @@ import javax.lang.model.element.ExecutableElement;
  */
 public class MethodSelectionWrapper {
 
-    private final Element element;
+    private Element element;
     private final ExecutableElement method;
     private final List<ExpressionTree> arguments;
     private final int argumentsNumber;
@@ -31,6 +31,10 @@ public class MethodSelectionWrapper {
 
     public Element getElement() {
         return element;
+    }
+
+    public void setElement(Element element) {
+        this.element = element;
     }
 
     public ExecutableElement getMethod() {

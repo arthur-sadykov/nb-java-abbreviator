@@ -9,6 +9,7 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.NewClassTree;
@@ -593,6 +594,15 @@ public class JavaSourceHelper {
             case LOGICAL_COMPLEMENT: {
                 return Optional.of(types.getPrimitiveType(TypeKind.BOOLEAN));
             }
+            case MEMBER_SELECT: {
+                Optional<ExpressionTree> expression = currentTree.map(ct -> (MemberSelectTree) ct)
+                        .map(MemberSelectTree::getExpression).or(() -> Optional.empty());
+                if (currentPath.isPresent() && expression.isPresent()) {
+                    TreePath path = TreePath.getPath(currentPath.get(), expression.get());
+                    return getTypeMirror(path);
+                }
+                return Optional.empty();
+            }
             case METHOD_INVOCATION: {
                 int insertIndex =
                         currentTree.map(ct -> findIndexOfCurrentArgumentInMethod((MethodInvocationTree) ct)).orElse(-1);
@@ -814,5 +824,24 @@ public class JavaSourceHelper {
 
     boolean insertLocalMethod(String methodAbbreviation) {
         return insertSelectionForMethodInCurrentOrSuperclass(methodAbbreviation);
+    }
+
+    boolean isMemberSelection() {
+        Optional<TreePath> path = pathFor(caretPosition);
+        return path.map(TreePath::getLeaf).map(Tree::getKind).map(k -> k == Tree.Kind.MEMBER_SELECT).orElse(false);
+    }
+
+    boolean insertChainedMethodSelection(String methodAbbreviation) {
+        Optional<TypeMirror> type = getTypeInContext();
+        Optional<Element> typeElement = type.map(types::asElement).or(() -> Optional.empty());
+        Optional<List<ExecutableElement>> methods = typeElement.map(this::getMethodsInClassAndSuperclasses)
+                .map(m -> getMethodsByAbbreviation(methodAbbreviation, m)).or(() -> Optional.empty());
+        if (methods.isPresent() && typeElement.isPresent()) {
+            Optional<MethodSelectionWrapper> method =
+                    findMethodWithLargestNumberOfResolvedArguments(typeElement.get(), methods.get());
+            method.ifPresent(m -> m.setElement(null));
+            return insertMethodSelection(method);
+        }
+        return false;
     }
 }
