@@ -811,4 +811,8 @@ public class JavaSourceHelper {
         }
         return false;
     }
+
+    boolean insertLocalMethod(String methodAbbreviation) {
+        return insertSelectionForMethodInCurrentOrSuperclass(methodAbbreviation);
+    }
 }

@@ -37,15 +37,17 @@ public class JavaAbbreviationHandler {
             if (!elements.isEmpty()) {
                 if (insertMethodSelection(elements, identifierAbbreviation)) {
                     return true;
-                } else {
-                    return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation);
                 }
+                return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation);
             } else {
                 return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation);
             }
         } else {
             List<Element> elements = helper.getElementsByAbbreviation(abbreviationContent);
-            return insertLocalElement(elements);
+            if (insertLocalElement(elements)) {
+                return true;
+            }
+            return insertLocalMethod(abbreviationContent);
         }
     }
 
@@ -58,11 +60,15 @@ public class JavaAbbreviationHandler {
         return helper.insertStaticMethodSelection(typeElements, methodAbbreviation);
     }
 
-    Document getDocument() {
-        return document;
-    }
-
     private boolean insertLocalElement(List<Element> elements) {
         return helper.insertLocalElement(elements);
+    }
+
+    private boolean insertLocalMethod(String methodAbbreviation) {
+        return helper.insertLocalMethod(methodAbbreviation);
+    }
+
+    Document getDocument() {
+        return document;
     }
 }
