@@ -822,6 +822,20 @@ public class JavaSourceHelper {
         return false;
     }
 
+    boolean insertKeyword(String keywordAbbreviation) {
+        String keyword = ConstantDataManager.ABBREVIATION_TO_KEYWORD.get(keywordAbbreviation);
+        if (keyword == null) {
+            return false;
+        }
+        try {
+            document.insertString(caretPosition, keyword, null);
+            return true;
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+            return false;
+        }
+    }
+
     boolean insertLocalMethod(String methodAbbreviation) {
         return insertSelectionForMethodInCurrentOrSuperclass(methodAbbreviation);
     }

@@ -49,8 +49,11 @@ public class JavaAbbreviationHandler {
                 List<Element> elements = helper.getElementsByAbbreviation(abbreviationContent);
                 if (insertLocalElement(elements)) {
                     return true;
+                } else if (insertKeyword(abbreviationContent)) {
+                    return true;
+                } else {
+                    return insertLocalMethod(abbreviationContent);
                 }
-                return insertLocalMethod(abbreviationContent);
             }
         }
     }
@@ -66,6 +69,10 @@ public class JavaAbbreviationHandler {
 
     private boolean insertLocalElement(List<Element> elements) {
         return helper.insertLocalElement(elements);
+    }
+
+    private boolean insertKeyword(String keywordAbbreviation) {
+        return helper.insertKeyword(keywordAbbreviation);
     }
 
     private boolean insertLocalMethod(String methodAbbreviation) {
