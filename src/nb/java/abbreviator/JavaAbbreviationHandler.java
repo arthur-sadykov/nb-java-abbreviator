@@ -44,8 +44,9 @@ public class JavaAbbreviationHandler {
                 return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation);
             }
         } else {
+            List<Element> elements = helper.getElementsByAbbreviation(abbreviationContent);
+            return insertLocalElement(elements);
         }
-        return false;
     }
 
     private boolean insertMethodSelection(List<Element> elements, String methodAbbreviation) {
@@ -59,5 +60,9 @@ public class JavaAbbreviationHandler {
 
     Document getDocument() {
         return document;
+    }
+
+    private boolean insertLocalElement(List<Element> elements) {
+        return helper.insertLocalElement(elements);
     }
 }

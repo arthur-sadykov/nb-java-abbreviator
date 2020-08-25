@@ -41,6 +41,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import nb.java.abbreviator.constants.ConstantDataManager;
 import org.netbeans.api.java.source.ClassIndex;
@@ -796,5 +797,18 @@ public class JavaSourceHelper {
 
     Document getDocument() {
         return document;
+    }
+
+    boolean insertLocalElement(List<Element> elements) {
+        if (!elements.isEmpty()) {
+            try {
+                document.insertString(caretPosition, elements.get(0).getSimpleName().toString(), null);
+                return true;
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
+                return false;
+            }
+        }
+        return false;
     }
 }
