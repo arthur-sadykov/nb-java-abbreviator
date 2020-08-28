@@ -37,10 +37,17 @@ public class JavaAbbreviationHandler {
             if (!elements.isEmpty()) {
                 if (insertMethodSelection(elements, identifierAbbreviation)) {
                     return true;
+                } else if (insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)) {
+                    return true;
+                } else {
+                    return insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
                 }
-                return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation);
             } else {
-                return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation);
+                if (insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)) {
+                    return true;
+                } else {
+                    return insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
+                }
             }
         } else {
             if (isMemberSelection()) {
@@ -89,5 +96,9 @@ public class JavaAbbreviationHandler {
 
     private boolean insertChainedMethodSelection(String methodAbbreviation) {
         return helper.insertChainedMethodSelection(methodAbbreviation);
+    }
+
+    private boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
+        return helper.insertConstantSelection(expressionAbbreviation, constantAbbreviation);
     }
 }

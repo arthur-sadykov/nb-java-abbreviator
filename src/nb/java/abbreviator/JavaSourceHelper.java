@@ -858,4 +858,35 @@ public class JavaSourceHelper {
         }
         return false;
     }
+
+    boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
+        List<TypeElement> typeElements = getTypeElementsByAbbreviation(expressionAbbreviation);
+        for (TypeElement typeElement : typeElements) {
+            List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
+            for (Element element : enclosedElements) {
+                if (element.getKind() == ElementKind.FIELD
+                        && element.getModifiers().contains(Modifier.PUBLIC)
+                        && element.getModifiers().contains(Modifier.STATIC)
+                        && element.getModifiers().contains(Modifier.FINAL)) {
+                    String elementName = element.getSimpleName().toString();
+                    String elementAbbreviation = getElementAbbreviation(elementName);
+                    if (constantAbbreviation.equals(elementAbbreviation)) {
+                        return insertConstantSelection(typeElement, element);
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean insertConstantSelection(TypeElement typeElement, Element constantElement) {
+        MemberSelectTree constantSelection = make.MemberSelect(make.Identifier(typeElement), constantElement);
+        try {
+            document.insertString(caretPosition, constantSelection.toString(), null);
+            return true;
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+            return false;
+        }
+    }
 }
