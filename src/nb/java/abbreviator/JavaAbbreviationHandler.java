@@ -58,8 +58,10 @@ public class JavaAbbreviationHandler {
                     return true;
                 } else if (insertKeyword(abbreviationContent)) {
                     return true;
+                } else if (insertLocalMethod(abbreviationContent)) {
+                    return true;
                 } else {
-                    return insertLocalMethod(abbreviationContent);
+                    return insertType(abbreviationContent);
                 }
             }
         }
@@ -70,7 +72,8 @@ public class JavaAbbreviationHandler {
     }
 
     private boolean insertStaticMethodSelection(String expressionAbbreviation, String methodAbbreviation) {
-        List<TypeElement> typeElements = helper.getTypeElementsByAbbreviation(expressionAbbreviation);
+        List<TypeElement> typeElements =
+                helper.getTypeElementsByAbbreviationInSourceCompileAndBootPath(expressionAbbreviation);
         return helper.insertStaticMethodSelection(typeElements, methodAbbreviation);
     }
 
@@ -100,5 +103,9 @@ public class JavaAbbreviationHandler {
 
     private boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
         return helper.insertConstantSelection(expressionAbbreviation, constantAbbreviation);
+    }
+
+    private boolean insertType(String typeAbbreviation) {
+        return helper.insertType(typeAbbreviation);
     }
 }

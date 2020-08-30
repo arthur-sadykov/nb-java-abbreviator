@@ -9,6 +9,7 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.ModifiersTree;
@@ -188,7 +189,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(elems);
     }
 
-    List<TypeElement> getTypeElementsByAbbreviation(String abbreviation) {
+    List<TypeElement> getTypeElementsByAbbreviationInSourceCompileAndBootPath(String abbreviation) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         ClasspathInfo classpathInfo = javaSource.getClasspathInfo();
         ClassIndex classIndex = classpathInfo.getClassIndex();
@@ -860,7 +861,7 @@ public class JavaSourceHelper {
     }
 
     boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
-        List<TypeElement> typeElements = getTypeElementsByAbbreviation(expressionAbbreviation);
+        List<TypeElement> typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(expressionAbbreviation);
         for (TypeElement typeElement : typeElements) {
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
             for (Element element : enclosedElements) {
@@ -887,6 +888,86 @@ public class JavaSourceHelper {
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
             return false;
+        }
+    }
+
+    boolean insertType(String typeAbbreviation) {
+        List<TypeElement> typeElements = getTypeElementsByAbbreviationInSourcePath(typeAbbreviation);
+        if (!typeElements.isEmpty()) {
+            if (insertTypeInDocument(typeElements.get(0))) {
+                addImport(typeElements.get(0));
+                return true;
+            }
+        } else {
+            typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(typeAbbreviation);
+            if (!typeElements.isEmpty()) {
+                if (insertTypeInDocument(typeElements.get(0))) {
+                    addImport(typeElements.get(0));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private List<TypeElement> getTypeElementsByAbbreviationInSourcePath(String abbreviation) {
+        JavaSource javaSource = getJavaSourceForDocument(document);
+        ClasspathInfo classpathInfo = javaSource.getClasspathInfo();
+        ClassIndex classIndex = classpathInfo.getClassIndex();
+        Set<ElementHandle<TypeElement>> declaredTypes = classIndex.getDeclaredTypes(
+                abbreviation.toUpperCase(),
+                ClassIndex.NameKind.CAMEL_CASE,
+                EnumSet.of(ClassIndex.SearchScope.SOURCE));
+        List<TypeElement> typeElements = new ArrayList<>();
+        try {
+            javaSource.runUserActionTask(compilationController -> {
+                moveStateToResolvedPhase(compilationController);
+                declaredTypes.forEach(type -> {
+                    TypeElement typeElement = type.resolve(compilationController);
+                    if (typeElement != null) {
+                        String typeName = typeElement.getSimpleName().toString();
+                        String typeAbbreviation = getElementAbbreviation(typeName);
+                        if (typeAbbreviation.equals(abbreviation)) {
+                            if (!elements.isDeprecated(typeElement)) {
+                                typeElements.add(typeElement);
+                            }
+                        }
+                    }
+                });
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(typeElements);
+    }
+
+    private boolean insertTypeInDocument(TypeElement type) {
+        try {
+            document.insertString(caretPosition, type.getSimpleName().toString(), null);
+            return true;
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+            return false;
+        }
+    }
+
+    private void addImport(TypeElement type) {
+        List<? extends ImportTree> imports = compilationUnit.getImports();
+        for (ImportTree importTree : imports) {
+            if (importTree.getQualifiedIdentifier().toString().equals(type.getQualifiedName().toString())) {
+                return;
+            }
+        }
+        JavaSource javaSource = getJavaSourceForDocument(document);
+        try {
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                compilationUnit = copy.getCompilationUnit();
+                make = copy.getTreeMaker();
+                copy.rewrite(compilationUnit, make.addCompUnitImport(compilationUnit, make.Import(make.Identifier(type.getQualifiedName().toString()), false)));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
     }
 }
