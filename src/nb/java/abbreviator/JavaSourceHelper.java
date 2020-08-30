@@ -516,7 +516,7 @@ public class JavaSourceHelper {
         Optional<TypeMirror> typeInContext = getTypeInContext();
         List<Optional<MethodSelectionWrapper>> wrappers = new ArrayList<>();
         elements.forEach(element -> {
-            List<ExecutableElement> methods = getMethodsInClassAndSuperclasses(element);
+            List<ExecutableElement> methods = getMethodsInClassAndSuperclassesExceptStatic(element);
             methods = getMethodsByAbbreviation(methodAbbreviation, methods);
             wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
         });
@@ -625,7 +625,13 @@ public class JavaSourceHelper {
         return Optional.empty();
     }
 
-    private List<ExecutableElement> getMethodsInClassAndSuperclasses(Element element) {
+    private List<ExecutableElement> getMethodsInClassAndSuperclassesExceptStatic(Element element) {
+        List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(element);
+        methods = filterNonStaticMethods(methods);
+        return Collections.unmodifiableList(methods);
+    }
+
+    private List<ExecutableElement> getAllMethodsInClassAndSuperclasses(Element element) {
         validate();
         TypeMirror typeMirror = element.asType();
         Iterable<? extends Element> members = elementUtilities.getMembers(typeMirror, (e, t) -> {
@@ -637,7 +643,6 @@ public class JavaSourceHelper {
             ExecutableElement method = (ExecutableElement) iterator.next();
             methods.add(method);
         }
-        methods = filterNonStaticMethods(methods);
         return Collections.unmodifiableList(methods);
     }
 
@@ -849,7 +854,7 @@ public class JavaSourceHelper {
     boolean insertChainedMethodSelection(String methodAbbreviation) {
         Optional<TypeMirror> type = getTypeInContext();
         Optional<Element> typeElement = type.map(types::asElement).or(() -> Optional.empty());
-        Optional<List<ExecutableElement>> methods = typeElement.map(this::getMethodsInClassAndSuperclasses)
+        Optional<List<ExecutableElement>> methods = typeElement.map(this::getAllMethodsInClassAndSuperclasses)
                 .map(m -> getMethodsByAbbreviation(methodAbbreviation, m)).or(() -> Optional.empty());
         if (methods.isPresent() && typeElement.isPresent()) {
             Optional<MethodSelectionWrapper> method =
