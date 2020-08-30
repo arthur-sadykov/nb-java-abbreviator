@@ -52,6 +52,8 @@ public class JavaAbbreviationHandler {
         } else {
             if (isMemberSelection()) {
                 return insertChainedMethodSelection(abbreviationContent);
+            } else if (isAnnotationSelection()) {
+                return insertAnnotation(abbreviationContent);
             } else {
                 List<Element> elements = helper.getElementsByAbbreviation(abbreviationContent);
                 if (insertLocalElement(elements)) {
@@ -99,6 +101,14 @@ public class JavaAbbreviationHandler {
 
     private boolean insertChainedMethodSelection(String methodAbbreviation) {
         return helper.insertChainedMethodSelection(methodAbbreviation);
+    }
+
+    private boolean isAnnotationSelection() {
+        return helper.isAnnotationSelection();
+    }
+
+    private boolean insertAnnotation(String annotationAbbreviation) {
+        return helper.insertAnnotation(annotationAbbreviation);
     }
 
     private boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {

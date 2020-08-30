@@ -975,4 +975,33 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
     }
+
+    boolean isAnnotationSelection() {
+        Optional<TreePath> path = pathFor(caretPosition);
+        return path.map(TreePath::getLeaf).map(Tree::getKind).map(k -> k == Tree.Kind.ANNOTATION).orElse(false);
+    }
+
+    boolean insertAnnotation(String annotationAbbreviation) {
+        List<TypeElement> typeElements =
+                getTypeElementsByAbbreviationInSourceCompileAndBootPath(annotationAbbreviation);
+        typeElements = filterAnnotations(typeElements);
+        if (!typeElements.isEmpty()) {
+            if (insertTypeInDocument(typeElements.get(0))) {
+                addImport(typeElements.get(0));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<TypeElement> filterAnnotations(List<TypeElement> typeElements) {
+        List<TypeElement> annotations = new ArrayList<>();
+        typeElements.stream()
+                .filter(typeElement ->
+                        (typeElement.getKind() == ElementKind.ANNOTATION_TYPE && !elements.isDeprecated(typeElement)))
+                .forEachOrdered(typeElement -> {
+                    annotations.add(typeElement);
+                });
+        return Collections.unmodifiableList(annotations);
+    }
 }
