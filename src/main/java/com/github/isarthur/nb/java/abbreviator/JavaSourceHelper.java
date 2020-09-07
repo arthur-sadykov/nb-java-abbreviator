@@ -130,8 +130,13 @@ public class JavaSourceHelper {
                         elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
                             return (!e.getSimpleName().toString().equals(ConstantDataManager.THIS)
                                     && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
-                                    && e.getKind() != ElementKind.METHOD)
-                                    && !elements.isDeprecated(e);
+                                    && (e.getKind() == ElementKind.ENUM_CONSTANT
+                                    || e.getKind() == ElementKind.EXCEPTION_PARAMETER
+                                    || e.getKind() == ElementKind.FIELD
+                                    || e.getKind() == ElementKind.LOCAL_VARIABLE
+                                    || e.getKind() == ElementKind.PARAMETER
+                                    || e.getKind() == ElementKind.RESOURCE_VARIABLE)
+                                    && !elements.isDeprecated(e));
                         });
                 localMembersAndVars.forEach(localElements::add);
             }).commit();
