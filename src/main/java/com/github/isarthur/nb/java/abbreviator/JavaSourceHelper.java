@@ -911,10 +911,11 @@ public class JavaSourceHelper {
         for (TypeElement typeElement : typeElements) {
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
             for (Element element : enclosedElements) {
-                if (element.getKind() == ElementKind.FIELD
+                if ((element.getKind() == ElementKind.FIELD
                         && element.getModifiers().contains(Modifier.PUBLIC)
                         && element.getModifiers().contains(Modifier.STATIC)
-                        && element.getModifiers().contains(Modifier.FINAL)) {
+                        && element.getModifiers().contains(Modifier.FINAL))
+                        || element.getKind() == ElementKind.ENUM_CONSTANT) {
                     String elementName = element.getSimpleName().toString();
                     String elementAbbreviation = getElementAbbreviation(elementName);
                     if (constantAbbreviation.equals(elementAbbreviation)) {
