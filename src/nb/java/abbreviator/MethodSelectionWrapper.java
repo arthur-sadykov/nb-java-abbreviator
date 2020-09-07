@@ -21,12 +21,15 @@ public class MethodSelectionWrapper {
     private final int argumentsNumber;
     private int resolvedArgumentsNumber;
     private double relation;
+    private final boolean staticMember;
 
-    public MethodSelectionWrapper(Element element, ExecutableElement method, List<ExpressionTree> arguments) {
+    public MethodSelectionWrapper(Element element, ExecutableElement method, List<ExpressionTree> arguments,
+            boolean staticMember) {
         this.element = element;
         this.method = method;
         this.arguments = arguments;
         this.argumentsNumber = method.getParameters().size();
+        this.staticMember = staticMember;
     }
 
     public Element getElement() {
@@ -60,5 +63,9 @@ public class MethodSelectionWrapper {
     public void setResolvedArgumentsNumber(int resolvedArgumentsNumber) {
         this.resolvedArgumentsNumber = resolvedArgumentsNumber;
         this.relation = argumentsNumber == 0 ? 0 : this.resolvedArgumentsNumber / argumentsNumber;
+    }
+
+    public boolean isStaticMember() {
+        return staticMember;
     }
 }

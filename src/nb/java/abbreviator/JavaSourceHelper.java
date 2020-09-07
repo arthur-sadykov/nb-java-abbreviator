@@ -470,7 +470,7 @@ public class JavaSourceHelper {
         elements.forEach(element -> {
             List<ExecutableElement> methods = getStaticMethodsInClass(element);
             methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
+            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods, true));
         });
         int maxNumberOfResolvedArguments = Integer.MIN_VALUE;
         for (Optional<MethodSelectionWrapper> wrapper : wrappers) {
@@ -518,7 +518,7 @@ public class JavaSourceHelper {
         elements.forEach(element -> {
             List<ExecutableElement> methods = getMethodsInClassAndSuperclassesExceptStatic(element);
             methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods));
+            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods, false));
         });
         int maxNumberOfResolvedArguments = Integer.MIN_VALUE;
         for (Optional<MethodSelectionWrapper> wrapper : wrappers) {
@@ -683,7 +683,7 @@ public class JavaSourceHelper {
     boolean insertSelectionForMethodInCurrentOrSuperclass(String methodAbbreviation) {
         List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses();
         methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-        Optional<MethodSelectionWrapper> wrapper = findMethodWithLargestNumberOfResolvedArguments(null, methods);
+        Optional<MethodSelectionWrapper> wrapper = findMethodWithLargestNumberOfResolvedArguments(null, methods, false);
         return insertMethodSelection(wrapper);
     }
 
@@ -730,11 +730,11 @@ public class JavaSourceHelper {
     }
 
     private Optional<MethodSelectionWrapper> findMethodWithLargestNumberOfResolvedArguments(Element element,
-            List<ExecutableElement> methods) {
+            List<ExecutableElement> methods, boolean staticMember) {
         List<MethodSelectionWrapper> wrappers = new ArrayList<>();
         methods.forEach(method -> {
             List<ExpressionTree> arguments = evaluateMethodArguments(method);
-            wrappers.add(new MethodSelectionWrapper(element, method, arguments));
+            wrappers.add(new MethodSelectionWrapper(element, method, arguments, staticMember));
         });
         wrappers.forEach(wrapper -> {
             List<ExpressionTree> arguments = wrapper.getArguments();
@@ -858,7 +858,7 @@ public class JavaSourceHelper {
                 .map(m -> getMethodsByAbbreviation(methodAbbreviation, m)).or(() -> Optional.empty());
         if (methods.isPresent() && typeElement.isPresent()) {
             Optional<MethodSelectionWrapper> method =
-                    findMethodWithLargestNumberOfResolvedArguments(typeElement.get(), methods.get());
+                    findMethodWithLargestNumberOfResolvedArguments(typeElement.get(), methods.get(), false);
             method.ifPresent(m -> m.setElement(null));
             return insertMethodSelection(method);
         }
@@ -889,6 +889,7 @@ public class JavaSourceHelper {
         MemberSelectTree constantSelection = make.MemberSelect(make.Identifier(typeElement), constantElement);
         try {
             document.insertString(caretPosition, constantSelection.toString(), null);
+            addImport(typeElement);
             return true;
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -956,7 +957,7 @@ public class JavaSourceHelper {
         }
     }
 
-    private void addImport(TypeElement type) {
+    public void addImport(TypeElement type) {
         List<? extends ImportTree> imports = compilationUnit.getImports();
         for (ImportTree importTree : imports) {
             if (importTree.getQualifiedIdentifier().toString().equals(type.getQualifiedName().toString())) {
