@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+OpenIDE-Module-Name: Java Abbreviator
+OpenIDE-Module-Short-Description: Autocompletion of method calls, constant references, keywords, etc. by typing its abbreviations.
+OpenIDE-Module-Long-Description: Autocompletion of method calls, constant references, keywords, etc. by typing its abbreviations.
+OpenIDE-Module-Display-Category: Editing
+AutoUpdate-Show-In-Client: true
