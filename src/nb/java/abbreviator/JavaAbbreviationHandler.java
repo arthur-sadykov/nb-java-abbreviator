@@ -5,7 +5,6 @@ package nb.java.abbreviator;
 
 import java.util.List;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.swing.text.Document;
 
 /**
@@ -73,10 +72,8 @@ public class JavaAbbreviationHandler {
         return helper.insertMethodSelection(elements, methodAbbreviation);
     }
 
-    private boolean insertStaticMethodSelection(String expressionAbbreviation, String methodAbbreviation) {
-        List<TypeElement> typeElements =
-                helper.getTypeElementsByAbbreviationInSourceCompileAndBootPath(expressionAbbreviation);
-        return helper.insertStaticMethodSelection(typeElements, methodAbbreviation);
+    private boolean insertStaticMethodSelection(String typeAbbreviation, String methodAbbreviation) {
+        return helper.insertStaticMethodSelection(typeAbbreviation, methodAbbreviation);
     }
 
     private boolean insertLocalElement(List<Element> elements) {

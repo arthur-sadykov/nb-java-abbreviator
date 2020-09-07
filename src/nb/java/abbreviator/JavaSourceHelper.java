@@ -458,8 +458,29 @@ public class JavaSourceHelper {
         this.typedAbbreviation = abbreviation;
     }
 
-    boolean insertStaticMethodSelection(List<TypeElement> elements, String methodAbbreviation) {
-        return insertMethodSelection(findStaticMethodWrapper(elements, methodAbbreviation));
+    boolean insertStaticMethodSelection(String typeAbbreviation, String methodAbbreviation) {
+        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(typeAbbreviation);
+        if (typeElements.isEmpty()) {
+            typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(typeAbbreviation);
+        }
+        return insertMethodSelection(findStaticMethodWrapper(typeElements, methodAbbreviation));
+    }
+
+    private List<TypeElement> getImportedTypesMatchingAbbreviation(String typeAbbreviation) {
+        List<? extends ImportTree> imports = compilationUnit.getImports();
+        List<TypeElement> result = new ArrayList<>();
+        imports.stream().map(importTree -> importTree.getQualifiedIdentifier().toString()).forEachOrdered(fqn -> {
+            String sn = fqn.substring(fqn.lastIndexOf('.') + 1);
+            if (typeAbbreviation.equals(getElementAbbreviation(sn))) {
+                Optional<TypeElement> typeElement = getTypeElement(fqn);
+                typeElement.ifPresent(result::add);
+            }
+        });
+        return Collections.unmodifiableList(result);
+    }
+
+    private Optional<TypeElement> getTypeElement(String fqn) {
+        return Optional.ofNullable(elements.getTypeElement(fqn));
     }
 
     private Optional<MethodSelectionWrapper> findStaticMethodWrapper(List<TypeElement> elements,
@@ -866,7 +887,10 @@ public class JavaSourceHelper {
     }
 
     boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
-        List<TypeElement> typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(expressionAbbreviation);
+        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(expressionAbbreviation);
+        if (typeElements.isEmpty()) {
+            typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(expressionAbbreviation);
+        }
         for (TypeElement typeElement : typeElements) {
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
             for (Element element : enclosedElements) {
@@ -898,7 +922,10 @@ public class JavaSourceHelper {
     }
 
     boolean insertType(String typeAbbreviation) {
-        List<TypeElement> typeElements = getTypeElementsByAbbreviationInSourcePath(typeAbbreviation);
+        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(typeAbbreviation);
+        if (typeElements.isEmpty()) {
+            typeElements = getTypeElementsByAbbreviationInSourcePath(typeAbbreviation);
+        }
         if (!typeElements.isEmpty()) {
             if (insertTypeInDocument(typeElements.get(0))) {
                 addImport(typeElements.get(0));
