@@ -951,55 +951,12 @@ public class JavaSourceHelper {
 
     boolean insertType(String typeAbbreviation) {
         List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(typeAbbreviation);
-        if (typeElements.isEmpty()) {
-            typeElements = getTypeElementsByAbbreviationInSourcePath(typeAbbreviation);
-        }
         if (!typeElements.isEmpty()) {
             if (insertTypeInDocument(typeElements.get(0))) {
-                addImport(typeElements.get(0));
                 return true;
-            }
-        } else {
-            typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(typeAbbreviation);
-            if (!typeElements.isEmpty()) {
-                if (insertTypeInDocument(typeElements.get(0))) {
-                    addImport(typeElements.get(0));
-                    return true;
-                }
             }
         }
         return false;
-    }
-
-    private List<TypeElement> getTypeElementsByAbbreviationInSourcePath(String abbreviation) {
-        JavaSource javaSource = getJavaSourceForDocument(document);
-        ClasspathInfo classpathInfo = javaSource.getClasspathInfo();
-        ClassIndex classIndex = classpathInfo.getClassIndex();
-        Set<ElementHandle<TypeElement>> declaredTypes = classIndex.getDeclaredTypes(
-                abbreviation.toUpperCase(),
-                ClassIndex.NameKind.CAMEL_CASE,
-                EnumSet.of(ClassIndex.SearchScope.SOURCE));
-        List<TypeElement> typeElements = new ArrayList<>();
-        try {
-            javaSource.runUserActionTask(compilationController -> {
-                moveStateToResolvedPhase(compilationController);
-                declaredTypes.forEach(type -> {
-                    TypeElement typeElement = type.resolve(compilationController);
-                    if (typeElement != null) {
-                        String typeName = typeElement.getSimpleName().toString();
-                        String typeAbbreviation = getElementAbbreviation(typeName);
-                        if (typeAbbreviation.equals(abbreviation)) {
-                            if (!elements.isDeprecated(typeElement)) {
-                                typeElements.add(typeElement);
-                            }
-                        }
-                    }
-                });
-            }, true);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        return Collections.unmodifiableList(typeElements);
     }
 
     private boolean insertTypeInDocument(TypeElement type) {
