@@ -726,12 +726,22 @@ public class JavaSourceHelper {
     }
 
     private List<ExecutableElement> getMethodsInCurrentAndSuperclasses() {
-        Optional<TypeMirror> typeMirror = getTypeMirrorOfCurrentClass();
-        return typeMirror.map(tm -> {
-            return elementUtilities.getMembers(tm, (e, t) -> {
-                return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
-            });
-        }).map(ElementFilter::methodsIn).orElse(Collections.emptyList());
+        JavaSource js = getJavaSourceForDocument(document);
+        List<ExecutableElement> methods = new ArrayList<>();
+        try {
+            js.runUserActionTask(controller -> {
+                moveStateToResolvedPhase(controller);
+                Optional<TypeMirror> typeMirror = getTypeMirrorOfCurrentClass();
+                methods.addAll(typeMirror.map(tm -> {
+                    return elementUtilities.getMembers(tm, (e, t) -> {
+                        return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
+                    });
+                }).map(ElementFilter::methodsIn).orElse(Collections.emptyList()));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(methods);
     }
 
     private Optional<TypeMirror> getTypeMirrorOfCurrentClass() {
