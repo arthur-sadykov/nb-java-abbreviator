@@ -98,6 +98,10 @@ public class JavaSourceHelper {
         this.caretPosition = -1;
     }
 
+    public int getCaretPosition() {
+        return caretPosition;
+    }
+
     private boolean isValid() {
         return caretPosition != -1;
     }

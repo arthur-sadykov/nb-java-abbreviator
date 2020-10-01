@@ -47,7 +47,7 @@ public class Assignment extends InsertableExpressionTree {
         if (tree != null) {
             String expression = current.getExpression().toString();
             expression = Utilities.createExpression(expression, methodCall);
-            assignmentTree = make.Assignment(current.getVariable(), make.Identifier(expression));
+            assignmentTree = make.Assignment(current.getVariable(), make.Identifier(expression + ";"));
         } else {
             assignmentTree = make.Assignment(current.getVariable(), methodCall);
         }

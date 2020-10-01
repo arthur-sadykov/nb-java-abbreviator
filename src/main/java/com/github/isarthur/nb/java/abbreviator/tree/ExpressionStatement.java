@@ -22,7 +22,11 @@ import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
+import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.WorkingCopy;
+import org.netbeans.api.lexer.TokenHierarchy;
+import org.netbeans.api.lexer.TokenId;
+import org.netbeans.api.lexer.TokenSequence;
 
 /**
  *
@@ -48,10 +52,25 @@ public class ExpressionStatement extends InsertableStatementTree {
         if (tree != null) {
             String expression = current.getExpression().toString();
             expression = Utilities.createExpression(expression, methodCall);
-            expressionStatementTree = make.ExpressionStatement(make.Identifier(expression));
+            TokenHierarchy<?> th = copy.getTokenHierarchy();
+            TokenSequence<?> ts = th.tokenSequence();
+            ts.move(helper.getCaretPosition());
+            skipPreviousWhitespaces(ts);
+            TokenId id = ts.token().id();
+            expressionStatementTree = make.ExpressionStatement(
+                    make.Identifier(id == JavaTokenId.EQ ? expression : expression + ";"));
         } else {
             expressionStatementTree = make.ExpressionStatement(methodCall);
         }
         parent.insert(expressionStatementTree);
+    }
+
+    private void skipPreviousWhitespaces(TokenSequence<?> ts) {
+        while (ts.movePrevious()) {
+            TokenId id = ts.token().id();
+            if (id != JavaTokenId.WHITESPACE) {
+                break;
+            }
+        }
     }
 }
