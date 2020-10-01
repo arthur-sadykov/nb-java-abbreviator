@@ -46,19 +46,12 @@ public class JavaAbbreviationHandler {
             String identifierAbbreviation = abbreviationContent.substring(abbreviationContent.indexOf('.') + 1);
             List<Element> elements = helper.getElementsByAbbreviation(expressionAbbreviation);
             if (!elements.isEmpty()) {
-                if (insertMethodSelection(elements, identifierAbbreviation)) {
-                    return true;
-                } else if (insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)) {
-                    return true;
-                } else {
-                    return insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
-                }
+                return insertMethodSelection(elements, identifierAbbreviation)
+                        || insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)
+                        || insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
             } else {
-                if (insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)) {
-                    return true;
-                } else {
-                    return insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
-                }
+                return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)
+                        || insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
             }
         } else {
             if (isMemberSelection()) {
@@ -67,15 +60,10 @@ public class JavaAbbreviationHandler {
                 return insertAnnotation(abbreviationContent);
             } else {
                 List<Element> elements = helper.getElementsByAbbreviation(abbreviationContent);
-                if (insertLocalElement(elements)) {
-                    return true;
-                } else if (insertKeyword(abbreviationContent)) {
-                    return true;
-                } else if (insertLocalMethod(abbreviationContent)) {
-                    return true;
-                } else {
-                    return insertType(abbreviationContent);
-                }
+                return insertLocalElement(elements)
+                        || insertKeyword(abbreviationContent)
+                        || insertLocalMethod(abbreviationContent)
+                        || insertType(abbreviationContent);
             }
         }
     }
