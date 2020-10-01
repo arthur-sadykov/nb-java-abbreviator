@@ -61,6 +61,9 @@ public class MethodInvocation extends InsertableExpressionTree {
                     insertIndex,
                     make.Identifier(expression));
         } else {
+            if (!methodInvocationTree.getArguments().isEmpty()) {
+                methodInvocationTree = make.removeMethodInvocationArgument(methodInvocationTree, insertIndex);
+            }
             methodInvocationTree = make.insertMethodInvocationArgument(
                     methodInvocationTree,
                     insertIndex,
