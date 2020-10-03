@@ -15,6 +15,11 @@
  */
 package com.github.isarthur.nb.java.abbreviator;
 
+import com.github.isarthur.nb.java.abbreviator.codefragment.FieldAccess;
+import com.github.isarthur.nb.java.abbreviator.codefragment.Keyword;
+import com.github.isarthur.nb.java.abbreviator.codefragment.LocalElement;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
+import com.github.isarthur.nb.java.abbreviator.codefragment.Type;
 import com.github.isarthur.nb.java.abbreviator.constants.ConstantDataManager;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BlockTree;
@@ -58,6 +63,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.source.ClassIndex;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CodeStyle;
@@ -79,11 +85,13 @@ import org.openide.util.Exceptions;
  */
 public class JavaSourceHelper {
 
+    private final JTextComponent component;
     private final Document document;
     private final List<Element> localElements;
     private Types types;
     private int caretPosition;
     private TreeMaker make;
+    private WorkingCopy workingCopy;
     private TreeUtilities treeUtilities;
     private Trees trees;
     private CompilationUnitTree compilationUnit;
@@ -91,9 +99,10 @@ public class JavaSourceHelper {
     private Elements elements;
     private String typedAbbreviation;
 
-    public JavaSourceHelper(Document document) {
-        requireNonNull(document, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "document"));
-        this.document = document;
+    public JavaSourceHelper(JTextComponent component) {
+        requireNonNull(component, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "component"));
+        this.component = component;
+        this.document = component.getDocument();
         this.localElements = new ArrayList<>();
         this.caretPosition = -1;
     }
@@ -120,8 +129,9 @@ public class JavaSourceHelper {
         this.caretPosition = position;
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(workingCopy -> {
-                workingCopy.toPhase(Phase.RESOLVED);
+            javaSource.runModificationTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                this.workingCopy = copy;
                 types = workingCopy.getTypes();
                 trees = workingCopy.getTrees();
                 treeUtilities = workingCopy.getTreeUtilities();
@@ -139,7 +149,10 @@ public class JavaSourceHelper {
                                     || e.getKind() == ElementKind.FIELD
                                     || e.getKind() == ElementKind.LOCAL_VARIABLE
                                     || e.getKind() == ElementKind.PARAMETER
-                                    || e.getKind() == ElementKind.RESOURCE_VARIABLE)
+                                    || e.getKind() == ElementKind.RESOURCE_VARIABLE
+                                    || e.getKind() == ElementKind.CLASS
+                                    || e.getKind() == ElementKind.INTERFACE
+                                    || e.getKind() == ElementKind.ENUM)
                                     && !elements.isDeprecated(e));
                         });
                 localMembersAndVars.forEach(localElements::add);
@@ -149,52 +162,59 @@ public class JavaSourceHelper {
         }
     }
 
-    public ExpressionStatementTree createVoidMethodSelection(MethodSelectionWrapper wrapper) {
+    public ExpressionStatementTree createVoidMethodCall(MethodCall methodCall) {
         MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
-                make.Identifier(wrapper.getMethod()), wrapper.getArguments());
-        if (wrapper.getElement() == null) {
+                make.Identifier(methodCall.getMethod()), methodCall.getArguments());
+        if (methodCall.getScope() == null) {
             return make.ExpressionStatement(methodInvocationTree);
         }
         return make.ExpressionStatement(
-                make.MemberSelect(make.Identifier(wrapper.getElement()), methodInvocationTree.toString()));
+                make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString()));
     }
 
-    public VariableTree createMethodSelectionWithReturnValue(MethodSelectionWrapper wrapper, WorkingCopy workingCopy) {
+    public VariableTree createMethodCallWithReturnValue(MethodCall methodCall) {
         ModifiersTree modifiers = make.Modifiers(Collections.emptySet());
-        Tree type = make.Type(wrapper.getMethod().getReturnType());
+        Tree type = make.Type(methodCall.getMethod().getReturnType());
         MethodInvocationTree methodInvocationTree = make.MethodInvocation(
                 Collections.emptyList(),
-                make.Identifier(wrapper.getMethod()),
-                wrapper.getArguments());
+                make.Identifier(methodCall.getMethod()),
+                methodCall.getArguments());
         ExpressionTree initializer;
-        if (wrapper.getElement() == null) {
+        if (methodCall.getScope() == null) {
             initializer = methodInvocationTree;
         } else {
-            if (isTypeElement(wrapper.getElement())) {
-                initializer = make.MemberSelect(make.QualIdent(wrapper.getElement()), methodInvocationTree.toString());
+            if (isTypeElement(methodCall.getScope())) {
+                initializer = make.MemberSelect(make.QualIdent(methodCall.getScope()), methodInvocationTree.toString());
             } else {
-                initializer = make.MemberSelect(make.Identifier(wrapper.getElement()), methodInvocationTree.toString());
+                initializer = make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString());
             }
         }
-        Iterator<String> names = Utilities.varNamesSuggestions(wrapper.getMethod().getReturnType(),
-                ElementKind.LOCAL_VARIABLE, Collections.emptySet(), null, null, workingCopy.getTypes(),
-                workingCopy.getElements(), localElements, CodeStyle.getDefault(document)).iterator();
-        String variableName = names.next();
+        String variableName = getVariableName(methodCall, workingCopy);
         VariableTree variableTree = make.Variable(modifiers, variableName, type, initializer);
         return variableTree;
+    }
+
+    private String getVariableName(MethodCall methodCall, WorkingCopy workingCopy) {
+        Iterator<String> names = Utilities.varNamesSuggestions(methodCall.getMethod().getReturnType(),
+                ElementKind.LOCAL_VARIABLE, Collections.emptySet(), null, null, workingCopy.getTypes(),
+                workingCopy.getElements(), localElements, CodeStyle.getDefault(document)).iterator();
+        if (names.hasNext()) {
+            return names.next();
+        }
+        return "";
     }
 
     private boolean isTypeElement(Element element) {
         return TypeElement.class.isInstance(element);
     }
 
-    public ExpressionTree createMethodSelectionWithoutReturnValue(MethodSelectionWrapper wrapper) {
+    public ExpressionTree createMethodCallWithoutReturnValue(MethodCall methodCall) {
         MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
-                make.Identifier(wrapper.getMethod()), wrapper.getArguments());
-        if (wrapper.getElement() == null) {
+                make.Identifier(methodCall.getMethod()), methodCall.getArguments());
+        if (methodCall.getScope() == null) {
             return methodInvocationTree;
         }
-        return make.MemberSelect(make.Identifier(wrapper.getElement()), methodInvocationTree.toString());
+        return make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString());
     }
 
     List<Element> getElementsByAbbreviation(String abbreviation) throws IllegalArgumentException {
@@ -479,12 +499,18 @@ public class JavaSourceHelper {
         this.typedAbbreviation = abbreviation;
     }
 
-    boolean insertStaticMethodSelection(String typeAbbreviation, String methodAbbreviation) {
-        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(typeAbbreviation);
-        if (typeElements.isEmpty()) {
-            typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(typeAbbreviation);
-        }
-        return insertMethodSelection(findStaticMethodWrapper(typeElements, methodAbbreviation));
+    List<MethodCall> findStaticMethodCalls(String scopeAbbreviation, String methodAbbreviation) {
+        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(scopeAbbreviation);
+        List<MethodCall> methodCalls = new ArrayList<>();
+        typeElements.forEach(element -> {
+            List<ExecutableElement> methods = getStaticMethodsInClass(element);
+            methods = getMethodsByAbbreviation(methodAbbreviation, methods);
+            methods.forEach(method -> {
+                List<ExpressionTree> arguments = evaluateMethodArguments(method);
+                methodCalls.add(new MethodCall(element, method, arguments, this));
+            });
+        });
+        return Collections.unmodifiableList(methodCalls);
     }
 
     private List<TypeElement> getImportedTypesMatchingAbbreviation(String typeAbbreviation) {
@@ -504,34 +530,6 @@ public class JavaSourceHelper {
         return Optional.ofNullable(elements.getTypeElement(fqn));
     }
 
-    private Optional<MethodSelectionWrapper> findStaticMethodWrapper(List<TypeElement> elements,
-            String methodAbbreviation) {
-        Optional<MethodSelectionWrapper> resultWrapper = null;
-        Optional<TypeMirror> typeInContext = getTypeInContext();
-        List<Optional<MethodSelectionWrapper>> wrappers = new ArrayList<>();
-        elements.forEach(element -> {
-            List<ExecutableElement> methods = getStaticMethodsInClass(element);
-            methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods, true));
-        });
-        int maxNumberOfResolvedArguments = Integer.MIN_VALUE;
-        for (Optional<MethodSelectionWrapper> wrapper : wrappers) {
-            Optional<ExecutableElement> method = wrapper.map(MethodSelectionWrapper::getMethod).or(() ->
-                    Optional.empty());
-            int numberOfResolvedArguments = wrapper.map(MethodSelectionWrapper::getMethod)
-                    .map(ExecutableElement::getParameters).map(List::size).orElse(-1);
-            if (numberOfResolvedArguments > maxNumberOfResolvedArguments) {
-                Optional<TypeMirror> returnType = method.map(m -> m.getReturnType()).or(() -> Optional.empty());
-                if (!typeInContext.isPresent() || typeInContext.map(tic ->
-                        returnType.map(rt -> isTypesAssignable(rt, tic)).orElse(false)).orElse(false)) {
-                    maxNumberOfResolvedArguments = numberOfResolvedArguments;
-                    resultWrapper = wrapper;
-                }
-            }
-        }
-        return resultWrapper != null ? resultWrapper : Optional.empty();
-    }
-
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
         validate();
         List<? extends Element> members = element.getEnclosedElements();
@@ -549,35 +547,17 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    boolean insertMethodSelection(List<Element> elements, String methodAbbreviation) {
-        return insertMethodSelection(findMethodWrapper(elements, methodAbbreviation));
-    }
-
-    private Optional<MethodSelectionWrapper> findMethodWrapper(List<Element> elements, String methodAbbreviation) {
-        Optional<MethodSelectionWrapper> resultWrapper = null;
-        Optional<TypeMirror> typeInContext = getTypeInContext();
-        List<Optional<MethodSelectionWrapper>> wrappers = new ArrayList<>();
+    List<MethodCall> findMethodCalls(List<Element> elements, String methodAbbreviation) {
+        List<MethodCall> methodCalls = new ArrayList<>();
         elements.forEach(element -> {
             List<ExecutableElement> methods = getMethodsInClassAndSuperclassesExceptStatic(element);
             methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-            wrappers.add(findMethodWithLargestNumberOfResolvedArguments(element, methods, false));
+            methods.forEach(method -> {
+                List<ExpressionTree> arguments = evaluateMethodArguments(method);
+                methodCalls.add(new MethodCall(element, method, arguments, this));
+            });
         });
-        int maxNumberOfResolvedArguments = Integer.MIN_VALUE;
-        for (Optional<MethodSelectionWrapper> wrapper : wrappers) {
-            Optional<ExecutableElement> method = wrapper.map(MethodSelectionWrapper::getMethod).or(() ->
-                    Optional.empty());
-            int numberOfResolvedArguments = wrapper.map(MethodSelectionWrapper::getMethod)
-                    .map(ExecutableElement::getParameters).map(List::size).orElse(-1);
-            if (numberOfResolvedArguments > maxNumberOfResolvedArguments) {
-                Optional<TypeMirror> returnType = method.map(m -> m.getReturnType()).or(() -> Optional.empty());
-                if (!typeInContext.isPresent() || typeInContext.map(tic ->
-                        returnType.map(rt -> isTypesAssignable(rt, tic)).orElse(false)).orElse(false)) {
-                    maxNumberOfResolvedArguments = numberOfResolvedArguments;
-                    resultWrapper = wrapper;
-                }
-            }
-        }
-        return resultWrapper != null ? resultWrapper : Optional.empty();
+        return Collections.unmodifiableList(methodCalls);
     }
 
     private Optional<TypeMirror> getTypeInContext() {
@@ -698,11 +678,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    private boolean isTypesAssignable(TypeMirror t1, TypeMirror t2) {
-        return types.isAssignable(t1, t2);
-    }
-
-    private boolean insertMethodSelection(Optional<MethodSelectionWrapper> wrapper) {
+    public boolean insertMethodCall(MethodCall methodCall) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         try {
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
@@ -710,9 +686,8 @@ public class JavaSourceHelper {
                 make = copy.getTreeMaker();
                 treeUtilities = copy.getTreeUtilities();
                 Optional<TreePath> currentPath = pathFor(caretPosition);
-                wrapper.ifPresent(w -> {
-                    currentPath.map(cp -> TreeFactory.create(cp, w, copy, this)).ifPresent(it -> it.insert(null));
-                });
+                currentPath.map(cp -> TreeFactory.create(cp, methodCall, copy, this)).ifPresent(it ->
+                        it.insert(null));
             });
             modificationResult.commit();
             return !modificationResult.getModifiedFileObjects().isEmpty();
@@ -722,11 +697,15 @@ public class JavaSourceHelper {
         }
     }
 
-    boolean insertSelectionForMethodInCurrentOrSuperclass(String methodAbbreviation) {
+    List<MethodCall> findLocalMethodCalls(String methodAbbreviation) {
         List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses();
         methods = getMethodsByAbbreviation(methodAbbreviation, methods);
-        Optional<MethodSelectionWrapper> wrapper = findMethodWithLargestNumberOfResolvedArguments(null, methods, false);
-        return insertMethodSelection(wrapper);
+        List<MethodCall> methodCalls = new ArrayList<>();
+        methods.forEach(method -> {
+            List<ExpressionTree> arguments = evaluateMethodArguments(method);
+            methodCalls.add(new MethodCall(null, method, arguments, this));
+        });
+        return Collections.unmodifiableList(methodCalls);
     }
 
     private List<ExecutableElement> getMethodsInCurrentAndSuperclasses() {
@@ -781,40 +760,6 @@ public class JavaSourceHelper {
         return abbreviation.toString();
     }
 
-    private Optional<MethodSelectionWrapper> findMethodWithLargestNumberOfResolvedArguments(Element element,
-            List<ExecutableElement> methods, boolean staticMember) {
-        List<MethodSelectionWrapper> wrappers = new ArrayList<>();
-        methods.forEach(method -> {
-            List<ExpressionTree> arguments = evaluateMethodArguments(method);
-            wrappers.add(new MethodSelectionWrapper(element, method, arguments, staticMember));
-        });
-        wrappers.forEach(wrapper -> {
-            List<ExpressionTree> arguments = wrapper.getArguments();
-            int numberOfResolvedArguments = 0;
-            numberOfResolvedArguments =
-                    arguments.stream().filter(expressionTree -> (isArgumentResolved(expressionTree.toString())))
-                            .map(item -> 1)
-                            .reduce(numberOfResolvedArguments, Integer::sum);
-            wrapper.setResolvedArgumentsNumber(numberOfResolvedArguments);
-        });
-        Collections.sort(wrappers, (o1, o2) -> {
-            return Integer.compare(o1.getArgumentsNumber(), o2.getArgumentsNumber());
-        });
-        for (int i = wrappers.size() - 1; i >= 0; i--) {
-            MethodSelectionWrapper wrapper = wrappers.get(i);
-            if (wrapper.getArgumentsNumber() == wrapper.getResolvedArgumentsNumber()) {
-                return Optional.ofNullable(wrapper);
-            }
-        }
-        Collections.sort(wrappers, (o1, o2) -> {
-            return Double.compare(o1.getRelation(), o2.getRelation());
-        });
-        if (wrappers.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(wrappers.get(wrappers.size() - 1));
-    }
-
     private List<ExpressionTree> evaluateMethodArguments(ExecutableElement method) {
         List<? extends VariableElement> parameters = method.getParameters();
         List<ExpressionTree> arguments = new ArrayList<>();
@@ -854,39 +799,26 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(arguments);
     }
 
-    private boolean isArgumentResolved(String argument) {
-        return !argument.equals(ConstantDataManager.NULL)
-                && !argument.equals(ConstantDataManager.INTEGER_ZERO_LITERAL)
-                && !argument.equals(ConstantDataManager.LONG_ZERO_LITERAL)
-                && !argument.equals(ConstantDataManager.DOUBLE_ZERO_LITERAL)
-                && !argument.equals(ConstantDataManager.FLOAT_ZERO_LITERAL)
-                && !argument.equals(ConstantDataManager.FALSE);
+    JTextComponent getComponent() {
+        return component;
     }
 
     Document getDocument() {
         return document;
     }
 
-    boolean insertLocalElement(List<Element> elements) {
-        if (!elements.isEmpty()) {
-            try {
-                document.insertString(caretPosition, elements.get(0).getSimpleName().toString(), null);
-                return true;
-            } catch (BadLocationException ex) {
-                Exceptions.printStackTrace(ex);
-                return false;
-            }
-        }
-        return false;
+    List<LocalElement> findLocalElements(String abbreviation) {
+        List<LocalElement> result = new ArrayList<>();
+        localElements
+                .stream()
+                .filter(element -> getElementAbbreviation(element.getSimpleName().toString()).equals(abbreviation))
+                .forEach(element -> result.add(new LocalElement(element)));
+        return Collections.unmodifiableList(result);
     }
 
-    boolean insertKeyword(String keywordAbbreviation) {
-        String keyword = ConstantDataManager.ABBREVIATION_TO_KEYWORD.get(keywordAbbreviation);
-        if (keyword == null) {
-            return false;
-        }
+    public boolean insertLocalElement(LocalElement element) {
         try {
-            document.insertString(caretPosition, keyword, null);
+            document.insertString(caretPosition, element.toString(), null);
             return true;
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -894,8 +826,22 @@ public class JavaSourceHelper {
         }
     }
 
-    boolean insertLocalMethod(String methodAbbreviation) {
-        return insertSelectionForMethodInCurrentOrSuperclass(methodAbbreviation);
+    Optional<Keyword> findKeyword(String keywordAbbreviation) {
+        String keyword = ConstantDataManager.ABBREVIATION_TO_KEYWORD.get(keywordAbbreviation);
+        if (keyword != null) {
+            return Optional.of(new Keyword(keyword));
+        }
+        return Optional.empty();
+    }
+
+    public boolean insertKeyword(Keyword keyword) {
+        try {
+            document.insertString(caretPosition, keyword.toString(), null);
+            return true;
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+            return false;
+        }
     }
 
     boolean isMemberSelection() {
@@ -903,49 +849,48 @@ public class JavaSourceHelper {
         return path.map(TreePath::getLeaf).map(Tree::getKind).map(k -> k == Tree.Kind.MEMBER_SELECT).orElse(false);
     }
 
-    boolean insertChainedMethodSelection(String methodAbbreviation) {
+    List<MethodCall> findChainedMethodCalls(String methodAbbreviation) {
         Optional<TypeMirror> type = getTypeInContext();
         Optional<Element> typeElement = type.map(types::asElement).or(() -> Optional.empty());
         Optional<List<ExecutableElement>> methods = typeElement.map(this::getAllMethodsInClassAndSuperclasses)
                 .map(m -> getMethodsByAbbreviation(methodAbbreviation, m)).or(() -> Optional.empty());
+        List<MethodCall> methodCalls = new ArrayList<>();
         if (methods.isPresent() && typeElement.isPresent()) {
-            Optional<MethodSelectionWrapper> method =
-                    findMethodWithLargestNumberOfResolvedArguments(typeElement.get(), methods.get(), false);
-            method.ifPresent(m -> m.setElement(null));
-            return insertMethodSelection(method);
+            methods.get().forEach(method -> {
+                List<ExpressionTree> arguments = evaluateMethodArguments(method);
+                methodCalls.add(new MethodCall(null, method, arguments, this));
+            });
         }
-        return false;
+        return Collections.unmodifiableList(methodCalls);
     }
 
-    boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
-        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(expressionAbbreviation);
-        if (typeElements.isEmpty()) {
-            typeElements = getTypeElementsByAbbreviationInSourceCompileAndBootPath(expressionAbbreviation);
-        }
-        for (TypeElement typeElement : typeElements) {
+    List<FieldAccess> findFieldAccesses(String scopeAbbreviation, String nameAbbreviation) {
+        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(scopeAbbreviation);
+        List<FieldAccess> result = new ArrayList<>();
+        typeElements.forEach(typeElement -> {
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-            for (Element element : enclosedElements) {
-                if ((element.getKind() == ElementKind.FIELD
-                        && element.getModifiers().contains(Modifier.PUBLIC)
-                        && element.getModifiers().contains(Modifier.STATIC)
-                        && element.getModifiers().contains(Modifier.FINAL))
-                        || element.getKind() == ElementKind.ENUM_CONSTANT) {
-                    String elementName = element.getSimpleName().toString();
-                    String elementAbbreviation = getElementAbbreviation(elementName);
-                    if (constantAbbreviation.equals(elementAbbreviation)) {
-                        return insertConstantSelection(typeElement, element);
-                    }
+            enclosedElements.stream().filter(element ->
+                    ((element.getKind() == ElementKind.FIELD
+                    && element.getModifiers().contains(Modifier.PUBLIC)
+                    && element.getModifiers().contains(Modifier.STATIC)
+                    && element.getModifiers().contains(Modifier.FINAL))
+                    || element.getKind() == ElementKind.ENUM_CONSTANT)).forEachOrdered(element -> {
+                String elementName = element.getSimpleName().toString();
+                String elementAbbreviation = getElementAbbreviation(elementName);
+                if (nameAbbreviation.equals(elementAbbreviation)) {
+                    result.add(new FieldAccess(typeElement, element));
                 }
-            }
-        }
-        return false;
+            });
+        });
+        return Collections.unmodifiableList(result);
     }
 
-    private boolean insertConstantSelection(TypeElement typeElement, Element constantElement) {
-        MemberSelectTree constantSelection = make.MemberSelect(make.Identifier(typeElement), constantElement);
+    public boolean insertFieldAccess(FieldAccess fieldAccess) {
+        MemberSelectTree cs = make.MemberSelect(make.Identifier(fieldAccess.getScope()),
+                fieldAccess.getName());
         try {
-            document.insertString(caretPosition, constantSelection.toString(), null);
-            addImport(typeElement);
+            document.insertString(caretPosition, cs.toString(), null);
+            addImport(fieldAccess.getScope());
             return true;
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -953,19 +898,16 @@ public class JavaSourceHelper {
         }
     }
 
-    boolean insertType(String typeAbbreviation) {
-        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(typeAbbreviation);
-        if (!typeElements.isEmpty()) {
-            if (insertTypeInDocument(typeElements.get(0))) {
-                return true;
-            }
-        }
-        return false;
+    List<Type> findTypes(String typeAbbreviation) {
+        List<TypeElement> importedTypes = getImportedTypesMatchingAbbreviation(typeAbbreviation);
+        List<Type> result = new ArrayList<>();
+        importedTypes.forEach(t -> result.add(new Type(t)));
+        return Collections.unmodifiableList(result);
     }
 
-    private boolean insertTypeInDocument(TypeElement type) {
+    public boolean insertType(Type type) {
         try {
-            document.insertString(caretPosition, type.getSimpleName().toString(), null);
+            document.insertString(caretPosition, type.toString(), null);
             return true;
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -991,34 +933,5 @@ public class JavaSourceHelper {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
-    }
-
-    boolean isAnnotationSelection() {
-        Optional<TreePath> path = pathFor(caretPosition);
-        return path.map(TreePath::getLeaf).map(Tree::getKind).map(k -> k == Tree.Kind.ANNOTATION).orElse(false);
-    }
-
-    boolean insertAnnotation(String annotationAbbreviation) {
-        List<TypeElement> typeElements =
-                getTypeElementsByAbbreviationInSourceCompileAndBootPath(annotationAbbreviation);
-        typeElements = filterAnnotations(typeElements);
-        if (!typeElements.isEmpty()) {
-            if (insertTypeInDocument(typeElements.get(0))) {
-                addImport(typeElements.get(0));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private List<TypeElement> filterAnnotations(List<TypeElement> typeElements) {
-        List<TypeElement> annotations = new ArrayList<>();
-        typeElements.stream()
-                .filter(typeElement ->
-                        (typeElement.getKind() == ElementKind.ANNOTATION_TYPE && !elements.isDeprecated(typeElement)))
-                .forEachOrdered(typeElement -> {
-                    annotations.add(typeElement);
-                });
-        return Collections.unmodifiableList(annotations);
     }
 }

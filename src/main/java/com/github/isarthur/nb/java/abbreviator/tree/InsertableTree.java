@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.github.isarthur.nb.java.abbreviator.TreeFactory;
 import com.github.isarthur.nb.java.abbreviator.constants.ConstantDataManager;
 import com.sun.source.tree.Tree;
@@ -43,14 +43,14 @@ public abstract class InsertableTree {
             Tree.Kind.ASSIGNMENT,
             Tree.Kind.METHOD_INVOCATION);
     protected final TreePath currentPath;
-    protected final MethodSelectionWrapper wrapper;
+    protected final MethodCall wrapper;
     protected final TreeMaker make;
     protected final WorkingCopy copy;
     protected final JavaSourceHelper helper;
     protected final TreeUtilities treeUtilities;
     protected InsertableTree parent;
 
-    protected InsertableTree(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
+    protected InsertableTree(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
             JavaSourceHelper helper) {
         requireNonNull(currentPath, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "currentPath"));
         requireNonNull(wrapper, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "wrapper"));

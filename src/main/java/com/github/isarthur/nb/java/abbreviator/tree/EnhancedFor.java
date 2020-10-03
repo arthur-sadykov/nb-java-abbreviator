@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.github.isarthur.nb.java.abbreviator.Utilities;
 import com.sun.source.tree.EnhancedForLoopTree;
 import com.sun.source.tree.ExpressionTree;
@@ -32,7 +32,7 @@ public class EnhancedFor extends InsertableStatementTree {
 
     private final EnhancedForLoopTree current;
 
-    public EnhancedFor(TreePath currentPath, MethodSelectionWrapper wrapper,
+    public EnhancedFor(TreePath currentPath, MethodCall wrapper,
             WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (EnhancedForLoopTree) currentPath.getLeaf();
@@ -43,7 +43,7 @@ public class EnhancedFor extends InsertableStatementTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodSelectionWithoutReturnValue(wrapper);
+        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(wrapper);
         EnhancedForLoopTree enhancedForLoopTree;
         if (tree != null) {
             String expression = current.getExpression().toString();

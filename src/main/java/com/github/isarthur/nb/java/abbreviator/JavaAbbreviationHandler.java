@@ -15,9 +15,26 @@
  */
 package com.github.isarthur.nb.java.abbreviator;
 
+import com.github.isarthur.nb.java.abbreviator.codefragment.CodeFragment;
+import com.github.isarthur.nb.java.abbreviator.codefragment.FieldAccess;
+import com.github.isarthur.nb.java.abbreviator.codefragment.Keyword;
+import com.github.isarthur.nb.java.abbreviator.codefragment.LocalElement;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
+import com.github.isarthur.nb.java.abbreviator.codefragment.Type;
+import com.github.isarthur.nb.java.abbreviator.ui.GenerateCodePanel;
+import com.github.isarthur.nb.java.abbreviator.ui.PopupUtil;
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.Element;
+import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -26,15 +43,13 @@ import javax.swing.text.Document;
 public class JavaAbbreviationHandler {
 
     private final JavaSourceHelper helper;
+    private final JTextComponent component;
     private final Document document;
 
     public JavaAbbreviationHandler(JavaSourceHelper helper) {
         this.helper = helper;
+        this.component = helper.getComponent();
         this.document = helper.getDocument();
-    }
-
-    void collectLocalElements(int position) {
-        helper.collectLocalElements(position);
     }
 
     boolean process(Abbreviation abbreviation) {
@@ -42,77 +57,139 @@ public class JavaAbbreviationHandler {
         helper.setTypedAbbreviation(abbreviationContent);
         helper.collectLocalElements(abbreviation.getStartPosition());
         if (abbreviation.getContent().contains(".")) {
-            String expressionAbbreviation = abbreviationContent.substring(0, abbreviationContent.indexOf('.'));
-            String identifierAbbreviation = abbreviationContent.substring(abbreviationContent.indexOf('.') + 1);
-            List<Element> elements = helper.getElementsByAbbreviation(expressionAbbreviation);
+            String scopeAbbreviation = abbreviationContent.substring(0, abbreviationContent.indexOf('.'));
+            String nameAbbreviation = abbreviationContent.substring(abbreviationContent.indexOf('.') + 1);
+            List<Element> elements = helper.getElementsByAbbreviation(scopeAbbreviation);
             if (!elements.isEmpty()) {
-                return insertMethodSelection(elements, identifierAbbreviation)
-                        || insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)
-                        || insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
+                List<MethodCall> methodCalls =
+                        helper.findMethodCalls(elements, nameAbbreviation);
+                List<MethodCall> staticMethodCalls =
+                        helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
+                List<FieldAccess> fieldAccesses =
+                        helper.findFieldAccesses(scopeAbbreviation, nameAbbreviation);
+                int matchesCount = methodCalls.size() + staticMethodCalls.size() + fieldAccesses.size();
+                switch (matchesCount) {
+                    case 0: {
+                        return false;
+                    }
+                    case 1: {
+                        if (!methodCalls.isEmpty()) {
+                            return helper.insertMethodCall(methodCalls.get(0));
+                        } else if (!staticMethodCalls.isEmpty()) {
+                            return helper.insertMethodCall(staticMethodCalls.get(0));
+                        } else {
+                            return helper.insertFieldAccess(fieldAccesses.get(0));
+                        }
+                    }
+                    default: {
+                        List<CodeFragment> codeFragments = new ArrayList<>();
+                        codeFragments.addAll(methodCalls);
+                        codeFragments.addAll(staticMethodCalls);
+                        codeFragments.addAll(fieldAccesses);
+                        showPopup(codeFragments);
+                        return true;
+                    }
+                }
             } else {
-                return insertStaticMethodSelection(expressionAbbreviation, identifierAbbreviation)
-                        || insertConstantSelection(expressionAbbreviation, identifierAbbreviation);
+                List<MethodCall> staticMethodCalls =
+                        helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
+                List<FieldAccess> fieldAccesses =
+                        helper.findFieldAccesses(scopeAbbreviation, nameAbbreviation);
+                int matchesCount = staticMethodCalls.size() + fieldAccesses.size();
+                switch (matchesCount) {
+                    case 0: {
+                        return false;
+                    }
+                    case 1: {
+                        if (!staticMethodCalls.isEmpty()) {
+                            return helper.insertMethodCall(staticMethodCalls.get(0));
+                        } else {
+                            return helper.insertFieldAccess(fieldAccesses.get(0));
+                        }
+                    }
+                    default: {
+                        List<CodeFragment> codeFragments = new ArrayList<>();
+                        codeFragments.addAll(staticMethodCalls);
+                        codeFragments.addAll(fieldAccesses);
+                        showPopup(codeFragments);
+                        return true;
+                    }
+                }
             }
         } else {
-            if (isMemberSelection()) {
-                return insertChainedMethodSelection(abbreviationContent);
-            } else if (isAnnotationSelection()) {
-                return insertAnnotation(abbreviationContent);
+            if (helper.isMemberSelection()) {
+                List<MethodCall> chainedMethodCalls =
+                        helper.findChainedMethodCalls(abbreviationContent);
+                int matchesCount = chainedMethodCalls.size();
+                switch (matchesCount) {
+                    case 0: {
+                        return false;
+                    }
+                    case 1: {
+                        return helper.insertMethodCall(chainedMethodCalls.get(0));
+                    }
+                    default: {
+                        showPopup(new ArrayList<>(chainedMethodCalls));
+                        return true;
+                    }
+                }
             } else {
-                List<Element> elements = helper.getElementsByAbbreviation(abbreviationContent);
-                return insertLocalElement(elements)
-                        || insertKeyword(abbreviationContent)
-                        || insertLocalMethod(abbreviationContent)
-                        || insertType(abbreviationContent);
+                List<LocalElement> localElements = helper.findLocalElements(abbreviationContent);
+                List<MethodCall> localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
+                List<Type> types = helper.findTypes(abbreviationContent);
+                Optional<Keyword> keyword = helper.findKeyword(abbreviationContent);
+                int matchesCount = localElements.size() + localMethodCalls.size() + types.size()
+                        + keyword.map(k -> 1).orElse(0);
+                switch (matchesCount) {
+                    case 0: {
+                        return false;
+                    }
+                    case 1: {
+                        if (!localElements.isEmpty()) {
+                            return helper.insertLocalElement(localElements.get(0));
+                        } else if (!localMethodCalls.isEmpty()) {
+                            return helper.insertMethodCall(localMethodCalls.get(0));
+                        } else if (!types.isEmpty()) {
+                            return helper.insertType(types.get(0));
+                        } else {
+                            return helper.insertKeyword(keyword.get());
+                        }
+                    }
+                    default: {
+                        List<CodeFragment> codeFragments = new ArrayList<>();
+                        codeFragments.addAll(localElements);
+                        codeFragments.addAll(localMethodCalls);
+                        codeFragments.addAll(types);
+                        keyword.ifPresent(codeFragments::add);
+                        showPopup(codeFragments);
+                        return true;
+                    }
+                }
             }
         }
     }
 
-    private boolean insertMethodSelection(List<Element> elements, String methodAbbreviation) {
-        return helper.insertMethodSelection(elements, methodAbbreviation);
-    }
-
-    private boolean insertStaticMethodSelection(String typeAbbreviation, String methodAbbreviation) {
-        return helper.insertStaticMethodSelection(typeAbbreviation, methodAbbreviation);
-    }
-
-    private boolean insertLocalElement(List<Element> elements) {
-        return helper.insertLocalElement(elements);
-    }
-
-    private boolean insertKeyword(String keywordAbbreviation) {
-        return helper.insertKeyword(keywordAbbreviation);
-    }
-
-    private boolean insertLocalMethod(String methodAbbreviation) {
-        return helper.insertLocalMethod(methodAbbreviation);
+    private void showPopup(List<CodeFragment> codeFragments) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                Rectangle2D caretRectangle = component.modelToView2D(component.getCaretPosition());
+                Point where = new Point((int) caretRectangle.getX(), (int) (caretRectangle.getY()
+                        + caretRectangle.getHeight()));
+                SwingUtilities.convertPointToScreen(where, component);
+                PopupUtil.showPopup(
+                        new GenerateCodePanel(component, codeFragments, helper),
+                        (Frame) SwingUtilities.getAncestorOfClass(Frame.class, component),
+                        where.getX(),
+                        where.getY(),
+                        true,
+                        caretRectangle.getHeight());
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        });
     }
 
     Document getDocument() {
         return document;
-    }
-
-    private boolean isMemberSelection() {
-        return helper.isMemberSelection();
-    }
-
-    private boolean insertChainedMethodSelection(String methodAbbreviation) {
-        return helper.insertChainedMethodSelection(methodAbbreviation);
-    }
-
-    private boolean isAnnotationSelection() {
-        return helper.isAnnotationSelection();
-    }
-
-    private boolean insertAnnotation(String annotationAbbreviation) {
-        return helper.insertAnnotation(annotationAbbreviation);
-    }
-
-    private boolean insertConstantSelection(String expressionAbbreviation, String constantAbbreviation) {
-        return helper.insertConstantSelection(expressionAbbreviation, constantAbbreviation);
-    }
-
-    private boolean insertType(String typeAbbreviation) {
-        return helper.insertType(typeAbbreviation);
     }
 }

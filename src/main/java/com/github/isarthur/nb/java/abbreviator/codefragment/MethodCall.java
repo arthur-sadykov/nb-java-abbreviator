@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.nb.java.abbreviator;
+package com.github.isarthur.nb.java.abbreviator.codefragment;
 
+import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.StatementTree;
 import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.Element;
@@ -25,31 +27,25 @@ import javax.lang.model.element.ExecutableElement;
  *
  * @author Arthur Sadykov
  */
-public class MethodSelectionWrapper {
+public class MethodCall implements CodeFragment {
 
-    private Element element;
+    private final Element scope;
     private final ExecutableElement method;
     private final List<ExpressionTree> arguments;
     private final int argumentsNumber;
-    private int resolvedArgumentsNumber;
-    private double relation;
-    private final boolean staticMember;
+    private final JavaSourceHelper helper;
 
-    public MethodSelectionWrapper(Element element, ExecutableElement method, List<ExpressionTree> arguments,
-            boolean staticMember) {
-        this.element = element;
+    public MethodCall(Element element, ExecutableElement method, List<ExpressionTree> arguments,
+            JavaSourceHelper helper) {
+        this.scope = element;
         this.method = method;
         this.arguments = arguments;
         this.argumentsNumber = method.getParameters().size();
-        this.staticMember = staticMember;
+        this.helper = helper;
     }
 
-    public Element getElement() {
-        return element;
-    }
-
-    public void setElement(Element element) {
-        this.element = element;
+    public Element getScope() {
+        return scope;
     }
 
     public ExecutableElement getMethod() {
@@ -64,20 +60,15 @@ public class MethodSelectionWrapper {
         return argumentsNumber;
     }
 
-    public int getResolvedArgumentsNumber() {
-        return resolvedArgumentsNumber;
-    }
-
-    public double getRelation() {
-        return relation;
-    }
-
-    public void setResolvedArgumentsNumber(int resolvedArgumentsNumber) {
-        this.resolvedArgumentsNumber = resolvedArgumentsNumber;
-        this.relation = argumentsNumber == 0 ? 0 : this.resolvedArgumentsNumber / argumentsNumber;
-    }
-
-    public boolean isStaticMember() {
-        return staticMember;
+    @Override
+    public String toString() {
+        StatementTree methodCall;
+        if (helper.isMethodReturnVoid(method)) {
+            methodCall = helper.createVoidMethodCall(this);
+            return methodCall.toString();
+        } else {
+            methodCall = helper.createMethodCallWithReturnValue(this);
+            return methodCall.toString() + ";";
+        }
     }
 }

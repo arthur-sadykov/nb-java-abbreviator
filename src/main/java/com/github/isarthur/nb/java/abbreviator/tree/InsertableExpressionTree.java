@@ -16,8 +16,8 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
 import com.github.isarthur.nb.java.abbreviator.TreeFactory;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
@@ -32,7 +32,7 @@ public class InsertableExpressionTree extends InsertableTree {
 
     private final ExpressionTree current;
 
-    public InsertableExpressionTree(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
+    public InsertableExpressionTree(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
             JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (ExpressionTree) currentPath.getLeaf();

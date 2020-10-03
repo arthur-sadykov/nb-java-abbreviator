@@ -46,10 +46,10 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
     @Override
     public boolean beforeInsert(Context context) throws BadLocationException {
         if (handler == null) {
-            handler = new JavaAbbreviationHandler(new JavaSourceHelper(context.getDocument()));
+            handler = new JavaAbbreviationHandler(new JavaSourceHelper(context.getComponent()));
         } else {
             if (context.getDocument() != handler.getDocument()) {
-                handler = new JavaAbbreviationHandler(new JavaSourceHelper(context.getDocument()));
+                handler = new JavaAbbreviationHandler(new JavaSourceHelper(context.getComponent()));
             }
         }
         processTypedCharacter(context);

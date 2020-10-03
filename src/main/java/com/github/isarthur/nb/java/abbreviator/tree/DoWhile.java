@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.sun.source.tree.DoWhileLoopTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
@@ -31,7 +31,7 @@ public class DoWhile extends InsertableStatementTree {
 
     private final DoWhileLoopTree current;
 
-    public DoWhile(TreePath currentPath, MethodSelectionWrapper wrapper,
+    public DoWhile(TreePath currentPath, MethodCall wrapper,
             WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (DoWhileLoopTree) currentPath.getLeaf();

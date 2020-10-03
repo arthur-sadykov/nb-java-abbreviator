@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.github.isarthur.nb.java.abbreviator.Utilities;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
@@ -32,7 +32,7 @@ public class Variable extends InsertableStatementTree {
 
     private final VariableTree current;
 
-    public Variable(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy, JavaSourceHelper helper) {
+    public Variable(TreePath currentPath, MethodCall wrapper, WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (VariableTree) currentPath.getLeaf();
     }
@@ -42,7 +42,7 @@ public class Variable extends InsertableStatementTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodSelectionWithoutReturnValue(wrapper);
+        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(wrapper);
         VariableTree variableTree;
         if (tree != null) {
             String expression = current.getInitializer().toString();

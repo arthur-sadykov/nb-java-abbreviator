@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.nb.java.abbreviator.tree;
+package com.github.isarthur.nb.java.abbreviator.codefragment;
 
-import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
-import com.sun.source.util.TreePath;
-import org.netbeans.api.java.source.WorkingCopy;
+import javax.lang.model.element.TypeElement;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public abstract class InsertableStatementTree extends InsertableTree {
+public class Type implements CodeFragment {
 
-    public InsertableStatementTree(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) {
-        super(currentPath, wrapper, copy, helper);
+    private final TypeElement type;
+
+    public Type(TypeElement type) {
+        this.type = type;
+    }
+
+    public TypeElement getType() {
+        return type;
+    }
+
+    @Override
+    public String toString() {
+        return type.getSimpleName().toString();
     }
 }

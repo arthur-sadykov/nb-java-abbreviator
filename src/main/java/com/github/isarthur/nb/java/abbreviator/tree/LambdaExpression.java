@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.Tree;
@@ -31,7 +31,7 @@ public class LambdaExpression extends InsertableExpressionTree {
 
     private final LambdaExpressionTree current;
 
-    public LambdaExpression(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
+    public LambdaExpression(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
             JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (LambdaExpressionTree) currentPath.getLeaf();
@@ -42,7 +42,7 @@ public class LambdaExpression extends InsertableExpressionTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodSelectionWithoutReturnValue(wrapper);
+        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(wrapper);
         ExpressionTree lambdaExpressionTree = make.Parenthesized(methodCall);
         parent.insert(tree);
     }

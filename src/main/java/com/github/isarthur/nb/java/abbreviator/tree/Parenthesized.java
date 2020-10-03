@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.github.isarthur.nb.java.abbreviator.Utilities;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ParenthesizedTree;
@@ -32,7 +32,7 @@ public class Parenthesized extends InsertableExpressionTree {
 
     private final ParenthesizedTree current;
 
-    public Parenthesized(TreePath currentPath, MethodSelectionWrapper wrapper,
+    public Parenthesized(TreePath currentPath, MethodCall wrapper,
             WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (ParenthesizedTree) currentPath.getLeaf();
@@ -43,7 +43,7 @@ public class Parenthesized extends InsertableExpressionTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodSelectionWithoutReturnValue(wrapper);
+        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(wrapper);
         ParenthesizedTree parenthesizedTree;
         if (tree != null) {
             String expression = current.getExpression().toString();

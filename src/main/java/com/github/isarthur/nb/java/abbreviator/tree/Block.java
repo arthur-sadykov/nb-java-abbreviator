@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.StatementTree;
@@ -33,7 +33,7 @@ public class Block extends InsertableStatementTree {
 
     private final BlockTree current;
 
-    public Block(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy, JavaSourceHelper helper) {
+    public Block(TreePath currentPath, MethodCall wrapper, WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (BlockTree) currentPath.getLeaf();
     }
@@ -55,10 +55,10 @@ public class Block extends InsertableStatementTree {
                 return;
             }
             if (helper.isMethodReturnVoid(wrapper.getMethod())) {
-                ExpressionStatementTree methodCall = helper.createVoidMethodSelection(wrapper);
+                ExpressionStatementTree methodCall = helper.createVoidMethodCall(wrapper);
                 newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, methodCall);
             } else {
-                VariableTree methodCall = helper.createMethodSelectionWithReturnValue(wrapper, copy);
+                VariableTree methodCall = helper.createMethodCallWithReturnValue(wrapper);
                 newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, methodCall);
             }
         }

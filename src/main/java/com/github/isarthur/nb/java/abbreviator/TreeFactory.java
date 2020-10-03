@@ -15,6 +15,7 @@
  */
 package com.github.isarthur.nb.java.abbreviator;
 
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.github.isarthur.nb.java.abbreviator.constants.ConstantDataManager;
 import com.github.isarthur.nb.java.abbreviator.tree.Assert;
 import com.github.isarthur.nb.java.abbreviator.tree.Assignment;
@@ -50,7 +51,7 @@ public class TreeFactory {
     private TreeFactory() {
     }
 
-    public static InsertableTree create(TreePath currentPath, MethodSelectionWrapper wrapper, WorkingCopy copy,
+    public static InsertableTree create(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
             JavaSourceHelper helper) {
         requireNonNull(currentPath, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "currentPath"));
         requireNonNull(wrapper, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "wrapper"));

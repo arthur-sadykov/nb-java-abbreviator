@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.StatementTree;
@@ -32,7 +32,7 @@ public class If extends InsertableStatementTree {
 
     private final IfTree current;
 
-    public If(TreePath currentPath, MethodSelectionWrapper wrapper,
+    public If(TreePath currentPath, MethodCall wrapper,
             WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (IfTree) currentPath.getLeaf();

@@ -16,7 +16,7 @@
 package com.github.isarthur.nb.java.abbreviator.tree;
 
 import com.github.isarthur.nb.java.abbreviator.JavaSourceHelper;
-import com.github.isarthur.nb.java.abbreviator.MethodSelectionWrapper;
+import com.github.isarthur.nb.java.abbreviator.codefragment.MethodCall;
 import com.github.isarthur.nb.java.abbreviator.Utilities;
 import com.sun.source.tree.AssertTree;
 import com.sun.source.tree.ExpressionTree;
@@ -32,7 +32,7 @@ public class Assert extends InsertableStatementTree {
 
     private final AssertTree current;
 
-    public Assert(TreePath currentPath, MethodSelectionWrapper wrapper,
+    public Assert(TreePath currentPath, MethodCall wrapper,
             WorkingCopy copy, JavaSourceHelper helper) {
         super(currentPath, wrapper, copy, helper);
         current = (AssertTree) currentPath.getLeaf();
@@ -45,7 +45,7 @@ public class Assert extends InsertableStatementTree {
         }
         String expression = current.getCondition().toString();
         String detail = current.getDetail().toString();
-        ExpressionTree methodCall = helper.createMethodSelectionWithoutReturnValue(wrapper);
+        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(wrapper);
         expression = Utilities.createExpression(expression, methodCall);
         detail = Utilities.createExpression(detail, methodCall);
         AssertTree assertTree;
