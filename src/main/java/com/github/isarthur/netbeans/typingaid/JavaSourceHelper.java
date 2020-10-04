@@ -45,10 +45,15 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -230,7 +235,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(elems);
     }
 
-    List<TypeElement> getTypeElementsByAbbreviationInSourceCompileAndBootPath(String abbreviation) {
+    List<TypeElement> findTypeElementsByAbbreviationInSourcePath(String abbreviation) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         ClasspathInfo classpathInfo = javaSource.getClasspathInfo();
         ClassIndex classIndex = classpathInfo.getClassIndex();
@@ -500,7 +505,7 @@ public class JavaSourceHelper {
     }
 
     List<MethodCall> findStaticMethodCalls(String scopeAbbreviation, String methodAbbreviation) {
-        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(scopeAbbreviation);
+        List<TypeElement> typeElements = findTypeElementsByAbbreviationInSourcePath(scopeAbbreviation);
         List<MethodCall> methodCalls = new ArrayList<>();
         typeElements.forEach(element -> {
             List<ExecutableElement> methods = getStaticMethodsInClass(element);
@@ -511,23 +516,6 @@ public class JavaSourceHelper {
             });
         });
         return Collections.unmodifiableList(methodCalls);
-    }
-
-    private List<TypeElement> getImportedTypesMatchingAbbreviation(String typeAbbreviation) {
-        List<? extends ImportTree> imports = compilationUnit.getImports();
-        List<TypeElement> result = new ArrayList<>();
-        imports.stream().map(importTree -> importTree.getQualifiedIdentifier().toString()).forEachOrdered(fqn -> {
-            String sn = fqn.substring(fqn.lastIndexOf('.') + 1);
-            if (typeAbbreviation.equals(getElementAbbreviation(sn))) {
-                Optional<TypeElement> typeElement = getTypeElement(fqn);
-                typeElement.ifPresent(result::add);
-            }
-        });
-        return Collections.unmodifiableList(result);
-    }
-
-    private Optional<TypeElement> getTypeElement(String fqn) {
-        return Optional.ofNullable(elements.getTypeElement(fqn));
     }
 
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
@@ -865,7 +853,7 @@ public class JavaSourceHelper {
     }
 
     List<FieldAccess> findFieldAccesses(String scopeAbbreviation, String nameAbbreviation) {
-        List<TypeElement> typeElements = getImportedTypesMatchingAbbreviation(scopeAbbreviation);
+        List<TypeElement> typeElements = findTypeElementsByAbbreviationInSourcePath(scopeAbbreviation);
         List<FieldAccess> result = new ArrayList<>();
         typeElements.forEach(typeElement -> {
             List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
@@ -899,10 +887,19 @@ public class JavaSourceHelper {
     }
 
     List<Type> findTypes(String typeAbbreviation) {
-        List<TypeElement> importedTypes = getImportedTypesMatchingAbbreviation(typeAbbreviation);
+        List<TypeElement> typeElements = findTypeElementsByAbbreviationInSourcePath(typeAbbreviation);
         List<Type> result = new ArrayList<>();
-        importedTypes.forEach(t -> result.add(new Type(t)));
+        typeElements = typeElements.stream()
+                .filter(distinctByKey(element -> element.getSimpleName().toString()))
+                .collect(Collectors.toList());
+        typeElements.forEach(t -> result.add(new Type(t)));
         return Collections.unmodifiableList(result);
+    }
+
+    private <T> Predicate<T> distinctByKey(
+            Function<? super T, ?> keyExtractor) {
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
     public boolean insertType(Type type) {
