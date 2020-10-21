@@ -22,15 +22,15 @@ package com.github.isarthur.netbeans.typingaid;
 public class Abbreviation {
 
     private static Abbreviation instance;
-    private int endPosition;
+    private int startPosition;
     private final StringBuffer buffer;
 
     private Abbreviation() {
-        this.endPosition = -1;
+        this.startPosition = -1;
         this.buffer = new StringBuffer();
     }
 
-    static Abbreviation getInstance() {
+    public static Abbreviation getInstance() {
         if (instance == null) {
             instance = new Abbreviation();
         }
@@ -38,24 +38,24 @@ public class Abbreviation {
     }
 
     int getStartPosition() {
-        return endPosition - buffer.length();
+        return startPosition;
     }
 
-    void setEndPosition(int endPosition) {
-        this.endPosition = endPosition;
+    public void setStartPosition(int startPosition) {
+        this.startPosition = startPosition;
     }
 
     int getEndPosition() {
-        return endPosition;
+        return startPosition + buffer.length();
     }
 
-    void append(char character) {
+    public void append(char character) {
         buffer.append(character);
     }
 
     void reset() {
         buffer.setLength(0);
-        endPosition = -1;
+        startPosition = -1;
     }
 
     boolean isEmpty() {

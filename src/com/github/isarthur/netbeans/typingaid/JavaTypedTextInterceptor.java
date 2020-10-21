@@ -67,7 +67,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
         if (isNotWhitespace(typedCharacter)) {
             if (isCharacterAccepted(typedCharacter)) {
                 abbreviation.append(typedCharacter);
-                abbreviation.setEndPosition(offset + 1);
+                abbreviation.setStartPosition(offset);
             }
             succeed = true;
         } else {

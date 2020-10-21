@@ -47,7 +47,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -290,42 +289,46 @@ public class JavaSourceHelper {
         return abbreviation.toString();
     }
 
-    private Optional<VariableElement> instanceOf(String typeName, String name) {
-        Optional<TypeMirror> type = type(typeName);
+    private VariableElement instanceOf(String typeName, String name) {
+        TypeMirror type = type(typeName);
+        if (type == null) {
+            return null;
+        }
         VariableElement closest = null;
         int distance = Integer.MAX_VALUE;
-        if (type != null) {
-            for (Element element : localElements) {
-                if (VariableElement.class
-                        .isInstance(element)
-                        && !ConstantDataManager.ANGLED_ERROR.contentEquals(element.getSimpleName())
-                        && element.asType().getKind() != TypeKind.ERROR
-                        && type.map(t -> types.isAssignable(element.asType(), t)).orElse(false)) {
-                    if (name.isEmpty()) {
-                        return Optional.of((VariableElement) element);
-                    }
-                    int d = ElementHeaders.getDistance(element.getSimpleName().toString()
-                            .toLowerCase(), name.toLowerCase());
-                    if (type.map(t -> isSameType(element.asType(), t, types)).orElse(false)) {
-                        d -= 1000;
-                    }
-                    if (d < distance) {
-                        distance = d;
-                        closest = (VariableElement) element;
-                    }
+        for (Element element : localElements) {
+            if (VariableElement.class
+                    .isInstance(element)
+                    && !ConstantDataManager.ANGLED_ERROR.contentEquals(element.getSimpleName())
+                    && element.asType().getKind() != TypeKind.ERROR
+                    && types.isAssignable(element.asType(), type)) {
+                if (name.isEmpty()) {
+                    return (VariableElement) element;
+                }
+                int d = ElementHeaders.getDistance(element.getSimpleName().toString()
+                        .toLowerCase(), name.toLowerCase());
+                if (isSameType(element.asType(), type, types)) {
+                    d -= 1000;
+                }
+                if (d < distance) {
+                    distance = d;
+                    closest = (VariableElement) element;
                 }
             }
         }
-        return Optional.ofNullable(closest);
+        return closest;
     }
 
-    private Optional<TypeMirror> type(String typeName) {
+    private TypeMirror type(String typeName) {
         String type = typeName.trim();
         if (type.isEmpty()) {
-            return Optional.empty();
+            return null;
         }
         Scope scope = treeUtilities.scopeFor(caretPosition);
-        Optional<TreePath> currentPath = pathFor(caretPosition);
+        TreePath currentPath = treeUtilities.pathFor(caretPosition);
+        if (currentPath == null) {
+            return null;
+        }
         TypeElement enclosingClass = scope.getEnclosingClass();
         SourcePositions[] sourcePositions = new SourcePositions[1];
         StatementTree statement = treeUtilities.parseStatement("{" + type + " a;}", sourcePositions); //NOI18N
@@ -335,13 +338,11 @@ public class JavaSourceHelper {
                 StatementTree variable = statements.get(0);
                 if (variable.getKind() == Tree.Kind.VARIABLE) {
                     treeUtilities.attributeTree(statement, scope);
-                    return currentPath.flatMap(cp ->
-                            getTypeMirror(new TreePath(cp, ((VariableTree) variable).getType())).or(() ->
-                                    Optional.empty()));
+                    return trees.getTypeMirror(new TreePath(currentPath, ((VariableTree) variable).getType()));
                 }
             }
         }
-        return Optional.ofNullable(treeUtilities.parseType(type, enclosingClass));
+        return treeUtilities.parseType(type, enclosingClass);
     }
 
     private boolean isSameType(TypeMirror t1, TypeMirror t2, Types types) {
@@ -381,10 +382,6 @@ public class JavaSourceHelper {
         return -1;
     }
 
-    private Optional<TreePath> pathFor(int caretPosition) {
-        return Optional.ofNullable(treeUtilities.pathFor(caretPosition));
-    }
-
     private JavaSource getJavaSourceForDocument(Document document) {
         JavaSource javaSource = JavaSource.forDocument(document);
         if (javaSource == null) {
@@ -398,18 +395,6 @@ public class JavaSourceHelper {
         if (phase.compareTo(Phase.RESOLVED) < 0) {
             throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_RESOLVED_PHASE);
         }
-    }
-
-    private Optional<Element> getElement(TreePath path) {
-        return Optional.ofNullable(trees.getElement(path));
-    }
-
-    private Optional<TreePath> getPath(TreePath path, Tree tree) {
-        return Optional.ofNullable(TreePath.getPath(path, tree));
-    }
-
-    private Optional<TreePath> getPath(CompilationUnitTree compilationUnitTree, Tree tree) {
-        return Optional.ofNullable(TreePath.getPath(compilationUnitTree, tree));
     }
 
     private int findIndexOfCurrentArgumentInMethod(MethodInvocationTree methodInvocationTree) {
@@ -548,24 +533,22 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(methodCalls);
     }
 
-    private Optional<TypeMirror> getTypeInContext() {
-        Optional<TreePath> currentPath = pathFor(caretPosition);
-        Optional<Tree> currentTree = currentPath.map(cp -> cp.getLeaf()).or(() -> Optional.empty());
-        Optional<Tree.Kind> kind = currentTree.map(ct -> ct.getKind()).or(() -> Optional.empty());
-        switch (kind.map(k -> k).orElse(Tree.Kind.OTHER)) {
+    private TypeMirror getTypeInContext() {
+        TreePath currentPath = treeUtilities.pathFor(caretPosition);
+        if (currentPath == null) {
+            return null;
+        }
+        Tree currentTree = currentPath.getLeaf();
+        switch (currentTree.getKind()) {
             case ASSIGNMENT: {
-                Optional<AssignmentTree> assignmentTree =
-                        currentTree.map(ct -> (AssignmentTree) ct).or(() -> Optional.empty());
-                Optional<ExpressionTree> variable =
-                        assignmentTree.map(AssignmentTree::getVariable).or(() -> Optional.empty());
-                Optional<TreePath> path = currentPath.isPresent() && variable.isPresent()
-                        ? getPath(currentPath.get(), variable.get())
-                        : Optional.empty();
-                return path.flatMap(this::getElement).map(Element::asType).or(() -> Optional.empty());
+                AssignmentTree assignmentTree = (AssignmentTree) currentTree;
+                ExpressionTree variable = assignmentTree.getVariable();
+                TreePath path = TreePath.getPath(currentPath, variable);
+                return trees.getElement(path).asType();
             }
             case BLOCK:
             case PARENTHESIZED: {
-                return Optional.empty();
+                return null;
             }
             case DIVIDE:
             case EQUAL_TO:
@@ -578,7 +561,7 @@ public class JavaSourceHelper {
             case NOT_EQUAL_TO:
             case PLUS:
             case REMAINDER: {
-                return Optional.of(types.getPrimitiveType(TypeKind.DOUBLE));
+                return types.getPrimitiveType(TypeKind.DOUBLE);
             }
             case AND:
             case AND_ASSIGNMENT:
@@ -598,41 +581,35 @@ public class JavaSourceHelper {
             case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
             case XOR:
             case XOR_ASSIGNMENT: {
-                return Optional.of(types.getPrimitiveType(TypeKind.LONG));
+                return types.getPrimitiveType(TypeKind.LONG);
             }
             case CONDITIONAL_AND:
             case CONDITIONAL_OR:
             case LOGICAL_COMPLEMENT: {
-                return Optional.of(types.getPrimitiveType(TypeKind.BOOLEAN));
+                return types.getPrimitiveType(TypeKind.BOOLEAN);
             }
             case MEMBER_SELECT: {
-                Optional<ExpressionTree> expression = currentTree.map(ct -> (MemberSelectTree) ct)
-                        .map(MemberSelectTree::getExpression).or(() -> Optional.empty());
-                if (currentPath.isPresent() && expression.isPresent()) {
-                    TreePath path = TreePath.getPath(currentPath.get(), expression.get());
-                    return getTypeMirror(path);
-                }
-                return Optional.empty();
+                ExpressionTree expression = ((MemberSelectTree) currentTree).getExpression();
+                TreePath path = TreePath.getPath(currentPath, expression);
+                return trees.getTypeMirror(path);
             }
             case METHOD_INVOCATION: {
-                int insertIndex =
-                        currentTree.map(ct -> findIndexOfCurrentArgumentInMethod((MethodInvocationTree) ct)).orElse(-1);
-                Optional<Element> element = currentPath.flatMap(this::getElement).or(() -> Optional.empty());
-                if (element.map(Element::getKind).orElse(ElementKind.OTHER) == ElementKind.METHOD) {
-                    return element.map(e -> (ExecutableElement) e)
-                            .map(ExecutableElement::getParameters)
-                            .filter(p -> insertIndex != -1)
-                            .map(p -> p.get(insertIndex))
-                            .map(VariableElement::asType)
-                            .or(() -> Optional.empty());
+                int insertIndex = findIndexOfCurrentArgumentInMethod((MethodInvocationTree) currentTree);
+                Element element = trees.getElement(currentPath);
+                if (element.getKind() == ElementKind.METHOD) {
+                    List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
+                    if (insertIndex != -1) {
+                        VariableElement parameter = parameters.get(insertIndex);
+                        return parameter.asType();
+                    }
                 }
                 break;
             }
             default: {
-                return Optional.empty();
+                return null;
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     private List<ExecutableElement> getMethodsInClassAndSuperclassesExceptStatic(Element element) {
@@ -673,9 +650,11 @@ public class JavaSourceHelper {
                 moveStateToResolvedPhase(copy);
                 make = copy.getTreeMaker();
                 treeUtilities = copy.getTreeUtilities();
-                Optional<TreePath> currentPath = pathFor(caretPosition);
-                currentPath.map(cp -> TreeFactory.create(cp, methodCall, copy, this)).ifPresent(it ->
-                        it.insert(null));
+                TreePath currentPath = treeUtilities.pathFor(caretPosition);
+                if (currentPath == null) {
+                    return;
+                }
+                TreeFactory.create(currentPath, methodCall, copy, this).insert(null);
             });
             modificationResult.commit();
             return !modificationResult.getModifiedFileObjects().isEmpty();
@@ -702,12 +681,14 @@ public class JavaSourceHelper {
         try {
             js.runUserActionTask(controller -> {
                 moveStateToResolvedPhase(controller);
-                Optional<TypeMirror> typeMirror = getTypeMirrorOfCurrentClass();
-                methods.addAll(typeMirror.map(tm -> {
-                    return elementUtilities.getMembers(tm, (e, t) -> {
-                        return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
-                    });
-                }).map(ElementFilter::methodsIn).orElse(Collections.emptyList()));
+                TypeMirror typeMirror = getTypeMirrorOfCurrentClass();
+                if (typeMirror == null) {
+                    return;
+                }
+                Iterable<? extends Element> members = elementUtilities.getMembers(typeMirror, (e, t) -> {
+                    return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
+                });
+                methods.addAll(ElementFilter.methodsIn(members));
             }, true);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -715,16 +696,12 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(methods);
     }
 
-    private Optional<TypeMirror> getTypeMirrorOfCurrentClass() {
+    private TypeMirror getTypeMirrorOfCurrentClass() {
         Tree tree = compilationUnit.getTypeDecls().get(0);
         if (tree.getKind() == Tree.Kind.CLASS) {
-            return getPath(compilationUnit, tree).flatMap(this::getTypeMirror).or(() -> Optional.empty());
+            return trees.getTypeMirror(TreePath.getPath(compilationUnit, tree));
         }
-        return Optional.empty();
-    }
-
-    private Optional<TypeMirror> getTypeMirror(TreePath path) {
-        return Optional.ofNullable(trees.getTypeMirror(path));
+        return null;
     }
 
     private List<ExecutableElement> getMethodsByAbbreviation(String methodAbbreviation, List<ExecutableElement> methods) {
@@ -755,11 +732,11 @@ public class JavaSourceHelper {
                 .map(parameter -> parameter.asType())
                 .forEachOrdered(elementType -> {
                     AtomicReference<IdentifierTree> identifierTree = new AtomicReference<>();
-                    Optional<VariableElement> variableElement = instanceOf(elementType.toString(), "");
-                    variableElement.ifPresentOrElse(ve -> {
-                        identifierTree.set(make.Identifier(ve));
+                    VariableElement variableElement = instanceOf(elementType.toString(), "");
+                    if (variableElement != null) {
+                        identifierTree.set(make.Identifier(variableElement));
                         arguments.add(identifierTree.get());
-                    }, () -> {
+                    } else {
                         switch (elementType.getKind()) {
                             case BOOLEAN:
                                 identifierTree.set(make.Identifier(ConstantDataManager.FALSE));
@@ -782,7 +759,7 @@ public class JavaSourceHelper {
                                 identifierTree.set(make.Identifier(ConstantDataManager.NULL));
                         }
                         arguments.add(identifierTree.get());
-                    });
+                    }
                 });
         return Collections.unmodifiableList(arguments);
     }
@@ -814,12 +791,12 @@ public class JavaSourceHelper {
         }
     }
 
-    Optional<Keyword> findKeyword(String keywordAbbreviation) {
+    Keyword findKeyword(String keywordAbbreviation) {
         String keyword = ConstantDataManager.ABBREVIATION_TO_KEYWORD.get(keywordAbbreviation);
         if (keyword != null) {
-            return Optional.of(new Keyword(keyword));
+            return new Keyword(keyword);
         }
-        return Optional.empty();
+        return null;
     }
 
     public boolean insertKeyword(Keyword keyword) {
@@ -833,22 +810,29 @@ public class JavaSourceHelper {
     }
 
     boolean isMemberSelection() {
-        Optional<TreePath> path = pathFor(caretPosition);
-        return path.map(TreePath::getLeaf).map(Tree::getKind).map(k -> k == Tree.Kind.MEMBER_SELECT).orElse(false);
+        TreePath currentPath = treeUtilities.pathFor(caretPosition);
+        if (currentPath == null) {
+            return false;
+        }
+        return currentPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT;
     }
 
     List<MethodCall> findChainedMethodCalls(String methodAbbreviation) {
-        Optional<TypeMirror> type = getTypeInContext();
-        Optional<Element> typeElement = type.map(types::asElement).or(() -> Optional.empty());
-        Optional<List<ExecutableElement>> methods = typeElement.map(this::getAllMethodsInClassAndSuperclasses)
-                .map(m -> getMethodsByAbbreviation(methodAbbreviation, m)).or(() -> Optional.empty());
-        List<MethodCall> methodCalls = new ArrayList<>();
-        if (methods.isPresent() && typeElement.isPresent()) {
-            methods.get().forEach(method -> {
-                List<ExpressionTree> arguments = evaluateMethodArguments(method);
-                methodCalls.add(new MethodCall(null, method, arguments, this));
-            });
+        TypeMirror type = getTypeInContext();
+        if (type == null) {
+            return Collections.emptyList();
         }
+        Element typeElement = types.asElement(type);
+        if (typeElement == null) {
+            return Collections.emptyList();
+        }
+        List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(typeElement);
+        methods = getMethodsByAbbreviation(methodAbbreviation, methods);
+        List<MethodCall> methodCalls = new ArrayList<>();
+        methods.forEach(method -> {
+            List<ExpressionTree> arguments = evaluateMethodArguments(method);
+            methodCalls.add(new MethodCall(null, method, arguments, this));
+        });
         return Collections.unmodifiableList(methodCalls);
     }
 

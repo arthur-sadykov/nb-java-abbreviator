@@ -25,10 +25,9 @@ import com.github.isarthur.netbeans.typingaid.ui.GenerateCodePanel;
 import com.github.isarthur.netbeans.typingaid.ui.PopupUtil;
 import java.awt.Frame;
 import java.awt.Point;
-import java.awt.geom.Rectangle2D;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
@@ -52,7 +51,7 @@ public class JavaAbbreviationHandler {
         this.document = helper.getDocument();
     }
 
-    boolean process(Abbreviation abbreviation) {
+    public boolean process(Abbreviation abbreviation) {
         String abbreviationContent = abbreviation.getContent();
         helper.setTypedAbbreviation(abbreviationContent);
         helper.collectLocalElements(abbreviation.getStartPosition());
@@ -137,9 +136,9 @@ public class JavaAbbreviationHandler {
                 List<LocalElement> localElements = helper.findLocalElements(abbreviationContent);
                 List<MethodCall> localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
                 List<Type> types = helper.findTypes(abbreviationContent);
-                Optional<Keyword> keyword = helper.findKeyword(abbreviationContent);
+                Keyword keyword = helper.findKeyword(abbreviationContent);
                 int matchesCount = localElements.size() + localMethodCalls.size() + types.size()
-                        + keyword.map(k -> 1).orElse(0);
+                        + (keyword == null ? 0 : 1);
                 switch (matchesCount) {
                     case 0: {
                         return false;
@@ -152,7 +151,7 @@ public class JavaAbbreviationHandler {
                         } else if (!types.isEmpty()) {
                             return helper.insertType(types.get(0));
                         } else {
-                            return helper.insertKeyword(keyword.get());
+                            return keyword != null ? helper.insertKeyword(keyword) : false;
                         }
                     }
                     default: {
@@ -160,7 +159,9 @@ public class JavaAbbreviationHandler {
                         codeFragments.addAll(localElements);
                         codeFragments.addAll(localMethodCalls);
                         codeFragments.addAll(types);
-                        keyword.ifPresent(codeFragments::add);
+                        if (keyword != null) {
+                            codeFragments.add(keyword);
+                        }
                         showPopup(codeFragments);
                         return true;
                     }
@@ -172,7 +173,7 @@ public class JavaAbbreviationHandler {
     private void showPopup(List<CodeFragment> codeFragments) {
         SwingUtilities.invokeLater(() -> {
             try {
-                Rectangle2D caretRectangle = component.modelToView2D(component.getCaretPosition());
+                Rectangle caretRectangle = component.modelToView(component.getCaretPosition());
                 Point where = new Point((int) caretRectangle.getX(), (int) (caretRectangle.getY()
                         + caretRectangle.getHeight()));
                 SwingUtilities.convertPointToScreen(where, component);

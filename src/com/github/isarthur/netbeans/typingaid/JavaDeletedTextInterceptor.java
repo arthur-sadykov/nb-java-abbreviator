@@ -39,9 +39,9 @@ public class JavaDeletedTextInterceptor implements DeletedTextInterceptor {
 
     @Override
     public void remove(Context context) throws BadLocationException {
-        int offset = context.getOffset();
+        int offset = context.getOffset() - context.getText().length();
         abbreviation.delete();
-        abbreviation.setEndPosition(offset - 1);
+        abbreviation.setStartPosition(offset);
     }
 
     @Override
