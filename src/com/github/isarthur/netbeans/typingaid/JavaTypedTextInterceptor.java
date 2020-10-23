@@ -15,7 +15,10 @@
  */
 package com.github.isarthur.netbeans.typingaid;
 
+import com.github.isarthur.netbeans.typingaid.codefragment.CodeFragment;
 import com.github.isarthur.netbeans.typingaid.constants.ConstantDataManager;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
@@ -35,7 +38,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
     private final Acceptor resetAcceptor;
     private JavaAbbreviationHandler handler;
     private final Abbreviation abbreviation;
-    private boolean succeed;
+    private List<CodeFragment> result;
     private int caretPosition;
 
     private JavaTypedTextInterceptor() {
@@ -67,15 +70,15 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
         if (isNotWhitespace(typedCharacter)) {
             if (isCharacterAccepted(typedCharacter)) {
                 abbreviation.append(typedCharacter);
-                abbreviation.setStartPosition(offset);
+                abbreviation.setStartPosition(offset - abbreviation.length() + 1);
             }
-            succeed = true;
+            result = Collections.emptyList();
         } else {
             if (abbreviation.isEmpty()) {
                 return;
             }
             removeAbbreviationFromDocument(abbreviation.getStartPosition(), abbreviation.getEndPosition(), document);
-            succeed = handler.process(abbreviation);
+            result = handler.process(abbreviation);
         }
     }
 
@@ -86,7 +89,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
             if (abbreviation.isEmpty()) {
                 return;
             }
-            if (!succeed) {
+            if (result == null) {
                 context.setText(abbreviation.getContent() + " ", abbreviation.length() + 1);
             } else {
                 context.setText("", 0);
@@ -130,7 +133,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
 
     @Override
     public void afterInsert(Context context) throws BadLocationException {
-        if (succeed) {
+        if (result != null) {
             if (context.getText().isEmpty()) {
                 JTextComponent component = context.getComponent();
                 component.setCaretPosition(caretPosition);

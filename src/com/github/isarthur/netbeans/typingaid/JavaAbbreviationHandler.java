@@ -51,7 +51,7 @@ public class JavaAbbreviationHandler {
         this.document = helper.getDocument();
     }
 
-    public boolean process(Abbreviation abbreviation) {
+    public List<CodeFragment> process(Abbreviation abbreviation) {
         String abbreviationContent = abbreviation.getContent();
         helper.setTypedAbbreviation(abbreviationContent);
         helper.collectLocalElements(abbreviation.getStartPosition());
@@ -69,7 +69,7 @@ public class JavaAbbreviationHandler {
                 int matchesCount = methodCalls.size() + staticMethodCalls.size() + fieldAccesses.size();
                 switch (matchesCount) {
                     case 0: {
-                        return false;
+                        return null;
                     }
                     case 1: {
                         if (!methodCalls.isEmpty()) {
@@ -86,7 +86,7 @@ public class JavaAbbreviationHandler {
                         codeFragments.addAll(staticMethodCalls);
                         codeFragments.addAll(fieldAccesses);
                         showPopup(codeFragments);
-                        return true;
+                        return codeFragments;
                     }
                 }
             } else {
@@ -97,7 +97,7 @@ public class JavaAbbreviationHandler {
                 int matchesCount = staticMethodCalls.size() + fieldAccesses.size();
                 switch (matchesCount) {
                     case 0: {
-                        return false;
+                        return null;
                     }
                     case 1: {
                         if (!staticMethodCalls.isEmpty()) {
@@ -111,7 +111,7 @@ public class JavaAbbreviationHandler {
                         codeFragments.addAll(staticMethodCalls);
                         codeFragments.addAll(fieldAccesses);
                         showPopup(codeFragments);
-                        return true;
+                        return codeFragments;
                     }
                 }
             }
@@ -122,14 +122,15 @@ public class JavaAbbreviationHandler {
                 int matchesCount = chainedMethodCalls.size();
                 switch (matchesCount) {
                     case 0: {
-                        return false;
+                        return null;
                     }
                     case 1: {
                         return helper.insertMethodCall(chainedMethodCalls.get(0));
                     }
                     default: {
-                        showPopup(new ArrayList<>(chainedMethodCalls));
-                        return true;
+                        ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodCalls);
+                        showPopup(codeFragments);
+                        return codeFragments;
                     }
                 }
             } else {
@@ -141,7 +142,7 @@ public class JavaAbbreviationHandler {
                         + (keyword == null ? 0 : 1);
                 switch (matchesCount) {
                     case 0: {
-                        return false;
+                        return null;
                     }
                     case 1: {
                         if (!localElements.isEmpty()) {
@@ -151,7 +152,7 @@ public class JavaAbbreviationHandler {
                         } else if (!types.isEmpty()) {
                             return helper.insertType(types.get(0));
                         } else {
-                            return keyword != null ? helper.insertKeyword(keyword) : false;
+                            return keyword != null ? helper.insertKeyword(keyword) : null;
                         }
                     }
                     default: {
@@ -163,7 +164,7 @@ public class JavaAbbreviationHandler {
                             codeFragments.add(keyword);
                         }
                         showPopup(codeFragments);
-                        return true;
+                        return codeFragments;
                     }
                 }
             }
@@ -174,6 +175,9 @@ public class JavaAbbreviationHandler {
         SwingUtilities.invokeLater(() -> {
             try {
                 Rectangle caretRectangle = component.modelToView(component.getCaretPosition());
+                if (caretRectangle == null) {
+                    return;
+                }
                 Point where = new Point((int) caretRectangle.getX(), (int) (caretRectangle.getY()
                         + caretRectangle.getHeight()));
                 SwingUtilities.convertPointToScreen(where, component);

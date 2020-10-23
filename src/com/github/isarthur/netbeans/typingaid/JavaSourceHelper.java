@@ -15,6 +15,7 @@
  */
 package com.github.isarthur.netbeans.typingaid;
 
+import com.github.isarthur.netbeans.typingaid.codefragment.CodeFragment;
 import com.github.isarthur.netbeans.typingaid.codefragment.FieldAccess;
 import com.github.isarthur.netbeans.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.typingaid.codefragment.LocalElement;
@@ -643,7 +644,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    public boolean insertMethodCall(MethodCall methodCall) {
+    public List<CodeFragment> insertMethodCall(MethodCall methodCall) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         try {
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
@@ -657,10 +658,12 @@ public class JavaSourceHelper {
                 TreeFactory.create(currentPath, methodCall, copy, this).insert(null);
             });
             modificationResult.commit();
-            return !modificationResult.getModifiedFileObjects().isEmpty();
+            if (!modificationResult.getModifiedFileObjects().isEmpty()) {
+            }
+            return !modificationResult.getModifiedFileObjects().isEmpty() ? Collections.singletonList(methodCall) : null;
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
-            return false;
+            return null;
         }
     }
 
@@ -781,13 +784,13 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public boolean insertLocalElement(LocalElement element) {
+    public List<CodeFragment> insertLocalElement(LocalElement element) {
         try {
             document.insertString(caretPosition, element.toString(), null);
-            return true;
+            return Collections.singletonList(element);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
-            return false;
+            return null;
         }
     }
 
@@ -799,13 +802,13 @@ public class JavaSourceHelper {
         return null;
     }
 
-    public boolean insertKeyword(Keyword keyword) {
+    public List<CodeFragment> insertKeyword(Keyword keyword) {
         try {
             document.insertString(caretPosition, keyword.toString(), null);
-            return true;
+            return Collections.singletonList(keyword);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
-            return false;
+            return null;
         }
     }
 
@@ -857,16 +860,16 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public boolean insertFieldAccess(FieldAccess fieldAccess) {
+    public List<CodeFragment> insertFieldAccess(FieldAccess fieldAccess) {
         MemberSelectTree cs = make.MemberSelect(make.Identifier(fieldAccess.getScope()),
                 fieldAccess.getName());
         try {
             document.insertString(caretPosition, cs.toString(), null);
             addImport(fieldAccess.getScope());
-            return true;
+            return Collections.singletonList(fieldAccess);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
-            return false;
+            return null;
         }
     }
 
@@ -886,13 +889,13 @@ public class JavaSourceHelper {
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
-    public boolean insertType(Type type) {
+    public List<CodeFragment> insertType(Type type) {
         try {
             document.insertString(caretPosition, type.toString(), null);
-            return true;
+            return Collections.singletonList(type);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
-            return false;
+            return null;
         }
     }
 

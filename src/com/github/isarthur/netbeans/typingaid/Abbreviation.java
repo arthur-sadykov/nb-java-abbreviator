@@ -49,11 +49,12 @@ public class Abbreviation {
         return startPosition + buffer.length();
     }
 
-    public void append(char character) {
+    public Abbreviation append(char character) {
         buffer.append(character);
+        return this;
     }
 
-    void reset() {
+    public void reset() {
         buffer.setLength(0);
         startPosition = -1;
     }
