@@ -90,7 +90,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
                 return;
             }
             if (result == null) {
-                context.setText(abbreviation.getContent() + " ", abbreviation.length() + 1);
+                context.setText(abbreviation.getContent() + " ", abbreviation.length() + 1); //NOI18N
             } else {
                 context.setText("", 0);
             }

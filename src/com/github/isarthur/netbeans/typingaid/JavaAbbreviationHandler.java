@@ -21,12 +21,14 @@ import com.github.isarthur.netbeans.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.typingaid.codefragment.MethodCall;
 import com.github.isarthur.netbeans.typingaid.codefragment.Type;
+import com.github.isarthur.netbeans.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.typingaid.ui.GenerateCodePanel;
 import com.github.isarthur.netbeans.typingaid.ui.PopupUtil;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.swing.SwingUtilities;
@@ -55,17 +57,23 @@ public class JavaAbbreviationHandler {
         String abbreviationContent = abbreviation.getContent();
         helper.setTypedAbbreviation(abbreviationContent);
         helper.collectLocalElements(abbreviation.getStartPosition());
-        if (abbreviation.getContent().contains(".")) {
+        if (abbreviation.getContent().contains(".")) { //NOI18N
             String scopeAbbreviation = abbreviationContent.substring(0, abbreviationContent.indexOf('.'));
             String nameAbbreviation = abbreviationContent.substring(abbreviationContent.indexOf('.') + 1);
             List<Element> elements = helper.getElementsByAbbreviation(scopeAbbreviation);
             if (!elements.isEmpty()) {
-                List<MethodCall> methodCalls =
-                        helper.findMethodCalls(elements, nameAbbreviation);
-                List<MethodCall> staticMethodCalls =
-                        helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
-                List<FieldAccess> fieldAccesses =
-                        helper.findFieldAccesses(scopeAbbreviation, nameAbbreviation);
+                List<MethodCall> methodCalls = Collections.emptyList();
+                if (Settings.getSettingForMethodInvocation()) {
+                    methodCalls = helper.findMethodCalls(elements, nameAbbreviation);
+                }
+                List<MethodCall> staticMethodCalls = Collections.emptyList();
+                if (Settings.getSettingForStaticMethodInvocation()) {
+                    staticMethodCalls = helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
+                }
+                List<FieldAccess> fieldAccesses = Collections.emptyList();
+                if (Settings.getSettingForStaticFieldAccess()) {
+                    fieldAccesses = helper.findFieldAccesses(scopeAbbreviation, nameAbbreviation);
+                }
                 int matchesCount = methodCalls.size() + staticMethodCalls.size() + fieldAccesses.size();
                 switch (matchesCount) {
                     case 0: {
@@ -90,10 +98,14 @@ public class JavaAbbreviationHandler {
                     }
                 }
             } else {
-                List<MethodCall> staticMethodCalls =
-                        helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
-                List<FieldAccess> fieldAccesses =
-                        helper.findFieldAccesses(scopeAbbreviation, nameAbbreviation);
+                List<MethodCall> staticMethodCalls = Collections.emptyList();
+                if (Settings.getSettingForStaticMethodInvocation()) {
+                    staticMethodCalls = helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
+                }
+                List<FieldAccess> fieldAccesses = Collections.emptyList();
+                if (Settings.getSettingForStaticFieldAccess()) {
+                    fieldAccesses = helper.findFieldAccesses(scopeAbbreviation, nameAbbreviation);
+                }
                 int matchesCount = staticMethodCalls.size() + fieldAccesses.size();
                 switch (matchesCount) {
                     case 0: {
@@ -117,8 +129,10 @@ public class JavaAbbreviationHandler {
             }
         } else {
             if (helper.isMemberSelection()) {
-                List<MethodCall> chainedMethodCalls =
-                        helper.findChainedMethodCalls(abbreviationContent);
+                List<MethodCall> chainedMethodCalls = Collections.emptyList();
+                if (Settings.getSettingForChainedMethodInvocation()) {
+                    chainedMethodCalls = helper.findChainedMethodCalls(abbreviationContent);
+                }
                 int matchesCount = chainedMethodCalls.size();
                 switch (matchesCount) {
                     case 0: {
@@ -134,10 +148,22 @@ public class JavaAbbreviationHandler {
                     }
                 }
             } else {
-                List<LocalElement> localElements = helper.findLocalElements(abbreviationContent);
-                List<MethodCall> localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
-                List<Type> types = helper.findTypes(abbreviationContent);
-                Keyword keyword = helper.findKeyword(abbreviationContent);
+                List<LocalElement> localElements = Collections.emptyList();
+                if (Settings.getSettingForLocalVariable()) {
+                    localElements = helper.findLocalElements(abbreviationContent);
+                }
+                List<MethodCall> localMethodCalls = Collections.emptyList();
+                if (Settings.getSettingForLocalMethodInvocation()) {
+                    localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
+                }
+                List<Type> types = Collections.emptyList();;
+                if (Settings.getSettingForType()) {
+                    types = helper.findTypes(abbreviationContent);
+                }
+                Keyword keyword = null;
+                if (Settings.getSettingForKeyword()) {
+                    keyword = helper.findKeyword(abbreviationContent);
+                }
                 int matchesCount = localElements.size() + localMethodCalls.size() + types.size()
                         + (keyword == null ? 0 : 1);
                 switch (matchesCount) {

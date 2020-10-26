@@ -55,52 +55,52 @@ public class ConstantDataManager {
 
     static {
         ABBREVIATION_TO_KEYWORD = new HashMap<>();
-        ABBREVIATION_TO_KEYWORD.put("ab", "abstract");
-        ABBREVIATION_TO_KEYWORD.put("as", "assert");
-        ABBREVIATION_TO_KEYWORD.put("b", "boolean");
-        ABBREVIATION_TO_KEYWORD.put("br", "break");
-        ABBREVIATION_TO_KEYWORD.put("by", "byte");
-        ABBREVIATION_TO_KEYWORD.put("c", "char");
-        ABBREVIATION_TO_KEYWORD.put("ca", "case");
-        ABBREVIATION_TO_KEYWORD.put("cl", "class");
-        ABBREVIATION_TO_KEYWORD.put("co", "continue");
-        ABBREVIATION_TO_KEYWORD.put("d", "double");
-        ABBREVIATION_TO_KEYWORD.put("de", "default");
-        ABBREVIATION_TO_KEYWORD.put("el", "else");
-        ABBREVIATION_TO_KEYWORD.put("en", "enum");
-        ABBREVIATION_TO_KEYWORD.put("ex", "extends");
-        ABBREVIATION_TO_KEYWORD.put("f", "false");
-        ABBREVIATION_TO_KEYWORD.put("fi", "final");
-        ABBREVIATION_TO_KEYWORD.put("fl", "float");
-        ABBREVIATION_TO_KEYWORD.put("fy", "finally");
-        ABBREVIATION_TO_KEYWORD.put("i", "int");
-        ABBREVIATION_TO_KEYWORD.put("im", "implements");
-        ABBREVIATION_TO_KEYWORD.put("in", "interface");
-        ABBREVIATION_TO_KEYWORD.put("io", "instanceof");
-        ABBREVIATION_TO_KEYWORD.put("it", "import");
-        ABBREVIATION_TO_KEYWORD.put("l", "long");
-        ABBREVIATION_TO_KEYWORD.put("n", "null");
-        ABBREVIATION_TO_KEYWORD.put("na", "native");
-        ABBREVIATION_TO_KEYWORD.put("o", "Object");
-        ABBREVIATION_TO_KEYWORD.put("pa", "package");
-        ABBREVIATION_TO_KEYWORD.put("pr", "private");
-        ABBREVIATION_TO_KEYWORD.put("pro", "protected");
-        ABBREVIATION_TO_KEYWORD.put("pu", "public");
-        ABBREVIATION_TO_KEYWORD.put("re", "return");
-        ABBREVIATION_TO_KEYWORD.put("s", "String");
-        ABBREVIATION_TO_KEYWORD.put("sf", "strictfp");
-        ABBREVIATION_TO_KEYWORD.put("sh", "short");
-        ABBREVIATION_TO_KEYWORD.put("st", "static");
-        ABBREVIATION_TO_KEYWORD.put("su", "super");
-        ABBREVIATION_TO_KEYWORD.put("sw", "switch");
-        ABBREVIATION_TO_KEYWORD.put("sy", "synchronized");
-        ABBREVIATION_TO_KEYWORD.put("t", "true");
-        ABBREVIATION_TO_KEYWORD.put("th", "this");
-        ABBREVIATION_TO_KEYWORD.put("tr", "transient");
-        ABBREVIATION_TO_KEYWORD.put("tw", "throw");
-        ABBREVIATION_TO_KEYWORD.put("ts", "throws");
-        ABBREVIATION_TO_KEYWORD.put("v", "void");
-        ABBREVIATION_TO_KEYWORD.put("vo", "volatile");
-        ABBREVIATION_TO_KEYWORD.put("wh", "while");
+        ABBREVIATION_TO_KEYWORD.put("ab", "abstract"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("as", "assert"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("b", "boolean"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("br", "break"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("by", "byte"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("c", "char"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("ca", "case"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("cl", "class"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("co", "continue"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("d", "double"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("de", "default"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("el", "else"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("en", "enum"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("ex", "extends"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("f", "false"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("fi", "final"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("fl", "float"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("fy", "finally"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("i", "int"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("im", "implements"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("in", "interface"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("io", "instanceof"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("it", "import"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("l", "long"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("n", "null"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("na", "native"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("o", "Object"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("pa", "package"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("pr", "private"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("pro", "protected"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("pu", "public"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("re", "return"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("s", "String"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("sf", "strictfp"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("sh", "short"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("st", "static"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("su", "super"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("sw", "switch"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("sy", "synchronized"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("t", "true"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("th", "this"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("tr", "transient"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("tw", "throw"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("ts", "throws"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("v", "void"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("vo", "volatile"); //NOI18N
+        ABBREVIATION_TO_KEYWORD.put("wh", "while"); //NOI18N
     }
 }

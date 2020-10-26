@@ -311,39 +311,13 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "}");
     }
 
-    public void testWhenMethodInvocationIsPartOfArithmeticBinaryExpressionThenSuggestRightSideOfStatementWithoutSemicolon()
-            throws IOException {
-        doAbbreviationInsert(
-                "bn.cpa",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        int codePoint = 123 + |;\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        int codePoint = 123 + ;\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("int codePoint = 123 + branchName.codePointAt(123);"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        int codePoint = 123 + branchName.codePointAt(123);\n"
-                + "    }\n"
-                + "}");
-    }
-
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
         String text = code.substring(0, caretOffset) + code.substring(caretOffset + 1);
         editor.setText(text);
         editor.setCaretPosition(caretOffset);
-        try (OutputStream out = testFile.getOutputStream(); Writer writer = new OutputStreamWriter(out)) {
+        try ( OutputStream out = testFile.getOutputStream();  Writer writer = new OutputStreamWriter(out)) {
             writer.append(text);
         }
         abbreviation.setStartPosition(caretOffset);
