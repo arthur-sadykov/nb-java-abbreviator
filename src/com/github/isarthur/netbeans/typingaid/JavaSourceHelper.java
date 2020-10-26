@@ -658,10 +658,18 @@ public class JavaSourceHelper {
                 TreeFactory.create(currentPath, methodCall, copy, this).insert(null);
             });
             modificationResult.commit();
-            if (!modificationResult.getModifiedFileObjects().isEmpty()) {
-            }
             return !modificationResult.getModifiedFileObjects().isEmpty() ? Collections.singletonList(methodCall) : null;
         } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            return null;
+        }
+    }
+
+    public List<CodeFragment> insertChainedMethodCall(MethodCall methodCall) {
+        try {
+            document.insertString(caretPosition, methodCall.toString(), null);
+            return Collections.singletonList(methodCall);
+        } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
             return null;
         }

@@ -18,6 +18,7 @@ package com.github.isarthur.netbeans.typingaid.codefragment;
 import com.github.isarthur.netbeans.typingaid.JavaSourceHelper;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.Tree;
 import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.Element;
@@ -62,13 +63,18 @@ public class MethodCall implements CodeFragment {
 
     @Override
     public String toString() {
-        StatementTree methodCall;
+        Tree methodCall;
         if (helper.isMethodReturnVoid(method)) {
             methodCall = helper.createVoidMethodCall(this);
             return methodCall.toString();
         } else {
-            methodCall = helper.createMethodCallWithReturnValue(this);
-            return methodCall.toString() + ";";
+            if (scope == null) {
+                methodCall = helper.createMethodCallWithoutReturnValue(this);
+                return methodCall.toString();
+            } else {
+                methodCall = helper.createMethodCallWithReturnValue(this);
+                return methodCall.toString() + ";"; //NOI18N
+            }
         }
     }
 }

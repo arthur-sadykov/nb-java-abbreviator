@@ -22,11 +22,7 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
-import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.WorkingCopy;
-import org.netbeans.api.lexer.TokenHierarchy;
-import org.netbeans.api.lexer.TokenId;
-import org.netbeans.api.lexer.TokenSequence;
 
 /**
  *
@@ -60,15 +56,10 @@ public class MethodInvocation extends InsertableExpressionTree {
                 return;
             }
             expression = Utilities.createExpression(expression, methodCall);
-            TokenHierarchy<?> th = copy.getTokenHierarchy();
-            TokenSequence<?> ts = th.tokenSequence();
-            ts.move(helper.getCaretPosition());
-            skipNextWhitespaces(ts);
-            TokenId id = ts.token().id();
             methodInvocationTree = make.insertMethodInvocationArgument(
                     methodInvocationTree,
                     insertIndex,
-                    make.Identifier(expression + ((id == JavaTokenId.COMMA) ? ", " : ")")));
+                    make.Identifier(expression));
         } else {
             if (!methodInvocationTree.getArguments().isEmpty()) {
                 methodInvocationTree = make.removeMethodInvocationArgument(methodInvocationTree, insertIndex);
@@ -79,14 +70,5 @@ public class MethodInvocation extends InsertableExpressionTree {
                     methodCall);
         }
         copy.rewrite(current, methodInvocationTree);
-    }
-
-    private void skipNextWhitespaces(TokenSequence<?> ts) {
-        while (ts.moveNext()) {
-            TokenId id = ts.token().id();
-            if (id != JavaTokenId.WHITESPACE) {
-                break;
-            }
-        }
     }
 }

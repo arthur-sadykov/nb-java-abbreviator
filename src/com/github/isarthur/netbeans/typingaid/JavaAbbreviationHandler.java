@@ -139,7 +139,7 @@ public class JavaAbbreviationHandler {
                         return null;
                     }
                     case 1: {
-                        return helper.insertMethodCall(chainedMethodCalls.get(0));
+                        return helper.insertChainedMethodCall(chainedMethodCalls.get(0));
                     }
                     default: {
                         ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodCalls);
@@ -156,7 +156,7 @@ public class JavaAbbreviationHandler {
                 if (Settings.getSettingForLocalMethodInvocation()) {
                     localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
                 }
-                List<Type> types = Collections.emptyList();;
+                List<Type> types = Collections.emptyList();
                 if (Settings.getSettingForType()) {
                     types = helper.findTypes(abbreviationContent);
                 }

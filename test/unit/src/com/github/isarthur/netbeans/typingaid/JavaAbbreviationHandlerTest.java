@@ -311,6 +311,81 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "}");
     }
 
+    public void testShouldSuggestCompletionForChainedMethodInvocation() throws IOException {
+        doAbbreviationInsert(
+                "ie",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        branchName.|;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        branchName.isEmpty();\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("isEmpty()"));
+        assertTestFileText(
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        branchName.;\n"
+                + "    }\n"
+                + "}");
+    }
+
+    public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsMethodArgument() throws IOException {
+        doAbbreviationInsert(
+                "ie",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        System.out.println(branchName.|);\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        System.out.println(branchName.isEmpty());\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("isEmpty()"));
+        assertTestFileText(
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        System.out.println(branchName.);\n"
+                + "    }\n"
+                + "}");
+    }
+
+    public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsVariableInitializer() throws IOException {
+        doAbbreviationInsert(
+                "ie",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean empty = branchName.|;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean empty = branchName.isEmpty();\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("isEmpty()"));
+        assertTestFileText(
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean empty = branchName.;\n"
+                + "    }\n"
+                + "}");
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

@@ -176,7 +176,12 @@ public class GenerateCodePanel extends javax.swing.JPanel {
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
         if (codeFragment instanceof MethodCall) {
-            helper.insertMethodCall((MethodCall) codeFragment);
+            MethodCall methodCall = (MethodCall) codeFragment;
+            if (methodCall.getScope() == null) {
+                helper.insertChainedMethodCall(methodCall);
+            } else {
+                helper.insertMethodCall(methodCall);
+            }
         } else if (codeFragment instanceof FieldAccess) {
             helper.insertFieldAccess((FieldAccess) codeFragment);
         } else if (codeFragment instanceof LocalElement) {
