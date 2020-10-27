@@ -163,12 +163,11 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                 if (Settings.getSettingForExternalType()) {
                     types = helper.findTypes(abbreviationContent);
                 }
-                Keyword keyword = null;
+                List<Keyword> keywords = Collections.emptyList();
                 if (Settings.getSettingForKeyword()) {
-                    keyword = helper.findKeyword(abbreviationContent);
+                    keywords = helper.findKeywords(abbreviationContent);
                 }
-                int matchesCount = localElements.size() + localMethodCalls.size() + types.size()
-                        + (keyword == null ? 0 : 1);
+                int matchesCount = localElements.size() + localMethodCalls.size() + types.size() + keywords.size();
                 switch (matchesCount) {
                     case 0: {
                         return null;
@@ -181,7 +180,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         } else if (!types.isEmpty()) {
                             return helper.insertType(types.get(0));
                         } else {
-                            return keyword != null ? helper.insertKeyword(keyword) : null;
+                            return helper.insertKeyword(keywords.get(0));
                         }
                     }
                     default: {
@@ -189,9 +188,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         codeFragments.addAll(localElements);
                         codeFragments.addAll(localMethodCalls);
                         codeFragments.addAll(types);
-                        if (keyword != null) {
-                            codeFragments.add(keyword);
-                        }
+                        codeFragments.addAll(keywords);
                         showPopup(codeFragments);
                         return codeFragments;
                     }

@@ -825,12 +825,18 @@ public class JavaSourceHelper {
         }
     }
 
-    Keyword findKeyword(String keywordAbbreviation) {
-        String keyword = ConstantDataManager.ABBREVIATION_TO_KEYWORD.get(keywordAbbreviation);
-        if (keyword != null) {
-            return new Keyword(keyword);
-        }
-        return null;
+    List<Keyword> findKeywords(String keywordAbbreviation) {
+        List<Keyword> result = new ArrayList<>();
+        ConstantDataManager.KEYWORDS.forEach(keyword -> {
+            String abbreviation = getElementAbbreviation(keyword);
+            if (keywordAbbreviation.equals(abbreviation)) {
+                result.add(new Keyword(keyword));
+            }
+        });
+        Collections.sort(result, (keyword1, keyword2) -> {
+            return keyword1.toString().compareTo(keyword2.toString());
+        });
+        return Collections.unmodifiableList(result);
     }
 
     public List<CodeFragment> insertKeyword(Keyword keyword) {

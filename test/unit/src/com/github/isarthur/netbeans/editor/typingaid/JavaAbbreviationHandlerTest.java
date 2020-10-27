@@ -15,6 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
+import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,6 +54,20 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
     private JEditorPane editor;
     private FileObject testFile;
     private Document document;
+    private boolean keyword;
+    private boolean externalType;
+    private boolean internalType;
+    private boolean resourceVariable;
+    private boolean exceptionParameter;
+    private boolean enumConstant;
+    private boolean parameter;
+    private boolean field;
+    private boolean localVariable;
+    private boolean staticFieldAccess;
+    private boolean localMethodInvocation;
+    private boolean chainedMethodInvocation;
+    private boolean staticMethodInvocation;
+    private boolean methodInvocation;
 
     public JavaAbbreviationHandlerTest(String testName) {
         super(testName);
@@ -83,6 +98,24 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
         JavaSourceHelper helper = new JavaSourceHelper(editor);
         handler = new JavaAbbreviationHandler(helper);
         abbreviation = JavaAbbreviation.getInstance();
+        getSettings();
+    }
+
+    private void getSettings() {
+        methodInvocation = Settings.getSettingForMethodInvocation();
+        staticMethodInvocation = Settings.getSettingForStaticMethodInvocation();
+        chainedMethodInvocation = Settings.getSettingForChainedMethodInvocation();
+        localMethodInvocation = Settings.getSettingForLocalMethodInvocation();
+        staticFieldAccess = Settings.getSettingForStaticFieldAccess();
+        localVariable = Settings.getSettingForLocalVariable();
+        field = Settings.getSettingForField();
+        parameter = Settings.getSettingForParameter();
+        enumConstant = Settings.getSettingForEnumConstant();
+        exceptionParameter = Settings.getSettingForExceptionParameter();
+        resourceVariable = Settings.getSettingForResourceVariable();
+        internalType = Settings.getSettingForInternalType();
+        externalType = Settings.getSettingForExternalType();
+        keyword = Settings.getSettingForKeyword();
     }
 
     public void testShouldSuggestCompletionForParameterName() throws IOException {
@@ -135,6 +168,38 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Arrays.asList("applicationContext"));
+    }
+
+    public void testShouldSuggestCompletionForKeyword() throws IOException {
+        Settings.setSettingForMethodInvocation(false);
+        Settings.setSettingForStaticMethodInvocation(false);
+        Settings.setSettingForChainedMethodInvocation(false);
+        Settings.setSettingForLocalMethodInvocation(false);
+        Settings.setSettingForStaticFieldAccess(false);
+        Settings.setSettingForLocalVariable(false);
+        Settings.setSettingForField(false);
+        Settings.setSettingForParameter(false);
+        Settings.setSettingForEnumConstant(false);
+        Settings.setSettingForExceptionParameter(false);
+        Settings.setSettingForResourceVariable(false);
+        Settings.setSettingForInternalType(false);
+        Settings.setSettingForExternalType(false);
+        Settings.setSettingForKeyword(true);
+        doAbbreviationInsert(
+                "s",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String applicationContext = \"\";\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String applicationContext = \"\";\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("short", "static", "strictfp", "synchronized", "switch", "super"));
     }
 
     public void testShouldSuggestCompletionForMultipleMatchesOfLocalElements() throws IOException {
@@ -415,6 +480,24 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         abbreviation.reset();
+        revertSettings();
+    }
+
+    private void revertSettings() {
+        Settings.setSettingForMethodInvocation(methodInvocation);
+        Settings.setSettingForStaticMethodInvocation(staticMethodInvocation);
+        Settings.setSettingForChainedMethodInvocation(chainedMethodInvocation);
+        Settings.setSettingForLocalMethodInvocation(localMethodInvocation);
+        Settings.setSettingForStaticFieldAccess(staticFieldAccess);
+        Settings.setSettingForLocalVariable(localVariable);
+        Settings.setSettingForField(field);
+        Settings.setSettingForParameter(parameter);
+        Settings.setSettingForEnumConstant(enumConstant);
+        Settings.setSettingForExceptionParameter(exceptionParameter);
+        Settings.setSettingForResourceVariable(resourceVariable);
+        Settings.setSettingForInternalType(internalType);
+        Settings.setSettingForExternalType(externalType);
+        Settings.setSettingForKeyword(keyword);
     }
 
     @Override
