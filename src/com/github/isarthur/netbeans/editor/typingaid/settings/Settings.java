@@ -29,7 +29,13 @@ public class Settings {
     private static final String LOCAL_METHOD_INVOCATION = "localMethodInvocation"; //NOI18N
     private static final String STATIC_FIELD_ACCESS = "staticFieldAccess"; //NOI18N
     private static final String LOCAL_VARIABLE = "localVariable"; //NOI18N
-    private static final String TYPE = "type"; //NOI18N
+    private static final String FIELD = "field"; //NOI18N
+    private static final String PARAMETER = "parameter"; //NOI18N
+    private static final String ENUM_CONSTANT = "enumConstant"; //NOI18N
+    private static final String EXCEPTION_PARAMETER = "exceptionParameter"; //NOI18N
+    private static final String RESOURCE_VARIABLE = "resourceVariable"; //NOI18N
+    private static final String INTERNAL_TYPE = "internalType"; //NOI18N
+    private static final String EXTERNAL_TYPE = "externalType"; //NOI18N
     private static final String KEYWORD = "keyword"; //NOI18N
 
     private Settings() {
@@ -83,12 +89,60 @@ public class Settings {
         NbPreferences.forModule(Settings.class).putBoolean(LOCAL_VARIABLE, localVariable);
     }
 
-    public static boolean getSettingForType() {
-        return NbPreferences.forModule(Settings.class).getBoolean(TYPE, true);
+    public static boolean getSettingForField() {
+        return NbPreferences.forModule(Settings.class).getBoolean(FIELD, true);
     }
 
-    public static void setSettingForType(boolean type) {
-        NbPreferences.forModule(Settings.class).putBoolean(TYPE, type);
+    public static void setSettingForField(boolean field) {
+        NbPreferences.forModule(Settings.class).putBoolean(FIELD, field);
+    }
+
+    public static boolean getSettingForParameter() {
+        return NbPreferences.forModule(Settings.class).getBoolean(PARAMETER, true);
+    }
+
+    public static void setSettingForParameter(boolean parameter) {
+        NbPreferences.forModule(Settings.class).putBoolean(PARAMETER, parameter);
+    }
+
+    public static boolean getSettingForEnumConstant() {
+        return NbPreferences.forModule(Settings.class).getBoolean(ENUM_CONSTANT, true);
+    }
+
+    public static void setSettingForEnumConstant(boolean enumConstant) {
+        NbPreferences.forModule(Settings.class).putBoolean(ENUM_CONSTANT, enumConstant);
+    }
+
+    public static boolean getSettingForExceptionParameter() {
+        return NbPreferences.forModule(Settings.class).getBoolean(EXCEPTION_PARAMETER, true);
+    }
+
+    public static void setSettingForExceptionParameter(boolean exceptionParameter) {
+        NbPreferences.forModule(Settings.class).putBoolean(EXCEPTION_PARAMETER, exceptionParameter);
+    }
+
+    public static boolean getSettingForResourceVariable() {
+        return NbPreferences.forModule(Settings.class).getBoolean(RESOURCE_VARIABLE, true);
+    }
+
+    public static void setSettingForResourceVariable(boolean resourceVariable) {
+        NbPreferences.forModule(Settings.class).putBoolean(RESOURCE_VARIABLE, resourceVariable);
+    }
+
+    public static boolean getSettingForInternalType() {
+        return NbPreferences.forModule(Settings.class).getBoolean(INTERNAL_TYPE, true);
+    }
+
+    public static void setSettingForInternalType(boolean type) {
+        NbPreferences.forModule(Settings.class).putBoolean(INTERNAL_TYPE, type);
+    }
+
+    public static boolean getSettingForExternalType() {
+        return NbPreferences.forModule(Settings.class).getBoolean(EXTERNAL_TYPE, true);
+    }
+
+    public static void setSettingForExternalType(boolean type) {
+        NbPreferences.forModule(Settings.class).putBoolean(EXTERNAL_TYPE, type);
     }
 
     public static boolean getSettingForKeyword() {

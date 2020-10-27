@@ -23,6 +23,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodCall;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
+import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.CompilationUnitTree;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -148,24 +150,44 @@ public class JavaSourceHelper {
                 Scope scope = treeUtilities.scopeFor(position);
                 Iterable<? extends Element> localMembersAndVars =
                         elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
-                            return (!e.getSimpleName().toString().equals(ConstantDataManager.THIS)
+                            return (!elements.isDeprecated(e))
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
                                     && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
-                                    && (e.getKind() == ElementKind.ENUM_CONSTANT
-                                    || e.getKind() == ElementKind.EXCEPTION_PARAMETER
-                                    || e.getKind() == ElementKind.FIELD
-                                    || e.getKind() == ElementKind.LOCAL_VARIABLE
-                                    || e.getKind() == ElementKind.PARAMETER
-                                    || e.getKind() == ElementKind.RESOURCE_VARIABLE
-                                    || e.getKind() == ElementKind.CLASS
-                                    || e.getKind() == ElementKind.INTERFACE
-                                    || e.getKind() == ElementKind.ENUM)
-                                    && !elements.isDeprecated(e));
+                                    && getRequiredLocalElementKinds().contains(e.getKind());
                         });
                 localMembersAndVars.forEach(localElements::add);
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+    }
+
+    private Set<ElementKind> getRequiredLocalElementKinds() {
+        Set<ElementKind> result = new HashSet<>(Byte.SIZE);
+        if (Settings.getSettingForLocalVariable()) {
+            result.add(ElementKind.LOCAL_VARIABLE);
+        }
+        if (Settings.getSettingForField()) {
+            result.add(ElementKind.FIELD);
+        }
+        if (Settings.getSettingForParameter()) {
+            result.add(ElementKind.PARAMETER);
+        }
+        if (Settings.getSettingForEnumConstant()) {
+            result.add(ElementKind.ENUM_CONSTANT);
+        }
+        if (Settings.getSettingForExceptionParameter()) {
+            result.add(ElementKind.EXCEPTION_PARAMETER);
+        }
+        if (Settings.getSettingForResourceVariable()) {
+            result.add(ElementKind.RESOURCE_VARIABLE);
+        }
+        if (Settings.getSettingForInternalType()) {
+            result.add(ElementKind.CLASS);
+            result.add(ElementKind.INTERFACE);
+            result.add(ElementKind.ENUM);
+        }
+        return Collections.unmodifiableSet(result);
     }
 
     public ExpressionStatementTree createVoidMethodCall(MethodCall methodCall) {

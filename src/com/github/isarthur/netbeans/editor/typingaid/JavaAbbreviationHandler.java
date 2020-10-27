@@ -160,7 +160,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
                 }
                 List<Type> types = Collections.emptyList();
-                if (Settings.getSettingForType()) {
+                if (Settings.getSettingForExternalType()) {
                     types = helper.findTypes(abbreviationContent);
                 }
                 Keyword keyword = null;

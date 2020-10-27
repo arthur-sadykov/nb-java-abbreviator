@@ -42,10 +42,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
-              <Component id="completionForPanel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
-          </Group>
+          <Component id="completionForPanel" min="-2" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -72,10 +69,16 @@
                       <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="staticFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="typeCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="internalTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="fieldCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="parameterCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="enumConstantCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="exceptionParameterCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="resourceVariableCheckBox" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="13" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -94,7 +97,19 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="typeCheckBox" min="-2" max="-2" attributes="0"/>
+                  <Component id="fieldCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="parameterCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="enumConstantCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="exceptionParameterCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="resourceVariableCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="internalTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
@@ -163,14 +178,14 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="localVariableCheckBoxActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JCheckBox" name="typeCheckBox">
+        <Component class="javax.swing.JCheckBox" name="externalTypeCheckBox">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.typeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.externalTypeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="typeCheckBoxActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="externalTypeCheckBoxActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JCheckBox" name="keywordCheckBox">
@@ -181,6 +196,66 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="keywordCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="internalTypeCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.internalTypeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="internalTypeCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="fieldCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.fieldCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fieldCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="parameterCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.parameterCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="parameterCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="enumConstantCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.enumConstantCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="enumConstantCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="exceptionParameterCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.exceptionParameterCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exceptionParameterCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="resourceVariableCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.resourceVariableCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="resourceVariableCheckBoxActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>
