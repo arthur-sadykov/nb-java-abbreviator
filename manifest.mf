@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
 OpenIDE-Module: com.github.isarthur.netbeans.editor.typingaid
-OpenIDE-Module-Specification-Version: 3.2.0
+OpenIDE-Module-Specification-Version: 3.2.1
 OpenIDE-Module-Localizing-Bundle: com/github/isarthur/netbeans/editor/typingaid/Bundle.properties
 AutoUpdate-Show-In-Client: true

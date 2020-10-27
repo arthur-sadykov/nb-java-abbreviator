@@ -811,6 +811,7 @@ public class JavaSourceHelper {
         localElements
                 .stream()
                 .filter(element -> getElementAbbreviation(element.getSimpleName().toString()).equals(abbreviation))
+                .filter(distinctByKey(Element::getSimpleName))
                 .forEach(element -> result.add(new LocalElement(element)));
         return Collections.unmodifiableList(result);
     }
@@ -920,8 +921,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    private <T> Predicate<T> distinctByKey(
-            Function<? super T, ?> keyExtractor) {
+    private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }

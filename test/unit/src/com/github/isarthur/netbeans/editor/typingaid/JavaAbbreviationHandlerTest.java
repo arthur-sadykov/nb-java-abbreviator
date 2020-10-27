@@ -451,6 +451,34 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "}");
     }
 
+    public void shouldNotAddDuplicatesToTheResultingList() throws IOException {
+        doAbbreviationInsert(
+                "nos",
+                "public class Test {\n"
+                + "    private int numberOfSpaces;\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String numberOfSpaces = \"\";\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    private int numberOfSpaces;\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String numberOfSpaces = \"\";\n"
+                + "        numberOfSpaces\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("numberOfSpaces"));
+        assertTestFileText(
+                "public class Test {\n"
+                + "    private int numberOfSpaces;\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String numberOfSpaces = \"\";\n"
+                + "        \n"
+                + "    }\n"
+                + "}");
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
