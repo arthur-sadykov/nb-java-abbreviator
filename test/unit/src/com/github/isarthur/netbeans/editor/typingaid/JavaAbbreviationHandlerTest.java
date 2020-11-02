@@ -451,6 +451,47 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "}");
     }
 
+    public void testShouldSuggestCompletionForParameterNameBasedOnType() throws IOException {
+        doAbbreviationInsert(
+                "sb",
+                "public class Test {\n"
+                + "    public void test(StringBuilder |) {\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(StringBuilder stringBuilder) {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("stringBuilder"));
+        assertTestFileText(
+                "public class Test {\n"
+                + "    public void test(StringBuilder ) {\n"
+                + "    }\n"
+                + "}");
+    }
+
+    public void testShouldSuggestCompletionForFieldNameBasedOnType() throws IOException {
+        doAbbreviationInsert(
+                "sb",
+                "public class Test {\n"
+                + "    private StringBuilder |;\n"
+                + "    public void test() {\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    private StringBuilder stringBuilder;\n"
+                + "    public void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("stringBuilder"));
+        assertTestFileText(
+                "public class Test {\n"
+                + "    private StringBuilder ;\n"
+                + "    public void test() {\n"
+                + "    }\n"
+                + "}");
+    }
+
     public void shouldNotAddDuplicatesToTheResultingList() throws IOException {
         doAbbreviationInsert(
                 "nos",

@@ -22,6 +22,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodCall;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.Name;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.editor.typingaid.ui.GenerateCodePanel;
@@ -151,46 +152,64 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     }
                 }
             } else {
-                List<LocalElement> localElements = Collections.emptyList();
-                if (Settings.getSettingForLocalVariable()) {
-                    localElements = helper.findLocalElements(abbreviationContent);
-                }
-                List<MethodCall> localMethodCalls = Collections.emptyList();
-                if (Settings.getSettingForLocalMethodInvocation()) {
-                    localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
-                }
-                List<Type> types = Collections.emptyList();
-                if (Settings.getSettingForExternalType()) {
-                    types = helper.findTypes(abbreviationContent);
-                }
-                List<Keyword> keywords = Collections.emptyList();
-                if (Settings.getSettingForKeyword()) {
-                    keywords = helper.findKeywords(abbreviationContent);
-                }
-                int matchesCount = localElements.size() + localMethodCalls.size() + types.size() + keywords.size();
-                switch (matchesCount) {
-                    case 0: {
-                        return null;
-                    }
-                    case 1: {
-                        if (!localElements.isEmpty()) {
-                            return helper.insertLocalElement(localElements.get(0));
-                        } else if (!localMethodCalls.isEmpty()) {
-                            return helper.insertMethodCall(localMethodCalls.get(0));
-                        } else if (!types.isEmpty()) {
-                            return helper.insertType(types.get(0));
-                        } else {
-                            return helper.insertKeyword(keywords.get(0));
+                if (helper.isFieldOrParameterName()) {
+                    List<Name> variableNames = helper.findVariableNames(abbreviationContent);
+                    int matchesCount = variableNames.size();
+                    switch (matchesCount) {
+                        case 0: {
+                            return null;
+                        }
+                        case 1: {
+                            return helper.insertName(variableNames.get(0));
+                        }
+                        default: {
+                            List<CodeFragment> codeFragments = new ArrayList<>(variableNames);
+                            showPopup(codeFragments);
+                            return codeFragments;
                         }
                     }
-                    default: {
-                        List<CodeFragment> codeFragments = new ArrayList<>();
-                        codeFragments.addAll(localElements);
-                        codeFragments.addAll(localMethodCalls);
-                        codeFragments.addAll(types);
-                        codeFragments.addAll(keywords);
-                        showPopup(codeFragments);
-                        return codeFragments;
+                } else {
+                    List<LocalElement> localElements = Collections.emptyList();
+                    if (Settings.getSettingForLocalVariable()) {
+                        localElements = helper.findLocalElements(abbreviationContent);
+                    }
+                    List<MethodCall> localMethodCalls = Collections.emptyList();
+                    if (Settings.getSettingForLocalMethodInvocation()) {
+                        localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
+                    }
+                    List<Type> types = Collections.emptyList();
+                    if (Settings.getSettingForExternalType()) {
+                        types = helper.findTypes(abbreviationContent);
+                    }
+                    List<Keyword> keywords = Collections.emptyList();
+                    if (Settings.getSettingForKeyword()) {
+                        keywords = helper.findKeywords(abbreviationContent);
+                    }
+                    int matchesCount = localElements.size() + localMethodCalls.size() + types.size() + keywords.size();
+                    switch (matchesCount) {
+                        case 0: {
+                            return null;
+                        }
+                        case 1: {
+                            if (!localElements.isEmpty()) {
+                                return helper.insertLocalElement(localElements.get(0));
+                            } else if (!localMethodCalls.isEmpty()) {
+                                return helper.insertMethodCall(localMethodCalls.get(0));
+                            } else if (!types.isEmpty()) {
+                                return helper.insertType(types.get(0));
+                            } else {
+                                return helper.insertKeyword(keywords.get(0));
+                            }
+                        }
+                        default: {
+                            List<CodeFragment> codeFragments = new ArrayList<>();
+                            codeFragments.addAll(localElements);
+                            codeFragments.addAll(localMethodCalls);
+                            codeFragments.addAll(types);
+                            codeFragments.addAll(keywords);
+                            showPopup(codeFragments);
+                            return codeFragments;
+                        }
                     }
                 }
             }

@@ -21,6 +21,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodCall;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.Name;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
@@ -217,19 +218,31 @@ public class JavaSourceHelper {
                 initializer = make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString());
             }
         }
-        String variableName = getVariableName(methodCall, workingCopy);
+        Set<String> variableNames = getVariableNames(methodCall.getMethod().getReturnType());
+        String variableName = variableNames.isEmpty() ? "" : variableNames.iterator().next(); //NOI18N
         VariableTree variableTree = make.Variable(modifiers, variableName, type, initializer);
         return variableTree;
     }
 
-    private String getVariableName(MethodCall methodCall, WorkingCopy workingCopy) {
-        Iterator<String> names = Utilities.varNamesSuggestions(methodCall.getMethod().getReturnType(),
-                ElementKind.LOCAL_VARIABLE, Collections.emptySet(), null, null, workingCopy.getTypes(),
-                workingCopy.getElements(), localElements, CodeStyle.getDefault(document)).iterator();
-        if (names.hasNext()) {
-            return names.next();
+    private Set<String> getVariableNames(TypeMirror type) {
+        Set<String> names = new HashSet<>();
+        Iterator<String> nameSuggestions = Utilities.varNamesSuggestions(type, ElementKind.FIELD,
+                Collections.emptySet(), null, null, workingCopy.getTypes(), workingCopy.getElements(), localElements,
+                CodeStyle.getDefault(document)).iterator();
+        while (nameSuggestions.hasNext()) {
+            names.add(nameSuggestions.next());
         }
-        return "";
+        return Collections.unmodifiableSet(names);
+    }
+
+    List<Name> findVariableNames(String abbreviation) {
+        List<Name> names = new ArrayList<>();
+        TypeMirror type = getTypeInContext();
+        Set<String> variableNames = getVariableNames(type);
+        variableNames.stream()
+                .filter(name -> getElementAbbreviation(name).equals(abbreviation))
+                .forEach(name -> names.add(new Name(name)));
+        return Collections.unmodifiableList(names);
     }
 
     private boolean isTypeElement(Element element) {
@@ -629,6 +642,12 @@ public class JavaSourceHelper {
                 }
                 break;
             }
+            case VARIABLE: {
+                VariableTree variableTree = (VariableTree) currentTree;
+                Tree type = variableTree.getType();
+                TreePath path = TreePath.getPath(currentPath, type);
+                return trees.getElement(path).asType();
+            }
             default: {
                 return null;
             }
@@ -858,6 +877,14 @@ public class JavaSourceHelper {
         return currentPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT;
     }
 
+    boolean isFieldOrParameterName() {
+        TreePath currentPath = treeUtilities.pathFor(caretPosition);
+        if (currentPath == null) {
+            return false;
+        }
+        return currentPath.getLeaf().getKind() == Tree.Kind.VARIABLE;
+    }
+
     List<MethodCall> findChainedMethodCalls(String methodAbbreviation) {
         TypeMirror type = getTypeInContext();
         if (type == null) {
@@ -930,6 +957,16 @@ public class JavaSourceHelper {
         try {
             document.insertString(caretPosition, type.toString(), null);
             return Collections.singletonList(type);
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+            return null;
+        }
+    }
+
+    public List<CodeFragment> insertName(Name name) {
+        try {
+            document.insertString(caretPosition, name.toString(), null);
+            return Collections.singletonList(name);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
             return null;
