@@ -542,7 +542,12 @@ public class JavaSourceHelper {
 
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
         validate();
-        List<? extends Element> members = element.getEnclosedElements();
+        Iterable<? extends Element> members;
+        try {
+            members = element.getEnclosedElements();
+        } catch (AssertionError error) {
+            return Collections.emptyList();
+        }
         List<ExecutableElement> methods = ElementFilter.methodsIn(members);
         methods = filterStaticMethods(methods);
         return Collections.unmodifiableList(methods);
@@ -664,9 +669,14 @@ public class JavaSourceHelper {
     private List<ExecutableElement> getAllMethodsInClassAndSuperclasses(Element element) {
         validate();
         TypeMirror typeMirror = element.asType();
-        Iterable<? extends Element> members = elementUtilities.getMembers(typeMirror, (e, t) -> {
-            return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
-        });
+        Iterable<? extends Element> members;
+        try {
+            members = elementUtilities.getMembers(typeMirror, (e, t) -> {
+                return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
+            });
+        } catch (AssertionError error) {
+            return Collections.emptyList();
+        }
         List<ExecutableElement> methods = new ArrayList<>();
         Iterator<? extends Element> iterator = members.iterator();
         while (iterator.hasNext()) {
