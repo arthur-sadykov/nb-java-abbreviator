@@ -52,7 +52,7 @@ public class TreeFactory {
     }
 
     public static InsertableTree create(TreePath currentPath, MethodCall methodCall, WorkingCopy copy,
-            JavaSourceHelper helper) {
+            JavaSourceHelper helper, int position) {
         requireNonNull(currentPath, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "currentPath")); //NOI18N
         requireNonNull(methodCall, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "methodCall")); //NOI18N
         requireNonNull(copy, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "copy")); //NOI18N
@@ -94,43 +94,43 @@ public class TreeFactory {
             case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
             case XOR:
             case XOR_ASSIGNMENT:
-                return new InsertableExpressionTree(currentPath, methodCall, copy, helper);
+                return new InsertableExpressionTree(currentPath, methodCall, copy, helper, position);
             case ASSERT:
-                return new Assert(currentPath, methodCall, copy, helper);
+                return new Assert(currentPath, methodCall, copy, helper, position);
             case ASSIGNMENT:
-                return new Assignment(currentPath, methodCall, copy, helper);
+                return new Assignment(currentPath, methodCall, copy, helper, position);
             case BLOCK:
-                return new Block(currentPath, methodCall, copy, helper);
+                return new Block(currentPath, methodCall, copy, helper, position);
             case DO_WHILE_LOOP:
-                return new DoWhile(currentPath, methodCall, copy, helper);
+                return new DoWhile(currentPath, methodCall, copy, helper, position);
             case ENHANCED_FOR_LOOP:
-                return new EnhancedFor(currentPath, methodCall, copy, helper);
+                return new EnhancedFor(currentPath, methodCall, copy, helper, position);
             case EXPRESSION_STATEMENT:
-                return new ExpressionStatement(currentPath, methodCall, copy, helper);
+                return new ExpressionStatement(currentPath, methodCall, copy, helper, position);
             case FOR_LOOP:
-                return new For(currentPath, methodCall, copy, helper);
+                return new For(currentPath, methodCall, copy, helper, position);
             case IF:
-                return new If(currentPath, methodCall, copy, helper);
+                return new If(currentPath, methodCall, copy, helper, position);
             case LAMBDA_EXPRESSION:
-                return new LambdaExpression(currentPath, methodCall, copy, helper);
+                return new LambdaExpression(currentPath, methodCall, copy, helper, position);
             case METHOD_INVOCATION:
-                return new MethodInvocation(currentPath, methodCall, copy, helper);
+                return new MethodInvocation(currentPath, methodCall, copy, helper, position);
             case NEW_CLASS:
-                return new NewClass(currentPath, methodCall, copy, helper);
+                return new NewClass(currentPath, methodCall, copy, helper, position);
             case PARENTHESIZED:
-                return new Parenthesized(currentPath, methodCall, copy, helper);
+                return new Parenthesized(currentPath, methodCall, copy, helper, position);
             case RETURN:
-                return new Return(currentPath, methodCall, copy, helper);
+                return new Return(currentPath, methodCall, copy, helper, position);
             case SYNCHRONIZED:
-                return new Synchronized(currentPath, methodCall, copy, helper);
+                return new Synchronized(currentPath, methodCall, copy, helper, position);
             case SWITCH:
-                return new Switch(currentPath, methodCall, copy, helper);
+                return new Switch(currentPath, methodCall, copy, helper, position);
             case VARIABLE:
-                return new Variable(currentPath, methodCall, copy, helper);
+                return new Variable(currentPath, methodCall, copy, helper, position);
             case WHILE_LOOP:
-                return new While(currentPath, methodCall, copy, helper);
+                return new While(currentPath, methodCall, copy, helper, position);
             default:
-                return NullInsertableTree.getInstance(currentPath, methodCall, copy, helper);
+                return NullInsertableTree.getInstance(currentPath, methodCall, copy, helper, position);
         }
     }
 }

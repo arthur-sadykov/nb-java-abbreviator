@@ -32,8 +32,8 @@ public class Assert extends InsertableStatementTree {
 
     private final AssertTree current;
 
-    public Assert(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Assert(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (AssertTree) currentPath.getLeaf();
     }
 
@@ -44,9 +44,9 @@ public class Assert extends InsertableStatementTree {
         }
         String expression = current.getCondition().toString();
         String detail = current.getDetail().toString();
-        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(this.methodCall);
-        expression = Utilities.createExpression(expression, methodCall);
-        detail = Utilities.createExpression(detail, methodCall);
+        ExpressionTree methodInvocation = helper.createMethodCallWithoutReturnValue(this.methodCall);
+        expression = Utilities.createExpression(expression, methodInvocation);
+        detail = Utilities.createExpression(detail, methodInvocation);
         AssertTree assertTree;
         if (tree != null) {
             if (!expression.isEmpty()) {
@@ -59,12 +59,12 @@ public class Assert extends InsertableStatementTree {
             }
         } else {
             if (!expression.isEmpty()) {
-                assertTree = make.Assert(methodCall, current.getDetail());
+                assertTree = make.Assert(methodInvocation, current.getDetail());
             } else {
                 if (detail.isEmpty()) {
                     return;
                 }
-                assertTree = make.Assert(current.getCondition(), methodCall);
+                assertTree = make.Assert(current.getCondition(), methodInvocation);
             }
         }
         parent.insert(assertTree);

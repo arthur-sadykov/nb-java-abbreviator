@@ -178,18 +178,18 @@ public class GenerateCodePanel extends javax.swing.JPanel {
         if (codeFragment instanceof MethodCall) {
             MethodCall methodCall = (MethodCall) codeFragment;
             if (methodCall.getScope() == null) {
-                helper.insertChainedMethodCall(methodCall);
+                helper.insertChainedMethodCall(methodCall, component.getCaretPosition());
             } else {
-                helper.insertMethodCall(methodCall);
+                helper.insertMethodCall(methodCall, component.getCaretPosition());
             }
         } else if (codeFragment instanceof FieldAccess) {
-            helper.insertFieldAccess((FieldAccess) codeFragment);
+            helper.insertFieldAccess((FieldAccess) codeFragment, component.getCaretPosition());
         } else if (codeFragment instanceof LocalElement) {
-            helper.insertLocalElement((LocalElement) codeFragment);
+            helper.insertLocalElement((LocalElement) codeFragment, component.getCaretPosition());
         } else if (codeFragment instanceof Keyword) {
-            helper.insertKeyword((Keyword) codeFragment);
+            helper.insertKeyword((Keyword) codeFragment, component.getCaretPosition());
         } else {
-            helper.insertType((Type) codeFragment);
+            helper.insertType((Type) codeFragment, component.getCaretPosition());
         }
     }
 

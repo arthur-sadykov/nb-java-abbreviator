@@ -31,7 +31,6 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.ModifiersTree;
@@ -54,6 +53,8 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -84,7 +85,6 @@ import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
-import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ui.ElementHeaders;
 import org.openide.util.Exceptions;
 
@@ -96,71 +96,12 @@ public class JavaSourceHelper {
 
     private final JTextComponent component;
     private final Document document;
-    private final List<Element> localElements;
-    private Types types;
-    private int caretPosition;
-    private TreeMaker make;
-    private WorkingCopy workingCopy;
-    private TreeUtilities treeUtilities;
-    private Trees trees;
-    private CompilationUnitTree compilationUnit;
-    private ElementUtilities elementUtilities;
-    private Elements elements;
     private String typedAbbreviation;
 
     public JavaSourceHelper(JTextComponent component) {
         requireNonNull(component, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "component"));
         this.component = component;
         this.document = component.getDocument();
-        this.localElements = new ArrayList<>();
-        this.caretPosition = -1;
-    }
-
-    public int getCaretPosition() {
-        return caretPosition;
-    }
-
-    private boolean isValid() {
-        return caretPosition != -1;
-    }
-
-    private void validate() {
-        if (!isValid()) {
-            throw new IllegalStateException(ConstantDataManager.SHOULD_SET_CARET_POSITION_AND_COLLECT_LOCAL_ELEMENTS);
-        }
-    }
-
-    void collectLocalElements(int position) {
-        if (position < 0 || position >= document.getLength()) {
-            throw new IllegalArgumentException(ConstantDataManager.INVALID_POSITION);
-        }
-        localElements.clear();
-        this.caretPosition = position;
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
-                this.workingCopy = copy;
-                types = workingCopy.getTypes();
-                trees = workingCopy.getTrees();
-                treeUtilities = workingCopy.getTreeUtilities();
-                compilationUnit = workingCopy.getCompilationUnit();
-                make = workingCopy.getTreeMaker();
-                elementUtilities = workingCopy.getElementUtilities();
-                elements = workingCopy.getElements();
-                Scope scope = treeUtilities.scopeFor(position);
-                Iterable<? extends Element> localMembersAndVars =
-                        elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
-                            return (!elements.isDeprecated(e))
-                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
-                                    && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
-                                    && getRequiredLocalElementKinds().contains(e.getKind());
-                        });
-                localMembersAndVars.forEach(localElements::add);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     private Set<ElementKind> getRequiredLocalElementKinds() {
@@ -192,53 +133,98 @@ public class JavaSourceHelper {
     }
 
     public ExpressionStatementTree createVoidMethodCall(MethodCall methodCall) {
-        MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
-                make.Identifier(methodCall.getMethod()), methodCall.getArguments());
-        if (methodCall.getScope() == null) {
-            return make.ExpressionStatement(methodInvocationTree);
+        AtomicReference<ExpressionStatementTree> expressionStatement = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeMaker make = copy.getTreeMaker();
+                MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
+                        make.Identifier(methodCall.getMethod()), methodCall.getArguments());
+                if (methodCall.getScope() == null) {
+                    expressionStatement.set(make.ExpressionStatement(methodInvocationTree));
+                } else {
+                    expressionStatement.set(make.ExpressionStatement(make.MemberSelect(
+                            make.Identifier(methodCall.getScope()), methodInvocationTree.toString())));
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return make.ExpressionStatement(
-                make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString()));
+        return expressionStatement.get();
     }
 
-    public VariableTree createMethodCallWithReturnValue(MethodCall methodCall) {
-        ModifiersTree modifiers = make.Modifiers(Collections.emptySet());
-        Tree type = make.Type(methodCall.getMethod().getReturnType());
-        MethodInvocationTree methodInvocationTree = make.MethodInvocation(
-                Collections.emptyList(),
-                make.Identifier(methodCall.getMethod()),
-                methodCall.getArguments());
-        ExpressionTree initializer;
-        if (methodCall.getScope() == null) {
-            initializer = methodInvocationTree;
-        } else {
-            if (isTypeElement(methodCall.getScope())) {
-                initializer = make.MemberSelect(make.QualIdent(methodCall.getScope()), methodInvocationTree.toString());
-            } else {
-                initializer = make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString());
-            }
+    public VariableTree createMethodCallWithReturnValue(MethodCall methodCall, int position) {
+        AtomicReference<VariableTree> variable = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeMaker make = copy.getTreeMaker();
+                ModifiersTree modifiers = make.Modifiers(Collections.emptySet());
+                Tree type = make.Type(methodCall.getMethod().getReturnType());
+                MethodInvocationTree methodInvocationTree = make.MethodInvocation(
+                        Collections.emptyList(),
+                        make.Identifier(methodCall.getMethod()),
+                        methodCall.getArguments());
+                ExpressionTree initializer;
+                if (methodCall.getScope() == null) {
+                    initializer = methodInvocationTree;
+                } else {
+                    if (isTypeElement(methodCall.getScope())) {
+                        initializer =
+                                make.MemberSelect(make.QualIdent(methodCall.getScope()), methodInvocationTree.toString());
+                    } else {
+                        initializer =
+                                make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString());
+                    }
+                }
+                Set<String> variableNames = getVariableNames(methodCall.getMethod().getReturnType(), position);
+                String variableName = variableNames.isEmpty() ? "" : variableNames.iterator().next(); //NOI18N
+                variable.set(make.Variable(modifiers, variableName, type, initializer));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        Set<String> variableNames = getVariableNames(methodCall.getMethod().getReturnType());
-        String variableName = variableNames.isEmpty() ? "" : variableNames.iterator().next(); //NOI18N
-        VariableTree variableTree = make.Variable(modifiers, variableName, type, initializer);
-        return variableTree;
+        return variable.get();
     }
 
-    private Set<String> getVariableNames(TypeMirror type) {
+    private Set<String> getVariableNames(TypeMirror typeMirror, int position) {
         Set<String> names = new HashSet<>();
-        Iterator<String> nameSuggestions = Utilities.varNamesSuggestions(type, ElementKind.FIELD,
-                Collections.emptySet(), null, null, workingCopy.getTypes(), workingCopy.getElements(), localElements,
-                CodeStyle.getDefault(document)).iterator();
-        while (nameSuggestions.hasNext()) {
-            names.add(nameSuggestions.next());
+        try {
+            List<Element> localElements = new ArrayList<>();
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                Scope scope = treeUtilities.scopeFor(position);
+                Iterable<? extends Element> localMembersAndVars =
+                        elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                            return (!elements.isDeprecated(e))
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
+                                    && getRequiredLocalElementKinds().contains(e.getKind());
+                        });
+                localMembersAndVars.forEach(localElements::add);
+                Iterator<String> nameSuggestions = Utilities.varNamesSuggestions(typeMirror, ElementKind.FIELD,
+                        Collections.emptySet(), null, null, copy.getTypes(), copy.getElements(), localElements,
+                        CodeStyle.getDefault(document)).iterator();
+                while (nameSuggestions.hasNext()) {
+                    names.add(nameSuggestions.next());
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableSet(names);
     }
 
-    List<Name> findVariableNames(String abbreviation) {
+    List<Name> findVariableNames(String abbreviation, int position) {
         List<Name> names = new ArrayList<>();
-        TypeMirror type = getTypeInContext();
-        Set<String> variableNames = getVariableNames(type);
+        TypeMirror type = getTypeInContext(position);
+        Set<String> variableNames = getVariableNames(type, position);
         variableNames.stream()
                 .filter(name -> getElementAbbreviation(name).equals(abbreviation))
                 .forEach(name -> names.add(new Name(name)));
@@ -250,25 +236,55 @@ public class JavaSourceHelper {
     }
 
     public ExpressionTree createMethodCallWithoutReturnValue(MethodCall methodCall) {
-        MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
-                make.Identifier(methodCall.getMethod()), methodCall.getArguments());
-        if (methodCall.getScope() == null) {
-            return methodInvocationTree;
+        AtomicReference<ExpressionTree> expression = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeMaker make = copy.getTreeMaker();
+                MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
+                        make.Identifier(methodCall.getMethod()), methodCall.getArguments());
+                if (methodCall.getScope() == null) {
+                    expression.set(methodInvocationTree);
+                } else {
+                    expression.set(make.MemberSelect(make.Identifier(
+                            methodCall.getScope()), methodInvocationTree.toString()));
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return make.MemberSelect(make.Identifier(methodCall.getScope()), methodInvocationTree.toString());
+        return expression.get();
     }
 
-    List<Element> getElementsByAbbreviation(String abbreviation) throws IllegalArgumentException {
-        validate();
-        List<Element> elems = new ArrayList<>();
-        localElements.forEach(element -> {
+    List<Element> getElementsByAbbreviation(String abbreviation, int position) throws IllegalArgumentException {
+        List<Element> localElements = new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                Scope scope = treeUtilities.scopeFor(position);
+                Iterable<? extends Element> localMembersAndVars =
+                        elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                            return (!elements.isDeprecated(e))
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
+                                    && getRequiredLocalElementKinds().contains(e.getKind());
+                        });
+                localMembersAndVars.forEach(localElements::add);
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        localElements.removeIf(element -> {
             String elementName = element.getSimpleName().toString();
             String elementAbbreviation = getElementAbbreviation(elementName);
-            if (elementAbbreviation.equals(abbreviation)) {
-                elems.add(element);
-            }
+            return !elementAbbreviation.equals(abbreviation);
         });
-        return Collections.unmodifiableList(elems);
+        return Collections.unmodifiableList(localElements);
     }
 
     List<TypeElement> findTypeElementsByAbbreviationInSourcePath(String abbreviation) {
@@ -283,6 +299,7 @@ public class JavaSourceHelper {
         try {
             javaSource.runUserActionTask(compilationController -> {
                 moveStateToResolvedPhase(compilationController);
+                Elements elements = compilationController.getElements();
                 declaredTypes.forEach(type -> {
                     TypeElement typeElement = type.resolve(compilationController);
                     if (typeElement != null) {
@@ -326,60 +343,96 @@ public class JavaSourceHelper {
         return abbreviation.toString();
     }
 
-    private VariableElement instanceOf(String typeName, String name) {
-        TypeMirror type = type(typeName);
-        if (type == null) {
-            return null;
+    private VariableElement instanceOf(String typeName, String name, int position) {
+        AtomicReference<VariableElement> closest = new AtomicReference<>();
+        try {
+            List<Element> localElements = new ArrayList<>();
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                Types types = copy.getTypes();
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                Scope scope = treeUtilities.scopeFor(position);
+                Iterable<? extends Element> localMembersAndVars =
+                        elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                            return (!elements.isDeprecated(e))
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
+                                    && getRequiredLocalElementKinds().contains(e.getKind());
+                        });
+                localMembersAndVars.forEach(localElements::add);
+                TypeMirror type = type(typeName, position);
+                if (type == null) {
+                    return;
+                }
+                int distance = Integer.MAX_VALUE;
+                for (Element element : localElements) {
+                    if (VariableElement.class
+                            .isInstance(element)
+                            && !ConstantDataManager.ANGLED_ERROR.contentEquals(element.getSimpleName())
+                            && element.asType().getKind() != TypeKind.ERROR
+                            && types.isAssignable(element.asType(), type)) {
+                        if (name.isEmpty()) {
+                            closest.set((VariableElement) element);
+                            return;
+                        }
+                        int d = ElementHeaders.getDistance(element.getSimpleName().toString()
+                                .toLowerCase(), name.toLowerCase());
+                        if (isSameType(element.asType(), type, types)) {
+                            d -= 1000;
+                        }
+                        if (d < distance) {
+                            distance = d;
+                            closest.set((VariableElement) element);
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        VariableElement closest = null;
-        int distance = Integer.MAX_VALUE;
-        for (Element element : localElements) {
-            if (VariableElement.class
-                    .isInstance(element)
-                    && !ConstantDataManager.ANGLED_ERROR.contentEquals(element.getSimpleName())
-                    && element.asType().getKind() != TypeKind.ERROR
-                    && types.isAssignable(element.asType(), type)) {
-                if (name.isEmpty()) {
-                    return (VariableElement) element;
-                }
-                int d = ElementHeaders.getDistance(element.getSimpleName().toString()
-                        .toLowerCase(), name.toLowerCase());
-                if (isSameType(element.asType(), type, types)) {
-                    d -= 1000;
-                }
-                if (d < distance) {
-                    distance = d;
-                    closest = (VariableElement) element;
-                }
-            }
-        }
-        return closest;
+        return closest.get();
     }
 
-    private TypeMirror type(String typeName) {
-        String type = typeName.trim();
-        if (type.isEmpty()) {
-            return null;
-        }
-        Scope scope = treeUtilities.scopeFor(caretPosition);
-        TreePath currentPath = treeUtilities.pathFor(caretPosition);
-        if (currentPath == null) {
-            return null;
-        }
-        TypeElement enclosingClass = scope.getEnclosingClass();
-        SourcePositions[] sourcePositions = new SourcePositions[1];
-        StatementTree statement = treeUtilities.parseStatement("{" + type + " a;}", sourcePositions); //NOI18N
-        if (statement.getKind() == Tree.Kind.BLOCK) {
-            List<? extends StatementTree> statements = ((BlockTree) statement).getStatements();
-            if (!statements.isEmpty()) {
-                StatementTree variable = statements.get(0);
-                if (variable.getKind() == Tree.Kind.VARIABLE) {
-                    treeUtilities.attributeTree(statement, scope);
-                    return trees.getTypeMirror(new TreePath(currentPath, ((VariableTree) variable).getType()));
+    private TypeMirror type(String typeName, int position) {
+        AtomicReference<TypeMirror> typeMirror = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                Trees trees = copy.getTrees();
+                Scope scope = treeUtilities.scopeFor(position);
+                String type = typeName.trim();
+                if (type.isEmpty()) {
+                    return;
                 }
-            }
+                TreePath currentPath = treeUtilities.pathFor(position);
+                if (currentPath == null) {
+                    return;
+                }
+                TypeElement enclosingClass = scope.getEnclosingClass();
+                SourcePositions[] sourcePositions = new SourcePositions[1];
+                StatementTree statement = treeUtilities.parseStatement("{" + type + " a;}", sourcePositions); //NOI18N
+                if (statement.getKind() == Tree.Kind.BLOCK) {
+                    List<? extends StatementTree> statements = ((BlockTree) statement).getStatements();
+                    if (!statements.isEmpty()) {
+                        StatementTree variable = statements.get(0);
+                        if (variable.getKind() == Tree.Kind.VARIABLE) {
+                            treeUtilities.attributeTree(statement, scope);
+                            typeMirror.set(
+                                    trees.getTypeMirror(new TreePath(currentPath, ((VariableTree) variable).getType())));
+                        }
+                    }
+                }
+                typeMirror.set(treeUtilities.parseType(type, enclosingClass));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return treeUtilities.parseType(type, enclosingClass);
+        return typeMirror.get();
     }
 
     private boolean isSameType(TypeMirror t1, TypeMirror t2, Types types) {
@@ -463,85 +516,103 @@ public class JavaSourceHelper {
         return i;
     }
 
-    public int findInsertIndexInBlock(BlockTree blockTree) {
-        requireNonNull(blockTree, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "blockTree"));
-        List<? extends StatementTree> statements = blockTree.getStatements();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = statements.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                StatementTree currentStatement = statements.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                if (caretPosition < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                StatementTree previousStatement = statements.get(0);
-                long previousStartPosition = sourcePositions.getStartPosition(compilationUnit, previousStatement);
-                StatementTree currentStatement = statements.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                if (caretPosition < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < caretPosition) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    StatementTree previousStatement = statements.get(i - 1);
-                    long previousStartPosition = sourcePositions.getStartPosition(compilationUnit, previousStatement);
-                    StatementTree currentStatement = statements.get(i);
-                    long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                    if (i < size - 1) {
-                        if (caretPosition < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < caretPosition && caretPosition < currentStartPosition) {
-                            return i;
+    public int findInsertIndexInBlock(BlockTree blockTree, int position) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends StatementTree> statements = blockTree.getStatements();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = statements.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        StatementTree currentStatement = statements.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                        if (position < currentStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
                         }
-                    } else {
-                        if (caretPosition < currentStartPosition) {
-                            return size - 1;
+                    }
+                    case 2: {
+                        StatementTree previousStatement = statements.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousStatement);
+                        StatementTree currentStatement = statements.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                        if (position < previousStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else if (currentStartPosition < position) {
+                            insertIndex.set(size);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
                         }
-                        return size;
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            StatementTree previousStatement = statements.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousStatement);
+                            StatementTree currentStatement = statements.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                            if (i < size - 1) {
+                                if (position < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < position && position < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (position < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
                     }
                 }
-            }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return -1;
-    }
-
-    List<Element> getLocalElements() {
-        return Collections.unmodifiableList(localElements);
+        return insertIndex.get();
     }
 
     public void setTypedAbbreviation(String abbreviation) {
         this.typedAbbreviation = abbreviation;
     }
 
-    List<MethodCall> findStaticMethodCalls(String scopeAbbreviation, String methodAbbreviation) {
+    List<MethodCall> findStaticMethodCalls(String scopeAbbreviation, String methodAbbreviation, int position) {
         List<TypeElement> typeElements = findTypeElementsByAbbreviationInSourcePath(scopeAbbreviation);
         List<MethodCall> methodCalls = new ArrayList<>();
         typeElements.forEach(element -> {
             List<ExecutableElement> methods = getStaticMethodsInClass(element);
             methods = getMethodsByAbbreviation(methodAbbreviation, methods);
             methods.forEach(method -> {
-                List<ExpressionTree> arguments = evaluateMethodArguments(method);
-                methodCalls.add(new MethodCall(element, method, arguments, this));
+                List<ExpressionTree> arguments = evaluateMethodArguments(method, position);
+                methodCalls.add(new MethodCall(element, method, arguments, this, position));
             });
         });
         return Collections.unmodifiableList(methodCalls);
     }
 
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
-        validate();
         Iterable<? extends Element> members;
         try {
             members = element.getEnclosedElements();
@@ -562,126 +633,140 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    List<MethodCall> findMethodCalls(List<Element> elements, String methodAbbreviation) {
+    List<MethodCall> findMethodCalls(List<Element> elements, String methodAbbreviation, int position) {
         List<MethodCall> methodCalls = new ArrayList<>();
         elements.forEach(element -> {
-            List<ExecutableElement> methods = getMethodsInClassAndSuperclassesExceptStatic(element);
+            List<ExecutableElement> methods = getMethodsInClassAndSuperclassesExceptStatic(element, position);
             methods = getMethodsByAbbreviation(methodAbbreviation, methods);
             methods.forEach(method -> {
-                List<ExpressionTree> arguments = evaluateMethodArguments(method);
-                methodCalls.add(new MethodCall(element, method, arguments, this));
+                List<ExpressionTree> arguments = evaluateMethodArguments(method, position);
+                methodCalls.add(new MethodCall(element, method, arguments, this, position));
             });
         });
         return Collections.unmodifiableList(methodCalls);
     }
 
-    private TypeMirror getTypeInContext() {
-        TreePath currentPath = treeUtilities.pathFor(caretPosition);
-        if (currentPath == null) {
-            return null;
-        }
-        Tree currentTree = currentPath.getLeaf();
-        switch (currentTree.getKind()) {
-            case ASSIGNMENT: {
-                AssignmentTree assignmentTree = (AssignmentTree) currentTree;
-                ExpressionTree variable = assignmentTree.getVariable();
-                TreePath path = TreePath.getPath(currentPath, variable);
-                return trees.getElement(path).asType();
-            }
-            case BLOCK:
-            case PARENTHESIZED: {
-                return null;
-            }
-            case DIVIDE:
-            case EQUAL_TO:
-            case GREATER_THAN:
-            case GREATER_THAN_EQUAL:
-            case LESS_THAN:
-            case LESS_THAN_EQUAL:
-            case MINUS:
-            case MULTIPLY:
-            case NOT_EQUAL_TO:
-            case PLUS:
-            case REMAINDER: {
-                return types.getPrimitiveType(TypeKind.DOUBLE);
-            }
-            case AND:
-            case AND_ASSIGNMENT:
-            case ARRAY_ACCESS:
-            case BITWISE_COMPLEMENT:
-            case LEFT_SHIFT:
-            case LEFT_SHIFT_ASSIGNMENT:
-            case OR:
-            case OR_ASSIGNMENT:
-            case POSTFIX_DECREMENT:
-            case POSTFIX_INCREMENT:
-            case PREFIX_DECREMENT:
-            case PREFIX_INCREMENT:
-            case RIGHT_SHIFT:
-            case RIGHT_SHIFT_ASSIGNMENT:
-            case UNSIGNED_RIGHT_SHIFT:
-            case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
-            case XOR:
-            case XOR_ASSIGNMENT: {
-                return types.getPrimitiveType(TypeKind.LONG);
-            }
-            case CONDITIONAL_AND:
-            case CONDITIONAL_OR:
-            case LOGICAL_COMPLEMENT: {
-                return types.getPrimitiveType(TypeKind.BOOLEAN);
-            }
-            case MEMBER_SELECT: {
-                ExpressionTree expression = ((MemberSelectTree) currentTree).getExpression();
-                TreePath path = TreePath.getPath(currentPath, expression);
-                return trees.getTypeMirror(path);
-            }
-            case METHOD_INVOCATION: {
-                int insertIndex = findIndexOfCurrentArgumentInMethod((MethodInvocationTree) currentTree);
-                Element element = trees.getElement(currentPath);
-                if (element.getKind() == ElementKind.METHOD) {
-                    List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
-                    if (insertIndex != -1) {
-                        VariableElement parameter = parameters.get(insertIndex);
-                        return parameter.asType();
+    private TypeMirror getTypeInContext(int position) {
+        AtomicReference<TypeMirror> typeMirror = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                Trees trees = copy.getTrees();
+                Types types = copy.getTypes();
+                TreePath currentPath = treeUtilities.pathFor(position);
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                switch (currentTree.getKind()) {
+                    case ASSIGNMENT: {
+                        AssignmentTree assignmentTree = (AssignmentTree) currentTree;
+                        ExpressionTree variable = assignmentTree.getVariable();
+                        TreePath path = TreePath.getPath(currentPath, variable);
+                        typeMirror.set(trees.getElement(path).asType());
+                    }
+                    case BLOCK:
+                    case PARENTHESIZED: {
+                        return;
+                    }
+                    case DIVIDE:
+                    case EQUAL_TO:
+                    case GREATER_THAN:
+                    case GREATER_THAN_EQUAL:
+                    case LESS_THAN:
+                    case LESS_THAN_EQUAL:
+                    case MINUS:
+                    case MULTIPLY:
+                    case NOT_EQUAL_TO:
+                    case PLUS:
+                    case REMAINDER: {
+                        typeMirror.set(types.getPrimitiveType(TypeKind.DOUBLE));
+                    }
+                    case AND:
+                    case AND_ASSIGNMENT:
+                    case ARRAY_ACCESS:
+                    case BITWISE_COMPLEMENT:
+                    case LEFT_SHIFT:
+                    case LEFT_SHIFT_ASSIGNMENT:
+                    case OR:
+                    case OR_ASSIGNMENT:
+                    case POSTFIX_DECREMENT:
+                    case POSTFIX_INCREMENT:
+                    case PREFIX_DECREMENT:
+                    case PREFIX_INCREMENT:
+                    case RIGHT_SHIFT:
+                    case RIGHT_SHIFT_ASSIGNMENT:
+                    case UNSIGNED_RIGHT_SHIFT:
+                    case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+                    case XOR:
+                    case XOR_ASSIGNMENT: {
+                        typeMirror.set(types.getPrimitiveType(TypeKind.LONG));
+                    }
+                    case CONDITIONAL_AND:
+                    case CONDITIONAL_OR:
+                    case LOGICAL_COMPLEMENT: {
+                        typeMirror.set(types.getPrimitiveType(TypeKind.BOOLEAN));
+                    }
+                    case MEMBER_SELECT: {
+                        ExpressionTree expression = ((MemberSelectTree) currentTree).getExpression();
+                        TreePath path = TreePath.getPath(currentPath, expression);
+                        typeMirror.set(trees.getTypeMirror(path));
+                    }
+                    case METHOD_INVOCATION: {
+                        int insertIndex = findIndexOfCurrentArgumentInMethod((MethodInvocationTree) currentTree);
+                        Element element = trees.getElement(currentPath);
+                        if (element.getKind() == ElementKind.METHOD) {
+                            List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
+                            if (insertIndex != -1) {
+                                VariableElement parameter = parameters.get(insertIndex);
+                                typeMirror.set(parameter.asType());
+                            }
+                        }
+                        break;
+                    }
+                    case VARIABLE: {
+                        VariableTree variableTree = (VariableTree) currentTree;
+                        Tree type = variableTree.getType();
+                        TreePath path = TreePath.getPath(currentPath, type);
+                        typeMirror.set(trees.getElement(path).asType());
                     }
                 }
-                break;
-            }
-            case VARIABLE: {
-                VariableTree variableTree = (VariableTree) currentTree;
-                Tree type = variableTree.getType();
-                TreePath path = TreePath.getPath(currentPath, type);
-                return trees.getElement(path).asType();
-            }
-            default: {
-                return null;
-            }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return null;
+        return typeMirror.get();
     }
 
-    private List<ExecutableElement> getMethodsInClassAndSuperclassesExceptStatic(Element element) {
+    private List<ExecutableElement> getMethodsInClassAndSuperclassesExceptStatic(Element element, int position) {
         List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(element);
         methods = filterNonStaticMethods(methods);
         return Collections.unmodifiableList(methods);
     }
 
     private List<ExecutableElement> getAllMethodsInClassAndSuperclasses(Element element) {
-        validate();
-        TypeMirror typeMirror = element.asType();
-        Iterable<? extends Element> members;
-        try {
-            members = elementUtilities.getMembers(typeMirror, (e, t) -> {
-                return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
-            });
-        } catch (AssertionError error) {
-            return Collections.emptyList();
-        }
         List<ExecutableElement> methods = new ArrayList<>();
-        Iterator<? extends Element> iterator = members.iterator();
-        while (iterator.hasNext()) {
-            ExecutableElement method = (ExecutableElement) iterator.next();
-            methods.add(method);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                TypeMirror typeMirror = element.asType();
+                Iterable<? extends Element> members;
+                try {
+                    members = elementUtilities.getMembers(typeMirror, (e, t) -> {
+                        return e.getKind() == ElementKind.METHOD && !elements.isDeprecated(e);
+                    });
+                } catch (AssertionError error) {
+                    return;
+                }
+                members.forEach(member -> methods.add((ExecutableElement) member));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(methods);
     }
@@ -696,18 +781,17 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    public List<CodeFragment> insertMethodCall(MethodCall methodCall) {
+    public List<CodeFragment> insertMethodCall(MethodCall methodCall, int position) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         try {
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
                 moveStateToResolvedPhase(copy);
-                make = copy.getTreeMaker();
-                treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(caretPosition);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(position);
                 if (currentPath == null) {
                     return;
                 }
-                TreeFactory.create(currentPath, methodCall, copy, this).insert(null);
+                TreeFactory.create(currentPath, methodCall, copy, this, position).insert(null);
             });
             modificationResult.commit();
             return !modificationResult.getModifiedFileObjects().isEmpty() ? Collections.singletonList(methodCall) : null;
@@ -717,9 +801,9 @@ public class JavaSourceHelper {
         }
     }
 
-    public List<CodeFragment> insertChainedMethodCall(MethodCall methodCall) {
+    public List<CodeFragment> insertChainedMethodCall(MethodCall methodCall, int position) {
         try {
-            document.insertString(caretPosition, methodCall.toString(), null);
+            document.insertString(position, methodCall.toString(), null);
             return Collections.singletonList(methodCall);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -727,23 +811,25 @@ public class JavaSourceHelper {
         }
     }
 
-    List<MethodCall> findLocalMethodCalls(String methodAbbreviation) {
+    List<MethodCall> findLocalMethodCalls(String methodAbbreviation, int position) {
         List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses();
         methods = getMethodsByAbbreviation(methodAbbreviation, methods);
         List<MethodCall> methodCalls = new ArrayList<>();
         methods.forEach(method -> {
-            List<ExpressionTree> arguments = evaluateMethodArguments(method);
-            methodCalls.add(new MethodCall(null, method, arguments, this));
+            List<ExpressionTree> arguments = evaluateMethodArguments(method, position);
+            methodCalls.add(new MethodCall(null, method, arguments, this, position));
         });
         return Collections.unmodifiableList(methodCalls);
     }
 
     private List<ExecutableElement> getMethodsInCurrentAndSuperclasses() {
-        JavaSource js = getJavaSourceForDocument(document);
+        JavaSource javaSource = getJavaSourceForDocument(document);
         List<ExecutableElement> methods = new ArrayList<>();
         try {
-            js.runUserActionTask(controller -> {
+            javaSource.runUserActionTask(controller -> {
                 moveStateToResolvedPhase(controller);
+                Elements elements = controller.getElements();
+                ElementUtilities elementUtilities = controller.getElementUtilities();
                 TypeMirror typeMirror = getTypeMirrorOfCurrentClass();
                 if (typeMirror == null) {
                     return;
@@ -760,11 +846,22 @@ public class JavaSourceHelper {
     }
 
     private TypeMirror getTypeMirrorOfCurrentClass() {
-        Tree tree = compilationUnit.getTypeDecls().get(0);
-        if (tree.getKind() == Tree.Kind.CLASS) {
-            return trees.getTypeMirror(TreePath.getPath(compilationUnit, tree));
+        AtomicReference<TypeMirror> typeMirror = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                Tree tree = compilationUnit.getTypeDecls().get(0);
+                if (tree.getKind() == Tree.Kind.CLASS) {
+                    typeMirror.set(trees.getTypeMirror(TreePath.getPath(compilationUnit, tree)));
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return null;
+        return typeMirror.get();
     }
 
     private List<ExecutableElement> getMethodsByAbbreviation(String methodAbbreviation, List<ExecutableElement> methods) {
@@ -788,42 +885,51 @@ public class JavaSourceHelper {
         return abbreviation.toString();
     }
 
-    private List<ExpressionTree> evaluateMethodArguments(ExecutableElement method) {
-        List<? extends VariableElement> parameters = method.getParameters();
+    private List<ExpressionTree> evaluateMethodArguments(ExecutableElement method, int position) {
         List<ExpressionTree> arguments = new ArrayList<>();
-        parameters.stream()
-                .map(parameter -> parameter.asType())
-                .forEachOrdered(elementType -> {
-                    AtomicReference<IdentifierTree> identifierTree = new AtomicReference<>();
-                    VariableElement variableElement = instanceOf(elementType.toString(), "");
-                    if (variableElement != null) {
-                        identifierTree.set(make.Identifier(variableElement));
-                        arguments.add(identifierTree.get());
-                    } else {
-                        switch (elementType.getKind()) {
-                            case BOOLEAN:
-                                identifierTree.set(make.Identifier(ConstantDataManager.FALSE));
-                                break;
-                            case BYTE:
-                            case SHORT:
-                            case INT:
-                                identifierTree.set(make.Identifier(ConstantDataManager.INTEGER_ZERO_LITERAL));
-                                break;
-                            case LONG:
-                                identifierTree.set(make.Identifier(ConstantDataManager.LONG_ZERO_LITERAL));
-                                break;
-                            case FLOAT:
-                                identifierTree.set(make.Identifier(ConstantDataManager.FLOAT_ZERO_LITERAL));
-                                break;
-                            case DOUBLE:
-                                identifierTree.set(make.Identifier(ConstantDataManager.DOUBLE_ZERO_LITERAL));
-                                break;
-                            default:
-                                identifierTree.set(make.Identifier(ConstantDataManager.NULL));
-                        }
-                        arguments.add(identifierTree.get());
-                    }
-                });
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeMaker make = copy.getTreeMaker();
+                List<? extends VariableElement> parameters = method.getParameters();
+                parameters.stream()
+                        .map(parameter -> parameter.asType())
+                        .forEachOrdered(elementType -> {
+                            AtomicReference<IdentifierTree> identifierTree = new AtomicReference<>();
+                            VariableElement variableElement = instanceOf(elementType.toString(), "", position);
+                            if (variableElement != null) {
+                                identifierTree.set(make.Identifier(variableElement));
+                                arguments.add(identifierTree.get());
+                            } else {
+                                switch (elementType.getKind()) {
+                                    case BOOLEAN:
+                                        identifierTree.set(make.Identifier(ConstantDataManager.FALSE));
+                                        break;
+                                    case BYTE:
+                                    case SHORT:
+                                    case INT:
+                                        identifierTree.set(make.Identifier(ConstantDataManager.INTEGER_ZERO_LITERAL));
+                                        break;
+                                    case LONG:
+                                        identifierTree.set(make.Identifier(ConstantDataManager.LONG_ZERO_LITERAL));
+                                        break;
+                                    case FLOAT:
+                                        identifierTree.set(make.Identifier(ConstantDataManager.FLOAT_ZERO_LITERAL));
+                                        break;
+                                    case DOUBLE:
+                                        identifierTree.set(make.Identifier(ConstantDataManager.DOUBLE_ZERO_LITERAL));
+                                        break;
+                                    default:
+                                        identifierTree.set(make.Identifier(ConstantDataManager.NULL));
+                                }
+                                arguments.add(identifierTree.get());
+                            }
+                        });
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         return Collections.unmodifiableList(arguments);
     }
 
@@ -835,19 +941,41 @@ public class JavaSourceHelper {
         return document;
     }
 
-    List<LocalElement> findLocalElements(String abbreviation) {
+    List<LocalElement> findLocalElements(String abbreviation, int position) {
         List<LocalElement> result = new ArrayList<>();
-        localElements
-                .stream()
-                .filter(element -> getElementAbbreviation(element.getSimpleName().toString()).equals(abbreviation))
-                .filter(distinctByKey(Element::getSimpleName))
-                .forEach(element -> result.add(new LocalElement(element)));
+        try {
+            List<Element> localElements = new ArrayList<>();
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                Scope scope = treeUtilities.scopeFor(position);
+                Iterable<? extends Element> localMembersAndVars =
+                        elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                            return (!elements.isDeprecated(e))
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
+                                    && getRequiredLocalElementKinds().contains(e.getKind());
+                        });
+                localMembersAndVars.forEach(localElements::add);
+                localElements
+                        .stream()
+                        .filter(element ->
+                                getElementAbbreviation(element.getSimpleName().toString()).equals(abbreviation))
+                        .filter(distinctByKey(Element::getSimpleName))
+                        .forEach(element -> result.add(new LocalElement(element)));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         return Collections.unmodifiableList(result);
     }
 
-    public List<CodeFragment> insertLocalElement(LocalElement element) {
+    public List<CodeFragment> insertLocalElement(LocalElement element, int position) {
         try {
-            document.insertString(caretPosition, element.toString(), null);
+            document.insertString(position, element.toString(), null);
             return Collections.singletonList(element);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -869,9 +997,9 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public List<CodeFragment> insertKeyword(Keyword keyword) {
+    public List<CodeFragment> insertKeyword(Keyword keyword, int position) {
         try {
-            document.insertString(caretPosition, keyword.toString(), null);
+            document.insertString(position, keyword.toString(), null);
             return Collections.singletonList(keyword);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -879,38 +1007,71 @@ public class JavaSourceHelper {
         }
     }
 
-    boolean isMemberSelection() {
-        TreePath currentPath = treeUtilities.pathFor(caretPosition);
-        if (currentPath == null) {
-            return false;
+    boolean isMemberSelection(int position) {
+        AtomicBoolean memberSelection = new AtomicBoolean();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(position);
+                if (currentPath == null) {
+                    memberSelection.set(false);
+                } else {
+                    memberSelection.set(currentPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT);
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return currentPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT;
+        return memberSelection.get();
     }
 
-    boolean isFieldOrParameterName() {
-        TreePath currentPath = treeUtilities.pathFor(caretPosition);
-        if (currentPath == null) {
-            return false;
+    boolean isFieldOrParameterName(int position) {
+        AtomicBoolean memberSelection = new AtomicBoolean();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(position);
+                if (currentPath == null) {
+                    memberSelection.set(false);
+                } else {
+                    memberSelection.set(currentPath.getLeaf().getKind() == Tree.Kind.VARIABLE);
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return currentPath.getLeaf().getKind() == Tree.Kind.VARIABLE;
+        return memberSelection.get();
     }
 
-    List<MethodCall> findChainedMethodCalls(String methodAbbreviation) {
-        TypeMirror type = getTypeInContext();
-        if (type == null) {
-            return Collections.emptyList();
-        }
-        Element typeElement = types.asElement(type);
-        if (typeElement == null) {
-            return Collections.emptyList();
-        }
-        List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(typeElement);
-        methods = getMethodsByAbbreviation(methodAbbreviation, methods);
+    List<MethodCall> findChainedMethodCalls(String methodAbbreviation, int position) {
         List<MethodCall> methodCalls = new ArrayList<>();
-        methods.forEach(method -> {
-            List<ExpressionTree> arguments = evaluateMethodArguments(method);
-            methodCalls.add(new MethodCall(null, method, arguments, this));
-        });
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                Types types = copy.getTypes();
+                TypeMirror type = getTypeInContext(position);
+                if (type == null) {
+                    return;
+                }
+                Element typeElement = types.asElement(type);
+                if (typeElement == null) {
+                    return;
+                }
+                List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(typeElement);
+                methods = getMethodsByAbbreviation(methodAbbreviation, methods);
+                methods.forEach(method -> {
+                    List<ExpressionTree> arguments = evaluateMethodArguments(method, position);
+                    methodCalls.add(new MethodCall(null, method, arguments, this, position));
+                });
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         return Collections.unmodifiableList(methodCalls);
     }
 
@@ -935,17 +1096,27 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public List<CodeFragment> insertFieldAccess(FieldAccess fieldAccess) {
-        MemberSelectTree cs = make.MemberSelect(make.Identifier(fieldAccess.getScope()),
-                fieldAccess.getName());
+    public List<CodeFragment> insertFieldAccess(FieldAccess fieldAccess, int position) {
+        List<CodeFragment> fieldAccesses = new ArrayList<>();
         try {
-            document.insertString(caretPosition, cs.toString(), null);
-            addImport(fieldAccess.getScope());
-            return Collections.singletonList(fieldAccess);
-        } catch (BadLocationException ex) {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                TreeMaker make = copy.getTreeMaker();
+                MemberSelectTree cs = make.MemberSelect(make.Identifier(fieldAccess.getScope()), fieldAccess.getName());
+                try {
+                    document.insertString(position, cs.toString(), null);
+                    addImport(fieldAccess.getScope());
+                    fieldAccesses.add(fieldAccess);
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }).commit();
+        } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
-            return null;
         }
+        return Collections.unmodifiableList(fieldAccesses);
     }
 
     List<Type> findTypes(String typeAbbreviation) {
@@ -963,9 +1134,9 @@ public class JavaSourceHelper {
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
-    public List<CodeFragment> insertType(Type type) {
+    public List<CodeFragment> insertType(Type type, int position) {
         try {
-            document.insertString(caretPosition, type.toString(), null);
+            document.insertString(position, type.toString(), null);
             return Collections.singletonList(type);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -973,9 +1144,9 @@ public class JavaSourceHelper {
         }
     }
 
-    public List<CodeFragment> insertName(Name name) {
+    public List<CodeFragment> insertName(Name name, int position) {
         try {
-            document.insertString(caretPosition, name.toString(), null);
+            document.insertString(position, name.toString(), null);
             return Collections.singletonList(name);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
@@ -984,19 +1155,15 @@ public class JavaSourceHelper {
     }
 
     public void addImport(TypeElement type) {
-        List<? extends ImportTree> imports = compilationUnit.getImports();
-        for (ImportTree importTree : imports) {
-            if (importTree.getQualifiedIdentifier().toString().equals(type.getQualifiedName().toString())) {
-                return;
-            }
-        }
-        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToResolvedPhase(copy);
-                compilationUnit = copy.getCompilationUnit();
-                make = copy.getTreeMaker();
-                copy.rewrite(compilationUnit, make.addCompUnitImport(compilationUnit, make.Import(make.Identifier(type.getQualifiedName().toString()), false)));
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                TreeMaker make = copy.getTreeMaker();
+                copy.rewrite(compilationUnit, make.addCompUnitImport(
+                        compilationUnit,
+                        make.Import(make.Identifier(type.getQualifiedName().toString()), false)));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);

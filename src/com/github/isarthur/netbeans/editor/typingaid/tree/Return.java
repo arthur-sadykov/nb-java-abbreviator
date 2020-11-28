@@ -32,8 +32,8 @@ public class Return extends InsertableStatementTree {
 
     private final ReturnTree current;
 
-    public Return(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Return(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (ReturnTree) currentPath.getLeaf();
     }
 

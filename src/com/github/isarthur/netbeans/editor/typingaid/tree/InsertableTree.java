@@ -49,9 +49,10 @@ public abstract class InsertableTree {
     protected final JavaSourceHelper helper;
     protected final TreeUtilities treeUtilities;
     protected InsertableTree parent;
+    protected final int position;
 
-    protected InsertableTree(TreePath currentPath, MethodCall methodCall, WorkingCopy copy,
-            JavaSourceHelper helper) {
+    protected InsertableTree(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
         requireNonNull(currentPath, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "currentPath")); //NOI18N
         requireNonNull(methodCall, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "methodCall")); //NOI18N
         requireNonNull(copy, () -> String.format(ConstantDataManager.ARGUMENT_MUST_BE_NON_NULL, "copy")); //NOI18N
@@ -60,11 +61,12 @@ public abstract class InsertableTree {
         this.methodCall = methodCall;
         this.copy = copy;
         this.helper = helper;
+        this.position = position;
         make = copy.getTreeMaker();
         treeUtilities = copy.getTreeUtilities();
         TreePath parentPath = currentPath.getParentPath();
         if (parentPath != null) {
-            parent = TreeFactory.create(parentPath, methodCall, copy, helper);
+            parent = TreeFactory.create(parentPath, methodCall, copy, helper, position);
         }
     }
 

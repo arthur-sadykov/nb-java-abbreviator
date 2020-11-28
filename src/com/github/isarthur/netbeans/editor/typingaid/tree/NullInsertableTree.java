@@ -29,15 +29,15 @@ public class NullInsertableTree extends InsertableTree {
 
     private static NullInsertableTree instance;
 
-    private NullInsertableTree(TreePath currentPath, MethodCall methodCall, WorkingCopy copy,
-            JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    private NullInsertableTree(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
     }
 
     public static NullInsertableTree getInstance(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) {
+            JavaSourceHelper helper, int position) {
         if (instance == null) {
-            instance = new NullInsertableTree(currentPath, wrapper, copy, helper);
+            instance = new NullInsertableTree(currentPath, wrapper, copy, helper, position);
         }
         return instance;
     }

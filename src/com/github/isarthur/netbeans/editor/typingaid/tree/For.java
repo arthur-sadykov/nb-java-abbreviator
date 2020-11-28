@@ -32,8 +32,8 @@ public class For extends InsertableStatementTree {
 
     private final ForLoopTree current;
 
-    public For(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public For(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (ForLoopTree) currentPath.getLeaf();
     }
 
@@ -43,10 +43,10 @@ public class For extends InsertableStatementTree {
             return;
         }
         String expression = current.getCondition().toString();
-        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(this.methodCall);
+        ExpressionTree methodInvocation = helper.createMethodCallWithoutReturnValue(this.methodCall);
         ForLoopTree forLoopTree;
         if (tree != null) {
-            expression = Utilities.createExpression(expression, methodCall);
+            expression = Utilities.createExpression(expression, methodInvocation);
             forLoopTree =
                     make.ForLoop(
                             current.getInitializer(),
@@ -57,7 +57,7 @@ public class For extends InsertableStatementTree {
             forLoopTree =
                     make.ForLoop(
                             current.getInitializer(),
-                            methodCall,
+                            methodInvocation,
                             current.getUpdate(),
                             current.getStatement());
         }

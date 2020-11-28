@@ -32,9 +32,9 @@ public class MethodInvocation extends InsertableExpressionTree {
 
     private final MethodInvocationTree current;
 
-    public MethodInvocation(TreePath currentPath, MethodCall methodCall, WorkingCopy copy,
-            JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public MethodInvocation(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (MethodInvocationTree) currentPath.getLeaf();
     }
 

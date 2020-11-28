@@ -31,8 +31,8 @@ public class While extends InsertableStatementTree {
 
     private final WhileLoopTree current;
 
-    public While(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public While(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (WhileLoopTree) currentPath.getLeaf();
     }
 

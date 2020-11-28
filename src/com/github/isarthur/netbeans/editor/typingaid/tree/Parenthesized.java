@@ -32,8 +32,9 @@ public class Parenthesized extends InsertableExpressionTree {
 
     private final ParenthesizedTree current;
 
-    public Parenthesized(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Parenthesized(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (ParenthesizedTree) currentPath.getLeaf();
     }
 

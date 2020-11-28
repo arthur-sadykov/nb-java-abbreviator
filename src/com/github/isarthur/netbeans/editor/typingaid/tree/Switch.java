@@ -31,8 +31,8 @@ public class Switch extends InsertableStatementTree {
 
     private final SwitchTree current;
 
-    public Switch(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Switch(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (SwitchTree) currentPath.getLeaf();
     }
 

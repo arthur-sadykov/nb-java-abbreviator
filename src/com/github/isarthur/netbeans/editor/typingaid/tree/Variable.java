@@ -32,8 +32,9 @@ public class Variable extends InsertableStatementTree {
 
     private final VariableTree current;
 
-    public Variable(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Variable(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (VariableTree) currentPath.getLeaf();
     }
 

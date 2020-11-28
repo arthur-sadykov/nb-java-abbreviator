@@ -33,8 +33,8 @@ public class Block extends InsertableStatementTree {
 
     private final BlockTree current;
 
-    public Block(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Block(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (BlockTree) currentPath.getLeaf();
     }
 
@@ -42,7 +42,7 @@ public class Block extends InsertableStatementTree {
     public void insert(Tree tree) {
         BlockTree newBlockTree = current;
         if (tree != null) {
-            int insertIndex = helper.findInsertIndexInBlock(newBlockTree);
+            int insertIndex = helper.findInsertIndexInBlock(newBlockTree, position);
             if (insertIndex == -1) {
                 return;
             }
@@ -50,16 +50,16 @@ public class Block extends InsertableStatementTree {
             newBlockTree = make.removeBlockStatement(newBlockTree, insertIndex);
             newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, (StatementTree) tree);
         } else {
-            int insertIndex = helper.findInsertIndexInBlock(newBlockTree);
+            int insertIndex = helper.findInsertIndexInBlock(newBlockTree, position);
             if (insertIndex == -1) {
                 return;
             }
             if (helper.isMethodReturnVoid(methodCall.getMethod())) {
-                ExpressionStatementTree methodCall = helper.createVoidMethodCall(this.methodCall);
-                newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, methodCall);
+                ExpressionStatementTree methodInvocation = helper.createVoidMethodCall(methodCall);
+                newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, methodInvocation);
             } else {
-                VariableTree methodCall = helper.createMethodCallWithReturnValue(this.methodCall);
-                newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, methodCall);
+                VariableTree methodInvocation = helper.createMethodCallWithReturnValue(methodCall, position);
+                newBlockTree = make.insertBlockStatement(newBlockTree, insertIndex, methodInvocation);
             }
         }
         copy.rewrite(current, newBlockTree);

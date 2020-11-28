@@ -18,7 +18,6 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.JavaSourceHelper;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
 import java.util.Collections;
 import java.util.List;
@@ -36,14 +35,16 @@ public class MethodCall implements CodeFragment {
     private final List<ExpressionTree> arguments;
     private final int argumentsNumber;
     private final JavaSourceHelper helper;
+    private final int position;
 
     public MethodCall(Element element, ExecutableElement method, List<ExpressionTree> arguments,
-            JavaSourceHelper helper) {
+            JavaSourceHelper helper, int position) {
         this.scope = element;
         this.method = method;
         this.arguments = arguments;
         this.argumentsNumber = method.getParameters().size();
         this.helper = helper;
+        this.position = position;
     }
 
     public Element getScope() {
@@ -73,7 +74,7 @@ public class MethodCall implements CodeFragment {
                 methodCall = helper.createMethodCallWithoutReturnValue(this);
                 return methodCall.toString();
             } else {
-                methodCall = helper.createMethodCallWithReturnValue(this);
+                methodCall = helper.createMethodCallWithReturnValue(this, position);
                 return methodCall.toString() + ";"; //NOI18N
             }
         }

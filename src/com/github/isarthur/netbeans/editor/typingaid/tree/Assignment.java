@@ -32,8 +32,9 @@ public class Assignment extends InsertableExpressionTree {
 
     private final AssignmentTree current;
 
-    public Assignment(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public Assignment(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (AssignmentTree) currentPath.getLeaf();
     }
 
@@ -42,14 +43,14 @@ public class Assignment extends InsertableExpressionTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(this.methodCall);
+        ExpressionTree methodInvocation = helper.createMethodCallWithoutReturnValue(this.methodCall);
         AssignmentTree assignmentTree;
         if (tree != null) {
             String expression = current.getExpression().toString();
-            expression = Utilities.createExpression(expression, methodCall);
+            expression = Utilities.createExpression(expression, methodInvocation);
             assignmentTree = make.Assignment(current.getVariable(), make.Identifier(expression + ";"));
         } else {
-            assignmentTree = make.Assignment(current.getVariable(), methodCall);
+            assignmentTree = make.Assignment(current.getVariable(), methodInvocation);
         }
         parent.insert(assignmentTree);
     }

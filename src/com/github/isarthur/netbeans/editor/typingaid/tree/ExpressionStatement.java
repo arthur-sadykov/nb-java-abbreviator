@@ -32,8 +32,9 @@ public class ExpressionStatement extends InsertableStatementTree {
 
     private final ExpressionStatementTree current;
 
-    public ExpressionStatement(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public ExpressionStatement(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (ExpressionStatementTree) currentPath.getLeaf();
     }
 
@@ -42,14 +43,14 @@ public class ExpressionStatement extends InsertableStatementTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(this.methodCall);
+        ExpressionTree methodInvocation = helper.createMethodCallWithoutReturnValue(this.methodCall);
         ExpressionStatementTree expressionStatementTree;
         if (tree != null) {
             String expression = current.getExpression().toString();
-            expression = Utilities.createExpression(expression, methodCall);
+            expression = Utilities.createExpression(expression, methodInvocation);
             expressionStatementTree = make.ExpressionStatement(make.Identifier(expression));
         } else {
-            expressionStatementTree = make.ExpressionStatement(methodCall);
+            expressionStatementTree = make.ExpressionStatement(methodInvocation);
         }
         parent.insert(expressionStatementTree);
     }

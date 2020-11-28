@@ -32,8 +32,9 @@ public class EnhancedFor extends InsertableStatementTree {
 
     private final EnhancedForLoopTree current;
 
-    public EnhancedFor(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public EnhancedFor(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (EnhancedForLoopTree) currentPath.getLeaf();
     }
 
@@ -42,11 +43,11 @@ public class EnhancedFor extends InsertableStatementTree {
         if (parent == null) {
             return;
         }
-        ExpressionTree methodCall = helper.createMethodCallWithoutReturnValue(this.methodCall);
+        ExpressionTree methodInvocation = helper.createMethodCallWithoutReturnValue(this.methodCall);
         EnhancedForLoopTree enhancedForLoopTree;
         if (tree != null) {
             String expression = current.getExpression().toString();
-            expression = Utilities.createExpression(expression, methodCall);
+            expression = Utilities.createExpression(expression, methodInvocation);
             enhancedForLoopTree =
                     make.EnhancedForLoop(
                             current.getVariable(),
@@ -56,7 +57,7 @@ public class EnhancedFor extends InsertableStatementTree {
             enhancedForLoopTree =
                     make.EnhancedForLoop(
                             current.getVariable(),
-                            methodCall,
+                            methodInvocation,
                             current.getStatement());
         }
         parent.insert(enhancedForLoopTree);

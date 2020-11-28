@@ -60,19 +60,21 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
     public List<CodeFragment> process(Abbreviation abbreviation) {
         String abbreviationContent = abbreviation.getContent();
         helper.setTypedAbbreviation(abbreviationContent);
-        helper.collectLocalElements(abbreviation.getStartOffset());
         if (abbreviation.getContent().contains(".")) { //NOI18N
             String scopeAbbreviation = abbreviationContent.substring(0, abbreviationContent.indexOf('.'));
             String nameAbbreviation = abbreviationContent.substring(abbreviationContent.indexOf('.') + 1);
-            List<Element> elements = helper.getElementsByAbbreviation(scopeAbbreviation);
+            List<Element> elements = helper.getElementsByAbbreviation(scopeAbbreviation, abbreviation.getStartOffset());
             if (!elements.isEmpty()) {
                 List<MethodCall> methodCalls = Collections.emptyList();
                 if (Settings.getSettingForMethodInvocation()) {
-                    methodCalls = helper.findMethodCalls(elements, nameAbbreviation);
+                    methodCalls = helper.findMethodCalls(elements, nameAbbreviation, abbreviation.getStartOffset());
                 }
                 List<MethodCall> staticMethodCalls = Collections.emptyList();
                 if (Settings.getSettingForStaticMethodInvocation()) {
-                    staticMethodCalls = helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
+                    staticMethodCalls = helper.findStaticMethodCalls(
+                            scopeAbbreviation,
+                            nameAbbreviation,
+                            abbreviation.getStartOffset());
                 }
                 List<FieldAccess> fieldAccesses = Collections.emptyList();
                 if (Settings.getSettingForStaticFieldAccess()) {
@@ -85,11 +87,11 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     }
                     case 1: {
                         if (!methodCalls.isEmpty()) {
-                            return helper.insertMethodCall(methodCalls.get(0));
+                            return helper.insertMethodCall(methodCalls.get(0), abbreviation.getStartOffset());
                         } else if (!staticMethodCalls.isEmpty()) {
-                            return helper.insertMethodCall(staticMethodCalls.get(0));
+                            return helper.insertMethodCall(staticMethodCalls.get(0), abbreviation.getStartOffset());
                         } else {
-                            return helper.insertFieldAccess(fieldAccesses.get(0));
+                            return helper.insertFieldAccess(fieldAccesses.get(0), abbreviation.getStartOffset());
                         }
                     }
                     default: {
@@ -104,7 +106,10 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
             } else {
                 List<MethodCall> staticMethodCalls = Collections.emptyList();
                 if (Settings.getSettingForStaticMethodInvocation()) {
-                    staticMethodCalls = helper.findStaticMethodCalls(scopeAbbreviation, nameAbbreviation);
+                    staticMethodCalls = helper.findStaticMethodCalls(
+                            scopeAbbreviation,
+                            nameAbbreviation,
+                            abbreviation.getStartOffset());
                 }
                 List<FieldAccess> fieldAccesses = Collections.emptyList();
                 if (Settings.getSettingForStaticFieldAccess()) {
@@ -117,9 +122,9 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     }
                     case 1: {
                         if (!staticMethodCalls.isEmpty()) {
-                            return helper.insertMethodCall(staticMethodCalls.get(0));
+                            return helper.insertMethodCall(staticMethodCalls.get(0), abbreviation.getStartOffset());
                         } else {
-                            return helper.insertFieldAccess(fieldAccesses.get(0));
+                            return helper.insertFieldAccess(fieldAccesses.get(0), abbreviation.getStartOffset());
                         }
                     }
                     default: {
@@ -132,10 +137,11 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                 }
             }
         } else {
-            if (helper.isMemberSelection()) {
+            if (helper.isMemberSelection(abbreviation.getStartOffset())) {
                 List<MethodCall> chainedMethodCalls = Collections.emptyList();
                 if (Settings.getSettingForChainedMethodInvocation()) {
-                    chainedMethodCalls = helper.findChainedMethodCalls(abbreviationContent);
+                    chainedMethodCalls =
+                            helper.findChainedMethodCalls(abbreviationContent, abbreviation.getStartOffset());
                 }
                 int matchesCount = chainedMethodCalls.size();
                 switch (matchesCount) {
@@ -143,7 +149,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         return null;
                     }
                     case 1: {
-                        return helper.insertChainedMethodCall(chainedMethodCalls.get(0));
+                        return helper.insertChainedMethodCall(chainedMethodCalls.get(0), abbreviation.getStartOffset());
                     }
                     default: {
                         ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodCalls);
@@ -152,15 +158,16 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     }
                 }
             } else {
-                if (helper.isFieldOrParameterName()) {
-                    List<Name> variableNames = helper.findVariableNames(abbreviationContent);
+                if (helper.isFieldOrParameterName(abbreviation.getStartOffset())) {
+                    List<Name> variableNames =
+                            helper.findVariableNames(abbreviationContent, abbreviation.getStartOffset());
                     int matchesCount = variableNames.size();
                     switch (matchesCount) {
                         case 0: {
                             return null;
                         }
                         case 1: {
-                            return helper.insertName(variableNames.get(0));
+                            return helper.insertName(variableNames.get(0), abbreviation.getStartOffset());
                         }
                         default: {
                             List<CodeFragment> codeFragments = new ArrayList<>(variableNames);
@@ -171,11 +178,12 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                 } else {
                     List<LocalElement> localElements = Collections.emptyList();
                     if (Settings.getSettingForLocalVariable()) {
-                        localElements = helper.findLocalElements(abbreviationContent);
+                        localElements = helper.findLocalElements(abbreviationContent, abbreviation.getStartOffset());
                     }
                     List<MethodCall> localMethodCalls = Collections.emptyList();
                     if (Settings.getSettingForLocalMethodInvocation()) {
-                        localMethodCalls = helper.findLocalMethodCalls(abbreviationContent);
+                        localMethodCalls =
+                                helper.findLocalMethodCalls(abbreviationContent, abbreviation.getStartOffset());
                     }
                     List<Type> types = Collections.emptyList();
                     if (Settings.getSettingForExternalType()) {
@@ -192,13 +200,13 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         }
                         case 1: {
                             if (!localElements.isEmpty()) {
-                                return helper.insertLocalElement(localElements.get(0));
+                                return helper.insertLocalElement(localElements.get(0), abbreviation.getStartOffset());
                             } else if (!localMethodCalls.isEmpty()) {
-                                return helper.insertMethodCall(localMethodCalls.get(0));
+                                return helper.insertMethodCall(localMethodCalls.get(0), abbreviation.getStartOffset());
                             } else if (!types.isEmpty()) {
-                                return helper.insertType(types.get(0));
+                                return helper.insertType(types.get(0), abbreviation.getStartOffset());
                             } else {
-                                return helper.insertKeyword(keywords.get(0));
+                                return helper.insertKeyword(keywords.get(0), abbreviation.getStartOffset());
                             }
                         }
                         default: {

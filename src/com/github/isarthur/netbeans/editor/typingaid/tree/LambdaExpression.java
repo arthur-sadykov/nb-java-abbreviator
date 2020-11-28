@@ -30,9 +30,9 @@ public class LambdaExpression extends InsertableExpressionTree {
 
     private final LambdaExpressionTree current;
 
-    public LambdaExpression(TreePath currentPath, MethodCall wrapper, WorkingCopy copy,
-            JavaSourceHelper helper) {
-        super(currentPath, wrapper, copy, helper);
+    public LambdaExpression(TreePath currentPath, MethodCall wrapper, WorkingCopy copy, JavaSourceHelper helper,
+            int position) {
+        super(currentPath, wrapper, copy, helper, position);
         current = (LambdaExpressionTree) currentPath.getLeaf();
     }
 

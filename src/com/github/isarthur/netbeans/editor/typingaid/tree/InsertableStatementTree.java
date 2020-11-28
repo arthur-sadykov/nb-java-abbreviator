@@ -27,7 +27,7 @@ import org.netbeans.api.java.source.WorkingCopy;
 public abstract class InsertableStatementTree extends InsertableTree {
 
     public InsertableStatementTree(TreePath currentPath, MethodCall methodCall, WorkingCopy copy,
-            JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+            JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
     }
 }

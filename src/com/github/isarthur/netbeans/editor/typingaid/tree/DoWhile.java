@@ -31,8 +31,8 @@ public class DoWhile extends InsertableStatementTree {
 
     private final DoWhileLoopTree current;
 
-    public DoWhile(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+    public DoWhile(TreePath currentPath, MethodCall methodCall, WorkingCopy copy, JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (DoWhileLoopTree) currentPath.getLeaf();
     }
 

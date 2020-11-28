@@ -33,8 +33,8 @@ public class InsertableExpressionTree extends InsertableTree {
     private final ExpressionTree current;
 
     public InsertableExpressionTree(TreePath currentPath, MethodCall methodCall, WorkingCopy copy,
-            JavaSourceHelper helper) {
-        super(currentPath, methodCall, copy, helper);
+            JavaSourceHelper helper, int position) {
+        super(currentPath, methodCall, copy, helper, position);
         current = (ExpressionTree) currentPath.getLeaf();
     }
 
@@ -55,7 +55,7 @@ public class InsertableExpressionTree extends InsertableTree {
         if (parentPath == null) {
             return;
         }
-        parent = TreeFactory.create(parentPath, methodCall, copy, helper);
+        parent = TreeFactory.create(parentPath, methodCall, copy, helper, position);
         parent.insert(current);
     }
 }
