@@ -5,5 +5,8 @@
 <project name="com.github.isarthur.netbeans.editor.typingaid" default="netbeans" basedir=".">
     <description>Builds, tests, and runs the project com.github.isarthur.netbeans.editor.typingaid.</description>
     <import file="nbproject/build-impl.xml"/>
-    <target name="build" depends="netbeans,nbm"/> 
+    <target name="build" depends="netbeans,copy-jar"/>
+    <target name="copy-jar" depends="netbeans">
+        <copy file="${basedir}/build/cluster/modules/com-github-isarthur-netbeans-editor-typingaid.jar" todir="${netbeans.user}/modules"/>
+    </target>
 </project>

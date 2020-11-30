@@ -138,23 +138,42 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
             }
         } else {
             if (helper.isMemberSelection(abbreviation.getStartOffset())) {
-                List<MethodCall> chainedMethodCalls = Collections.emptyList();
-                if (Settings.getSettingForChainedMethodInvocation()) {
-                    chainedMethodCalls =
-                            helper.findChainedMethodCalls(abbreviationContent, abbreviation.getStartOffset());
-                }
-                int matchesCount = chainedMethodCalls.size();
-                switch (matchesCount) {
-                    case 0: {
-                        return null;
+                if (helper.afterThis(abbreviation.getStartOffset())) {
+                    List<LocalElement> fields =
+                            helper.findFields(abbreviationContent, abbreviation.getStartOffset());
+                    int matchesCount = fields.size();
+                    switch (matchesCount) {
+                        case 0: {
+                            return null;
+                        }
+                        case 1: {
+                            return helper.insertLocalElement(fields.get(0), abbreviation.getStartOffset());
+                        }
+                        default: {
+                            ArrayList<CodeFragment> codeFragments = new ArrayList<>(fields);
+                            showPopup(codeFragments);
+                            return codeFragments;
+                        }
                     }
-                    case 1: {
-                        return helper.insertChainedMethodCall(chainedMethodCalls.get(0), abbreviation.getStartOffset());
+                } else {
+                    List<MethodCall> chainedMethodCalls = Collections.emptyList();
+                    if (Settings.getSettingForChainedMethodInvocation()) {
+                        chainedMethodCalls =
+                                helper.findChainedMethodCalls(abbreviationContent, abbreviation.getStartOffset());
                     }
-                    default: {
-                        ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodCalls);
-                        showPopup(codeFragments);
-                        return codeFragments;
+                    int matchesCount = chainedMethodCalls.size();
+                    switch (matchesCount) {
+                        case 0: {
+                            return null;
+                        }
+                        case 1: {
+                            return helper.insertChainedMethodCall(chainedMethodCalls.get(0), abbreviation.getStartOffset());
+                        }
+                        default: {
+                            ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodCalls);
+                            showPopup(codeFragments);
+                            return codeFragments;
+                        }
                     }
                 }
             } else {

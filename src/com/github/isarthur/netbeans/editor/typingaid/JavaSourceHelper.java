@@ -74,6 +74,7 @@ import javax.lang.model.util.Types;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.ClassIndex;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CodeStyle;
@@ -86,6 +87,10 @@ import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.ui.ElementHeaders;
+import org.netbeans.api.lexer.Token;
+import org.netbeans.api.lexer.TokenHierarchy;
+import org.netbeans.api.lexer.TokenId;
+import org.netbeans.api.lexer.TokenSequence;
 import org.openide.util.Exceptions;
 
 /**
@@ -1168,5 +1173,62 @@ public class JavaSourceHelper {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+    }
+
+    boolean afterThis(int position) {
+        AtomicBoolean afterThis = new AtomicBoolean();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TokenHierarchy<?> tokenHierarchy = copy.getTokenHierarchy();
+                TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
+                tokenSequence.move(position);
+                tokenSequence.movePrevious();
+                tokenSequence.movePrevious();
+                Token<?> token = tokenSequence.token();
+                if (token != null) {
+                    TokenId tokenId = token.id();
+                    if (tokenId == JavaTokenId.THIS) {
+                        afterThis.set(true);
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return afterThis.get();
+    }
+
+    List<LocalElement> findFields(String abbreviation, int position) {
+        List<LocalElement> result = new ArrayList<>();
+        try {
+            List<Element> fields = new ArrayList<>();
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                Scope scope = treeUtilities.scopeFor(position);
+                Iterable<? extends Element> localMembersAndVars =
+                        elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                            return (!elements.isDeprecated(e))
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
+                                    && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
+                                    && e.getKind() == ElementKind.FIELD;
+                        });
+                localMembersAndVars.forEach(fields::add);
+                fields
+                        .stream()
+                        .filter(element ->
+                                getElementAbbreviation(element.getSimpleName().toString()).equals(abbreviation))
+                        .filter(distinctByKey(Element::getSimpleName))
+                        .forEach(element -> result.add(new LocalElement(element)));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(result);
     }
 }
