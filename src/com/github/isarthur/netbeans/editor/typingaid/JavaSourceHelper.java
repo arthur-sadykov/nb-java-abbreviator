@@ -1084,19 +1084,22 @@ public class JavaSourceHelper {
         List<TypeElement> typeElements = findTypeElementsByAbbreviationInSourcePath(scopeAbbreviation);
         List<FieldAccess> result = new ArrayList<>();
         typeElements.forEach(typeElement -> {
-            List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-            enclosedElements.stream().filter(element ->
-                    ((element.getKind() == ElementKind.FIELD
-                    && element.getModifiers().contains(Modifier.PUBLIC)
-                    && element.getModifiers().contains(Modifier.STATIC)
-                    && element.getModifiers().contains(Modifier.FINAL))
-                    || element.getKind() == ElementKind.ENUM_CONSTANT)).forEachOrdered(element -> {
-                String elementName = element.getSimpleName().toString();
-                String elementAbbreviation = getElementAbbreviation(elementName);
-                if (nameAbbreviation.equals(elementAbbreviation)) {
-                    result.add(new FieldAccess(typeElement, element));
-                }
-            });
+            try {
+                List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
+                enclosedElements.stream().filter(element ->
+                        ((element.getKind() == ElementKind.FIELD
+                        && element.getModifiers().contains(Modifier.PUBLIC)
+                        && element.getModifiers().contains(Modifier.STATIC)
+                        && element.getModifiers().contains(Modifier.FINAL))
+                        || element.getKind() == ElementKind.ENUM_CONSTANT)).forEachOrdered(element -> {
+                    String elementName = element.getSimpleName().toString();
+                    String elementAbbreviation = getElementAbbreviation(elementName);
+                    if (nameAbbreviation.equals(elementAbbreviation)) {
+                        result.add(new FieldAccess(typeElement, element));
+                    }
+                });
+            } catch (AssertionError ex) {
+            }
         });
         return Collections.unmodifiableList(result);
     }
