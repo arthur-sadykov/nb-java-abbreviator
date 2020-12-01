@@ -28,6 +28,7 @@ import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManag
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
@@ -593,6 +594,84 @@ public class JavaSourceHelper {
                             StatementTree currentStatement = statements.get(i);
                             long currentStartPosition =
                                     sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                            if (i < size - 1) {
+                                if (position < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < position && position < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (position < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return insertIndex.get();
+    }
+
+    public int findInsertIndexInClass(ClassTree classTree, int position) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends Tree> members = classTree.getMembers();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = members.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        Tree currentMember = members.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentMember);
+                        if (position < currentStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    case 2: {
+                        Tree previousMember = members.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousMember);
+                        Tree currentMember = members.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentMember);
+                        if (position < previousStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else if (currentStartPosition < position) {
+                            insertIndex.set(size);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            Tree previousMember = members.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousMember);
+                            Tree currentMember = members.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentMember);
                             if (i < size - 1) {
                                 if (position < previousStartPosition) {
                                     insertIndex.set(i - 1);

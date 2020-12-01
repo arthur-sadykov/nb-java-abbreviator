@@ -20,6 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManag
 import com.github.isarthur.netbeans.editor.typingaid.tree.Assert;
 import com.github.isarthur.netbeans.editor.typingaid.tree.Assignment;
 import com.github.isarthur.netbeans.editor.typingaid.tree.Block;
+import com.github.isarthur.netbeans.editor.typingaid.tree.Clazz;
 import com.github.isarthur.netbeans.editor.typingaid.tree.DoWhile;
 import com.github.isarthur.netbeans.editor.typingaid.tree.EnhancedFor;
 import com.github.isarthur.netbeans.editor.typingaid.tree.ExpressionStatement;
@@ -101,6 +102,8 @@ public class TreeFactory {
                 return new Assignment(currentPath, methodCall, copy, helper, position);
             case BLOCK:
                 return new Block(currentPath, methodCall, copy, helper, position);
+            case CLASS:
+                return new Clazz(currentPath, methodCall, copy, helper, position);
             case DO_WHILE_LOOP:
                 return new DoWhile(currentPath, methodCall, copy, helper, position);
             case ENHANCED_FOR_LOOP:
