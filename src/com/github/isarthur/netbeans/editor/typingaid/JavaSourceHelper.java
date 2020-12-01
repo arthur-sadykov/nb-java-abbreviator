@@ -22,6 +22,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodCall;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Name;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.Statement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
@@ -35,6 +36,7 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Scope;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
@@ -99,6 +101,24 @@ import org.openide.util.Exceptions;
  */
 public class JavaSourceHelper {
 
+    private static final String TRUE = "true"; //NOI18N
+    private static final String NULL = "null"; //NOI18N
+    private static final String ZERO = "0"; //NOI18N
+    private static final String ZERO_L = "0L"; //NOI18N
+    private static final String ZERO_DOT_ZERO = "0.0"; //NOI18N
+    private static final String ZERO_DOT_ZERO_F = "0.0F"; //NOI18N
+    private static final String EMPTY_STRING = "\"\""; //NOI18N
+    private static final String EMPTY_CHAR = "' '"; //NOI18N
+    private static final String BYTE = "byte"; //NOI18N
+    private static final String SHORT = "short"; //NOI18N
+    private static final String INT = "int"; //NOI18N
+    private static final String LONG = "long"; //NOI18N
+    private static final String FLOAT = "float"; //NOI18N
+    private static final String DOUBLE = "double"; //NOI18N
+    private static final String CHAR = "char"; //NOI18N
+    private static final String BOOLEAN = "boolean"; //NOI18N
+    private static final String VOID = "void"; //NOI18N
+    private static final String STRING = "java.lang.String"; //NOI18N
     private final JTextComponent component;
     private final Document document;
     private String typedAbbreviation;
@@ -902,7 +922,7 @@ public class JavaSourceHelper {
                         .map(parameter -> parameter.asType())
                         .forEachOrdered(elementType -> {
                             AtomicReference<IdentifierTree> identifierTree = new AtomicReference<>();
-                            VariableElement variableElement = instanceOf(elementType.toString(), "", position);
+                            VariableElement variableElement = instanceOf(elementType.toString(), "", position); //NOI18N
                             if (variableElement != null) {
                                 identifierTree.set(make.Identifier(variableElement));
                                 arguments.add(identifierTree.get());
@@ -1233,5 +1253,101 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(result);
+    }
+
+    public List<CodeFragment> insertReturnStatement(int offset) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        String returnVar = returnVar(offset);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(offset);
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock, offset);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                ReturnTree returnStatement = make.Return(returnVar != null ? make.Identifier(returnVar) : null);
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, returnStatement);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(returnStatement.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private String returnVar(int offset) {
+        String methodType = owningMethodType(offset);
+        if (methodType == null) {
+            return null;
+        }
+        VariableElement variable = instanceOf(methodType, "", offset); //NOI18N
+        if (variable != null) {
+            return variable.getSimpleName().toString();
+        } else {
+            switch (methodType) {
+                case BYTE:
+                case SHORT:
+                case INT:
+                    return ZERO;
+                case LONG:
+                    return ZERO_L;
+                case FLOAT:
+                    return ZERO_DOT_ZERO_F;
+                case DOUBLE:
+                    return ZERO_DOT_ZERO;
+                case CHAR:
+                    return EMPTY_CHAR;
+                case BOOLEAN:
+                    return TRUE;
+                case VOID:
+                    return null;
+                case STRING:
+                    return EMPTY_STRING;
+                default:
+                    return NULL;
+            }
+        }
+    }
+
+    private String owningMethodType(int offset) {
+        AtomicReference<String> methodType = new AtomicReference<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                Trees trees = copy.getTrees();
+                TreePath currentPath = treeUtilities.pathFor(offset);
+                TreePath methodOrLambdaPath = treeUtilities.getPathElementOfKind(
+                        EnumSet.of(Tree.Kind.LAMBDA_EXPRESSION, Tree.Kind.METHOD), currentPath);
+                if (methodOrLambdaPath == null) {
+                    return;
+                }
+                Tree methodOrLambda = methodOrLambdaPath.getLeaf();
+                if (methodOrLambda.getKind() == Tree.Kind.METHOD) {
+                    ExecutableElement method = (ExecutableElement) trees.getElement(methodOrLambdaPath);
+                    TypeMirror returnType = method.getReturnType();
+                    if (returnType != null) {
+                        methodType.set(returnType.toString());
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return methodType.get();
     }
 }

@@ -187,7 +187,12 @@ public class GenerateCodePanel extends javax.swing.JPanel {
         } else if (codeFragment instanceof LocalElement) {
             helper.insertLocalElement((LocalElement) codeFragment, component.getCaretPosition());
         } else if (codeFragment instanceof Keyword) {
-            helper.insertKeyword((Keyword) codeFragment, component.getCaretPosition());
+            Keyword keyword = (Keyword) codeFragment;
+            if (keyword.getName().equals("return")) { //NOI18N
+                helper.insertReturnStatement(component.getCaretPosition());
+            } else {
+                helper.insertKeyword(keyword, component.getCaretPosition());
+            }
         } else {
             helper.insertType((Type) codeFragment, component.getCaretPosition());
         }

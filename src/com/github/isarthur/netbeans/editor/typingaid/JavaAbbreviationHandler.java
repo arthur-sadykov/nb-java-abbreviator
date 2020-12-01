@@ -225,7 +225,12 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             } else if (!types.isEmpty()) {
                                 return helper.insertType(types.get(0), abbreviation.getStartOffset());
                             } else {
-                                return helper.insertKeyword(keywords.get(0), abbreviation.getStartOffset());
+                                Keyword keyword = keywords.get(0);
+                                if (keyword.getName().equals("return")) { //NOI18N
+                                    return helper.insertReturnStatement(abbreviation.getStartOffset());
+                                } else {
+                                    return helper.insertKeyword(keyword, abbreviation.getStartOffset());
+                                }
                             }
                         }
                         default: {
