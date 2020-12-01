@@ -322,11 +322,11 @@ public class Utilities {
         return theString.startsWith(prefix);
     }
 
-    public static String createExpression(String expression, ExpressionTree methodCall) {
+    public static String createExpression(String expression, ExpressionTree methodInvocation) {
         int index = expression.indexOf(ConstantDataManager.PARENTHESIZED_ERROR);
         if (index != -1) {
             expression = expression.substring(0, index)
-                    + methodCall.toString()
+                    + methodInvocation.toString()
                     + expression.substring(index + ConstantDataManager.PARENTHESIZED_ERROR.length());
         } else {
             index = expression.indexOf(ConstantDataManager.ANGLED_ERROR);
@@ -334,7 +334,7 @@ public class Utilities {
                 return ConstantDataManager.EMPTY_STRING;
             }
             expression = expression.substring(0, index)
-                    + methodCall.toString()
+                    + methodInvocation.toString()
                     + expression.substring(index + ConstantDataManager.ANGLED_ERROR.length());
         }
         return expression;

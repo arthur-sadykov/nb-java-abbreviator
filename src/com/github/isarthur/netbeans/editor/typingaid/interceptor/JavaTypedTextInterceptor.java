@@ -98,7 +98,6 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
             } else {
                 context.setText("", 0);
             }
-            abbreviation.reset();
         }
     }
 

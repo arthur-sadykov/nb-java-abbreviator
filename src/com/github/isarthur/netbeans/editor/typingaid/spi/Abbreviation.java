@@ -38,4 +38,8 @@ public interface Abbreviation {
     void setStartOffset(int startOffset);
 
     void delete();
+
+    String getScope();
+
+    String getName();
 }

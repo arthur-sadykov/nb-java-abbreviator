@@ -87,4 +87,24 @@ public class JavaAbbreviation implements Abbreviation {
     public int length() {
         return buffer.length();
     }
+
+    @Override
+    public String getScope() {
+        String content = getContent();
+        int dotIndex = content.indexOf('.');
+        if (dotIndex > 0) {
+            return content.substring(0, dotIndex);
+        }
+        return content;
+    }
+
+    @Override
+    public String getName() {
+        String content = getContent();
+        int dotIndex = content.indexOf('.');
+        if (dotIndex > 0) {
+            return content.substring(dotIndex + 1);
+        }
+        return content;
+    }
 }

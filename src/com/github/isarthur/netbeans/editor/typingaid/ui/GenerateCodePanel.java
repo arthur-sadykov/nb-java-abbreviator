@@ -20,7 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodCall;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import java.awt.Color;
 import java.awt.Component;
@@ -175,26 +175,26 @@ public class GenerateCodePanel extends javax.swing.JPanel {
             component.requestFocus();
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
-        if (codeFragment instanceof MethodCall) {
-            MethodCall methodCall = (MethodCall) codeFragment;
-            if (methodCall.getScope() == null) {
-                helper.insertChainedMethodCall(methodCall, component.getCaretPosition());
+        if (codeFragment instanceof MethodInvocation) {
+            MethodInvocation methodInvocation = (MethodInvocation) codeFragment;
+            if (methodInvocation.getScope() == null) {
+                helper.insertChainedMethodInvocation(methodInvocation, component.getCaretPosition());
             } else {
-                helper.insertMethodCall(methodCall, component.getCaretPosition());
+                helper.insertCodeFragment(methodInvocation);
             }
         } else if (codeFragment instanceof FieldAccess) {
-            helper.insertFieldAccess((FieldAccess) codeFragment, component.getCaretPosition());
+            helper.insertFieldAccess((FieldAccess) codeFragment);
         } else if (codeFragment instanceof LocalElement) {
-            helper.insertLocalElement((LocalElement) codeFragment, component.getCaretPosition());
+            helper.insertLocalElement((LocalElement) codeFragment);
         } else if (codeFragment instanceof Keyword) {
             Keyword keyword = (Keyword) codeFragment;
             if (keyword.getName().equals("return")) { //NOI18N
-                helper.insertReturnStatement(component.getCaretPosition());
+                helper.insertReturnStatement();
             } else {
-                helper.insertKeyword(keyword, component.getCaretPosition());
+                helper.insertKeyword(keyword);
             }
         } else {
-            helper.insertType((Type) codeFragment, component.getCaretPosition());
+            helper.insertType((Type) codeFragment);
         }
     }
 

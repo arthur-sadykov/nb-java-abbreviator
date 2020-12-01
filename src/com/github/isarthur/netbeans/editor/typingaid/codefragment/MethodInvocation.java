@@ -28,23 +28,21 @@ import javax.lang.model.element.ExecutableElement;
  *
  * @author Arthur Sadykov
  */
-public class MethodCall implements CodeFragment {
+public class MethodInvocation implements CodeFragment {
 
     private final Element scope;
     private final ExecutableElement method;
     private final List<ExpressionTree> arguments;
     private final int argumentsNumber;
     private final JavaSourceHelper helper;
-    private final int position;
 
-    public MethodCall(Element element, ExecutableElement method, List<ExpressionTree> arguments,
-            JavaSourceHelper helper, int position) {
+    public MethodInvocation(Element element, ExecutableElement method, List<ExpressionTree> arguments,
+            JavaSourceHelper helper) {
         this.scope = element;
         this.method = method;
         this.arguments = arguments;
         this.argumentsNumber = method.getParameters().size();
         this.helper = helper;
-        this.position = position;
     }
 
     public Element getScope() {
@@ -65,17 +63,17 @@ public class MethodCall implements CodeFragment {
 
     @Override
     public String toString() {
-        Tree methodCall;
+        Tree methodInvocation;
         if (helper.isMethodReturnVoid(method)) {
-            methodCall = helper.createVoidMethodCall(this);
-            return methodCall.toString();
+            methodInvocation = helper.createVoidMethodInvocation(this);
+            return methodInvocation.toString();
         } else {
             if (scope == null) {
-                methodCall = helper.createMethodCallWithoutReturnValue(this);
-                return methodCall.toString();
+                methodInvocation = helper.createMethodInvocationWithoutReturnValue(this);
+                return methodInvocation.toString();
             } else {
-                methodCall = helper.createMethodCallWithReturnValue(this, position);
-                return methodCall.toString() + ";"; //NOI18N
+                methodInvocation = helper.createMethodInvocationWithReturnValue(this);
+                return methodInvocation.toString() + ";"; //NOI18N
             }
         }
     }
