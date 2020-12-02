@@ -68,6 +68,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -1418,12 +1420,19 @@ public class JavaSourceHelper {
                 VariableTree currentVariable = (VariableTree) currentTree;
                 TreeMaker make = copy.getTreeMaker();
                 ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
+                String initializer = currentVariable.getInitializer().toString();
+                int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
+                if (errorIndex >= 0) {
+                    initializer = initializer.substring(0, errorIndex)
+                            .concat(methodInvocation.toString())
+                            .concat(initializer.substring(errorIndex + 7));
+                }
                 VariableTree newVariable =
                         make.Variable(
                                 currentVariable.getModifiers(),
                                 currentVariable.getName(),
                                 currentVariable.getType(),
-                                methodInvocation);
+                                make.Identifier(initializer));
                 copy.rewrite(currentVariable, newVariable);
             }).commit();
         } catch (IOException ex) {
