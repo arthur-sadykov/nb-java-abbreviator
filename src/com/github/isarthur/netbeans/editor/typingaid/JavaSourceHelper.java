@@ -952,19 +952,34 @@ public class JavaSourceHelper {
     }
 
     boolean isFieldOrParameterName() {
-        AtomicBoolean memberSelection = new AtomicBoolean();
+        AtomicBoolean memberSelection = new AtomicBoolean(true);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
                 if (currentPath == null) {
                     memberSelection.set(false);
                 } else {
-                    memberSelection.set(currentPath.getLeaf().getKind() == Tree.Kind.VARIABLE);
+                    if (currentPath.getLeaf().getKind() != Tree.Kind.VARIABLE) {
+                        memberSelection.set(false);
+                        return;
+                    }
+                    TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+                    sequence.move(abbreviation.getStartOffset());
+                    while (sequence.movePrevious()) {
+                        if (sequence.token().id() == JavaTokenId.EQ) {
+                            memberSelection.set(false);
+                            break;
+                        } else if (sequence.token().id() != JavaTokenId.WHITESPACE) {
+                            memberSelection.set(true);
+                            break;
+                        }
+                    }
                 }
-            }, true);
+            },
+                    true);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
