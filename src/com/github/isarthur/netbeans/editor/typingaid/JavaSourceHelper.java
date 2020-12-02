@@ -33,6 +33,7 @@ import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
+import com.sun.source.tree.ConditionalExpressionTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ForLoopTree;
@@ -471,6 +472,9 @@ public class JavaSourceHelper {
                     case CONDITIONAL_AND:
                         insertConditionalAnd(methodInvocation);
                         break;
+                    case CONDITIONAL_EXPRESSION:
+                        insertConditionalStatement(methodInvocation);
+                        break;
                     case CONDITIONAL_OR:
                         insertConditionalOr(methodInvocation);
                         break;
@@ -584,24 +588,6 @@ public class JavaSourceHelper {
                     case XOR_ASSIGNMENT:
                         insertXorAssignment(methodInvocation);
                         break;
-//                    case ASSERT:
-//                        return new Assert(currentPath, methodInvocation, copy, helper, position, document);
-//                    case CLASS:
-//                        return new Clazz(currentPath, methodInvocation, copy, helper, position, document);
-//                    case DO_WHILE_LOOP:
-//                        return new DoWhile(currentPath, methodInvocation, copy, helper, position, document);
-//                    case ENHANCED_FOR_LOOP:
-//                        return new EnhancedFor(currentPath, methodInvocation, copy, helper, position, document);
-//                    case EXPRESSION_STATEMENT:
-//                        return new ExpressionStatement(currentPath, methodInvocation, copy, helper, position, document);
-//                    case IF:
-//                        return new If(currentPath, methodInvocation, copy, helper, position, document);
-//                    case LAMBDA_EXPRESSION:
-//                        return new LambdaExpression(currentPath, methodInvocation, copy, helper, position, document);
-//                    case WHILE_LOOP:
-//                        return new While(currentPath, methodInvocation, copy, helper, position, document);
-//                    default:
-//                        return NullInsertableTree.getInstance(currentPath, methodInvocation, copy, helper, position, document);
                 }
             });
             modificationResult.commit();
@@ -2597,5 +2583,63 @@ public class JavaSourceHelper {
 
     private int findInsertIndexForInvocationArgument(NewClassTree newClassTree) {
         return findInsertIndexForArgument(newClassTree.getArguments());
+    }
+
+    public void insertConditionalStatement(CodeFragment fragment) {
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.CONDITIONAL_EXPRESSION) {
+                    return;
+                }
+                ConditionalExpressionTree currentConditionalOperator = (ConditionalExpressionTree) currentTree;
+                TreeMaker make = copy.getTreeMaker();
+                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
+                TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+                sequence.move(abbreviation.getStartOffset());
+                boolean questionFound = false;
+                boolean colonFound = false;
+                while (sequence.moveNext() && sequence.token().id() != JavaTokenId.SEMICOLON) {
+                    TokenId tokenId = sequence.token().id();
+                    if (tokenId == JavaTokenId.QUESTION) {
+                        questionFound = true;
+                    } else if (tokenId == JavaTokenId.COLON) {
+                        colonFound = true;
+                    }
+                }
+                ConditionalExpressionTree newConditionalOperator;
+                if (colonFound) {
+                    if (questionFound) {
+                        newConditionalOperator =
+                                make.ConditionalExpression(
+                                        methodInvocation,
+                                        currentConditionalOperator.getTrueExpression(),
+                                        currentConditionalOperator.getFalseExpression());
+                    } else {
+                        newConditionalOperator =
+                                make.ConditionalExpression(
+                                        currentConditionalOperator.getCondition(),
+                                        methodInvocation,
+                                        currentConditionalOperator.getFalseExpression());
+                    }
+                } else {
+                    newConditionalOperator =
+                            make.ConditionalExpression(
+                                    currentConditionalOperator.getCondition(),
+                                    currentConditionalOperator.getTrueExpression(),
+                                    methodInvocation);
+                }
+                copy.rewrite(currentConditionalOperator, newConditionalOperator);
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 }
