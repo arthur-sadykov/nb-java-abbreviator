@@ -20,4 +20,16 @@ package com.github.isarthur.netbeans.editor.typingaid.spi;
  * @author Arthur Sadykov
  */
 public interface CodeFragment {
+
+    Kind getKind();
+
+    public enum Kind {
+        FIELD_ACCESS,
+        KEYWORD,
+        LOCAL_ELEMENT,
+        METHOD_INVOCATION,
+        NAME,
+        STATEMENT,
+        TYPE
+    }
 }

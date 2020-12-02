@@ -35,6 +35,11 @@ public class LocalElement implements CodeFragment {
     }
 
     @Override
+    public Kind getKind() {
+        return Kind.LOCAL_ELEMENT;
+    }
+
+    @Override
     public String toString() {
         return element.getSimpleName().toString();
     }

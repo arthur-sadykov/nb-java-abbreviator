@@ -35,6 +35,11 @@ public class Type implements CodeFragment {
     }
 
     @Override
+    public Kind getKind() {
+        return Kind.TYPE;
+    }
+
+    @Override
     public String toString() {
         return type.getSimpleName().toString();
     }

@@ -30,6 +30,11 @@ public class Name implements CodeFragment {
     }
 
     @Override
+    public Kind getKind() {
+        return Kind.NAME;
+    }
+
+    @Override
     public String toString() {
         return name;
     }

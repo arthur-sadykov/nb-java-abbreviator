@@ -34,6 +34,11 @@ public class Keyword implements CodeFragment {
     }
 
     @Override
+    public Kind getKind() {
+        return Kind.KEYWORD;
+    }
+
+    @Override
     public String toString() {
         return name;
     }

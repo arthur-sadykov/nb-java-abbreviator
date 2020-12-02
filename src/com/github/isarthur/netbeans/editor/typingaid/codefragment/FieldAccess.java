@@ -24,33 +24,39 @@ import javax.lang.model.element.TypeElement;
  * @author Arthur Sadykov
  */
 public class FieldAccess implements CodeFragment {
-
+    
     private TypeElement scope;
     private Element name;
-
+    
     public FieldAccess(TypeElement type, Element constant) {
         this.scope = type;
         this.name = constant;
     }
-
+    
     public Element getName() {
         return name;
     }
-
+    
     public void setName(Element name) {
         this.name = name;
     }
-
+    
     public TypeElement getScope() {
         return scope;
     }
-
+    
     public void setScope(TypeElement scope) {
         this.scope = scope;
+    }
+    
+    @Override
+    public Kind getKind() {
+        return Kind.FIELD_ACCESS;
     }
 
     @Override
     public String toString() {
         return scope + "." + name;
     }
+    
 }

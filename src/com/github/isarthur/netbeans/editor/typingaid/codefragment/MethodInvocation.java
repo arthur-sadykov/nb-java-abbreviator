@@ -62,6 +62,11 @@ public class MethodInvocation implements CodeFragment {
     }
 
     @Override
+    public Kind getKind() {
+        return Kind.METHOD_INVOCATION;
+    }
+
+    @Override
     public String toString() {
         Tree methodInvocation;
         if (helper.isMethodReturnVoid(method)) {
