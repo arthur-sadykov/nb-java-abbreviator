@@ -68,8 +68,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -1563,7 +1561,7 @@ public class JavaSourceHelper {
         return variable.get();
     }
 
-    public void insertAssignment(CodeFragment fragment) {
+    private void insertAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1588,7 +1586,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertConditionalOr(CodeFragment fragment) {
+    private void insertConditionalOr(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1614,7 +1612,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertAnd(CodeFragment fragment) {
+    private void insertAnd(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1639,7 +1637,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertAndAssignment(CodeFragment fragment) {
+    private void insertAndAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1665,7 +1663,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertConditionalAnd(CodeFragment fragment) {
+    private void insertConditionalAnd(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1691,7 +1689,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertDivide(CodeFragment fragment) {
+    private void insertDivide(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1717,7 +1715,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertDivideAssignment(CodeFragment fragment) {
+    private void insertDivideAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1743,7 +1741,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertEqualTo(CodeFragment fragment) {
+    private void insertEqualTo(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1769,7 +1767,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertGreaterThan(CodeFragment fragment) {
+    private void insertGreaterThan(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1795,7 +1793,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertGreaterThanEqual(CodeFragment fragment) {
+    private void insertGreaterThanEqual(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1821,7 +1819,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertLeftShift(CodeFragment fragment) {
+    private void insertLeftShift(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1873,7 +1871,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertLessThan(CodeFragment fragment) {
+    private void insertLessThan(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1899,7 +1897,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertLessThanEqual(CodeFragment fragment) {
+    private void insertLessThanEqual(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1925,7 +1923,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertLogicalComplement(CodeFragment fragment) {
+    private void insertLogicalComplement(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1950,7 +1948,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertMemberSelect(CodeFragment fragment) {
+    private void insertMemberSelect(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -1976,7 +1974,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertMinus(CodeFragment fragment) {
+    private void insertMinus(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2001,7 +1999,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertMinusAssignment(CodeFragment fragment) {
+    private void insertMinusAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2027,7 +2025,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertMultiply(CodeFragment fragment) {
+    private void insertMultiply(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2053,7 +2051,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertMultiplyAssignment(CodeFragment fragment) {
+    private void insertMultiplyAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2079,7 +2077,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertNotEqualTo(CodeFragment fragment) {
+    private void insertNotEqualTo(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2105,7 +2103,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertOr(CodeFragment fragment) {
+    private void insertOr(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2130,7 +2128,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertOrAssignment(CodeFragment fragment) {
+    private void insertOrAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2156,7 +2154,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertPlus(CodeFragment fragment) {
+    private void insertPlus(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2181,7 +2179,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertPlusAssignment(CodeFragment fragment) {
+    private void insertPlusAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2207,7 +2205,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertRemainder(CodeFragment fragment) {
+    private void insertRemainder(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2233,7 +2231,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertRemainderAssignment(CodeFragment fragment) {
+    private void insertRemainderAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2259,7 +2257,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertRightShift(CodeFragment fragment) {
+    private void insertRightShift(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2285,7 +2283,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertRightShiftAssignment(CodeFragment fragment) {
+    private void insertRightShiftAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2311,7 +2309,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertUnaryMinus(CodeFragment fragment) {
+    private void insertUnaryMinus(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2336,7 +2334,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertUnaryPlus(CodeFragment fragment) {
+    private void insertUnaryPlus(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2361,7 +2359,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertUnsignedRightShift(CodeFragment fragment) {
+    private void insertUnsignedRightShift(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2387,7 +2385,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertUnsignedRightShiftAssignment(CodeFragment fragment) {
+    private void insertUnsignedRightShiftAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2415,7 +2413,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertXor(CodeFragment fragment) {
+    private void insertXor(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2440,7 +2438,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertXorAssignment(CodeFragment fragment) {
+    private void insertXorAssignment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2466,7 +2464,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertForLoop(CodeFragment fragment) {
+    private void insertForLoop(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2518,7 +2516,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public void insertMethodInvocation(CodeFragment fragment) {
+    private void insertMethodInvocation(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2563,7 +2561,7 @@ public class JavaSourceHelper {
         return -1;
     }
 
-    public void insertNewClass(CodeFragment fragment) {
+    private void insertNewClass(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
@@ -2594,7 +2592,7 @@ public class JavaSourceHelper {
         return findInsertIndexForArgument(newClassTree.getArguments());
     }
 
-    public void insertConditionalStatement(CodeFragment fragment) {
+    private void insertConditionalStatement(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
