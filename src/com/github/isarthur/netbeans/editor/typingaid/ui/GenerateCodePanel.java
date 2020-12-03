@@ -175,26 +175,15 @@ public class GenerateCodePanel extends javax.swing.JPanel {
             component.requestFocus();
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
-        if (codeFragment instanceof MethodInvocation) {
-            MethodInvocation methodInvocation = (MethodInvocation) codeFragment;
-            if (methodInvocation.getScope() == null) {
-                helper.insertChainedMethodInvocation(methodInvocation, component.getCaretPosition());
-            } else {
-                helper.insertCodeFragment(methodInvocation);
-            }
-        } else if (codeFragment instanceof FieldAccess) {
-            helper.insertFieldAccess((FieldAccess) codeFragment);
-        } else if (codeFragment instanceof LocalElement) {
-            helper.insertLocalElement((LocalElement) codeFragment);
-        } else if (codeFragment instanceof Keyword) {
+        if (codeFragment instanceof Keyword) {
             Keyword keyword = (Keyword) codeFragment;
             if (keyword.getName().equals("return")) { //NOI18N
                 helper.insertReturnStatement();
             } else {
-                helper.insertKeyword(keyword);
+                helper.insertCodeFragment(keyword);
             }
         } else {
-            helper.insertType((Type) codeFragment);
+            helper.insertCodeFragment(codeFragment);
         }
     }
 

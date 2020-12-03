@@ -85,7 +85,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         } else if (!staticMethodInvocations.isEmpty()) {
                             return helper.insertCodeFragment(staticMethodInvocations.get(0));
                         } else {
-                            return helper.insertFieldAccess(fieldAccesses.get(0));
+                            return helper.insertCodeFragment(fieldAccesses.get(0));
                         }
                     }
                     default: {
@@ -115,7 +115,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         if (!staticMethodInvocations.isEmpty()) {
                             return helper.insertCodeFragment(staticMethodInvocations.get(0));
                         } else {
-                            return helper.insertFieldAccess(fieldAccesses.get(0));
+                            return helper.insertCodeFragment(fieldAccesses.get(0));
                         }
                     }
                     default: {
@@ -137,7 +137,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             return null;
                         }
                         case 1: {
-                            return helper.insertLocalElement(fields.get(0));
+                            return helper.insertCodeFragment(fields.get(0));
                         }
                         default: {
                             ArrayList<CodeFragment> codeFragments = new ArrayList<>(fields);
@@ -156,7 +156,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             return null;
                         }
                         case 1: {
-                            return helper.insertChainedMethodInvocation(chainedMethodInvocations.get(0), abbreviation.getStartOffset());
+                            return helper.insertCodeFragment(chainedMethodInvocations.get(0));
                         }
                         default: {
                             ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodInvocations);
@@ -206,17 +206,17 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         }
                         case 1: {
                             if (!localElements.isEmpty()) {
-                                return helper.insertLocalElement(localElements.get(0));
+                                return helper.insertCodeFragment(localElements.get(0));
                             } else if (!localMethodInvocations.isEmpty()) {
                                 return helper.insertCodeFragment(localMethodInvocations.get(0));
                             } else if (!types.isEmpty()) {
-                                return helper.insertType(types.get(0));
+                                return helper.insertCodeFragment(types.get(0));
                             } else {
                                 Keyword keyword = keywords.get(0);
                                 if (keyword.getName().equals("return")) { //NOI18N
                                     return helper.insertReturnStatement();
                                 } else {
-                                    return helper.insertKeyword(keyword);
+                                    return helper.insertCodeFragment(keyword);
                                 }
                             }
                         }

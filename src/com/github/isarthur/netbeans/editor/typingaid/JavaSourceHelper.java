@@ -49,7 +49,6 @@ import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
-import com.sun.source.tree.WhileLoopTree;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
@@ -96,6 +95,7 @@ import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ui.ElementHeaders;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
@@ -217,6 +217,7 @@ public class JavaSourceHelper {
                         ExpressionTree variable = assignmentTree.getVariable();
                         TreePath path = TreePath.getPath(currentPath, variable);
                         typeMirror.set(trees.getElement(path).asType());
+                        break;
                     }
                     case BLOCK:
                     case PARENTHESIZED: {
@@ -234,6 +235,7 @@ public class JavaSourceHelper {
                     case PLUS:
                     case REMAINDER: {
                         typeMirror.set(types.getPrimitiveType(TypeKind.DOUBLE));
+                        break;
                     }
                     case AND:
                     case AND_ASSIGNMENT:
@@ -254,16 +256,19 @@ public class JavaSourceHelper {
                     case XOR:
                     case XOR_ASSIGNMENT: {
                         typeMirror.set(types.getPrimitiveType(TypeKind.LONG));
+                        break;
                     }
                     case CONDITIONAL_AND:
                     case CONDITIONAL_OR:
                     case LOGICAL_COMPLEMENT: {
                         typeMirror.set(types.getPrimitiveType(TypeKind.BOOLEAN));
+                        break;
                     }
                     case MEMBER_SELECT: {
                         ExpressionTree expression = ((MemberSelectTree) currentTree).getExpression();
                         TreePath path = TreePath.getPath(currentPath, expression);
                         typeMirror.set(trees.getTypeMirror(path));
+                        break;
                     }
                     case METHOD_INVOCATION: {
                         int insertIndex = findIndexOfCurrentArgumentInMethod((MethodInvocationTree) currentTree);
@@ -282,6 +287,7 @@ public class JavaSourceHelper {
                         Tree type = variableTree.getType();
                         TreePath path = TreePath.getPath(currentPath, type);
                         typeMirror.set(trees.getElement(path).asType());
+                        break;
                     }
                 }
             }, true);
@@ -444,12 +450,13 @@ public class JavaSourceHelper {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    public List<CodeFragment> insertCodeFragment(MethodInvocation methodInvocation) {
+    public List<CodeFragment> insertCodeFragment(CodeFragment fragment) {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
                 moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreeMaker make = copy.getTreeMaker();
                 TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
                 if (currentPath == null) {
                     return;
@@ -458,151 +465,139 @@ public class JavaSourceHelper {
                 Tree.Kind kind = currentTree.getKind();
                 switch (kind) {
                     case AND:
-                        insertAnd(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.AND);
                         break;
                     case AND_ASSIGNMENT:
-                        insertAndAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.AND_ASSIGNMENT);
                         break;
                     case ASSIGNMENT:
-                        insertAssignment(methodInvocation);
+                        insertAssignmentTree(fragment, copy, make);
                         break;
                     case BLOCK:
-                        insertBlockStatement(methodInvocation);
+                        insertBlockTree(fragment, copy, make);
                         break;
                     case CONDITIONAL_AND:
-                        insertConditionalAnd(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.CONDITIONAL_AND);
                         break;
                     case CONDITIONAL_EXPRESSION:
-                        insertConditionalStatement(methodInvocation);
+                        insertConditionalExpressionTree(fragment, copy, make);
                         break;
                     case CONDITIONAL_OR:
-                        insertConditionalOr(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.CONDITIONAL_OR);
                         break;
                     case DIVIDE:
-                        insertDivide(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.DIVIDE);
                         break;
                     case DIVIDE_ASSIGNMENT:
-                        insertDivideAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.DIVIDE_ASSIGNMENT);
                         break;
                     case EQUAL_TO:
-                        insertEqualTo(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.EQUAL_TO);
                         break;
                     case FOR_LOOP:
-                        insertForLoop(methodInvocation);
+                        insertForLoopTree(fragment, copy, make);
                         break;
                     case GREATER_THAN:
-                        insertGreaterThan(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.GREATER_THAN);
                         break;
                     case GREATER_THAN_EQUAL:
-                        insertGreaterThanEqual(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.GREATER_THAN_EQUAL);
                         break;
                     case LEFT_SHIFT:
-                        insertLeftShift(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.LEFT_SHIFT);
                         break;
                     case LEFT_SHIFT_ASSIGNMENT:
-                        insertLeftShiftAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.LEFT_SHIFT_ASSIGNMENT);
                         break;
                     case LESS_THAN:
-                        insertLessThan(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.LESS_THAN);
                         break;
                     case LESS_THAN_EQUAL:
-                        insertLessThanEqual(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.LESS_THAN_EQUAL);
                         break;
                     case LOGICAL_COMPLEMENT:
-                        insertLogicalComplement(methodInvocation);
+                        insertUnaryTree(fragment, copy, make, Tree.Kind.LOGICAL_COMPLEMENT);
                         break;
                     case MEMBER_SELECT:
-                        insertMemberSelect(methodInvocation);
+                        insertMemberSelectTree(fragment, copy, make);
                         break;
                     case METHOD_INVOCATION:
-                        insertMethodInvocation(methodInvocation);
-                        document.remove(component.getCaretPosition() - Short.BYTES, Short.BYTES);
+                        insertMethodInvocationTree(fragment, copy, make);
                         break;
                     case MINUS:
-                        insertMinus(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.MINUS);
                         break;
                     case MINUS_ASSIGNMENT:
-                        insertMinusAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.MINUS_ASSIGNMENT);
                         break;
                     case MULTIPLY:
-                        insertMultiply(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.MULTIPLY);
                         break;
                     case MULTIPLY_ASSIGNMENT:
-                        insertMultiplyAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.MULTIPLY_ASSIGNMENT);
                         break;
                     case NEW_CLASS:
-                        insertNewClass(methodInvocation);
-                        document.remove(component.getCaretPosition() - Short.BYTES, Short.BYTES);
+                        insertNewClassTree(fragment, copy, make);
                         break;
                     case NOT_EQUAL_TO:
-                        insertNotEqualTo(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.NOT_EQUAL_TO);
                         break;
                     case OR:
-                        insertOr(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.OR);
                         break;
                     case OR_ASSIGNMENT:
-                        insertOrAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.OR_ASSIGNMENT);
                         break;
                     case PARENTHESIZED:
-                        insertParenthesized(methodInvocation);
+                        insertParenthesized(fragment, copy, make);
                         break;
                     case PLUS:
-                        insertPlus(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.PLUS);
                         break;
                     case PLUS_ASSIGNMENT:
-                        insertPlusAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.PLUS_ASSIGNMENT);
                         break;
                     case REMAINDER:
-                        insertRemainder(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.REMAINDER);
                         break;
                     case REMAINDER_ASSIGNMENT:
-                        insertRemainderAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.REMAINDER_ASSIGNMENT);
                         break;
                     case RETURN:
-                        insertReturnStatement(methodInvocation);
+                        insertReturnTree(fragment, copy, make);
                         break;
                     case RIGHT_SHIFT:
-                        insertRightShift(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.RIGHT_SHIFT);
                         break;
                     case RIGHT_SHIFT_ASSIGNMENT:
-                        insertRightShiftAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.RIGHT_SHIFT_ASSIGNMENT);
                         break;
                     case UNARY_MINUS:
-                        insertUnaryMinus(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.UNARY_MINUS);
                         break;
                     case UNARY_PLUS:
-                        insertUnaryPlus(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.UNARY_PLUS);
                         break;
                     case UNSIGNED_RIGHT_SHIFT:
-                        insertUnsignedRightShift(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.UNSIGNED_RIGHT_SHIFT);
                         break;
                     case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
-                        insertUnsignedRightShiftAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.UNSIGNED_RIGHT_SHIFT_ASSIGNMENT);
                         break;
                     case VARIABLE:
-                        insertVariable(methodInvocation);
+                        insertVariableTree(fragment, copy, make);
                         break;
                     case XOR:
-                        insertXor(methodInvocation);
+                        insertBinaryTree(fragment, copy, make, Tree.Kind.XOR);
                         break;
                     case XOR_ASSIGNMENT:
-                        insertXorAssignment(methodInvocation);
+                        insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.XOR_ASSIGNMENT);
                         break;
                 }
             });
             modificationResult.commit();
-            return Collections.singletonList(methodInvocation);
+            return Collections.singletonList(fragment);
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-            return null;
-        }
-    }
-
-    public List<CodeFragment> insertChainedMethodInvocation(MethodInvocation methodInvocation, int position) {
-        try {
-            document.insertString(position, methodInvocation.toString(), null);
-            return Collections.singletonList(methodInvocation);
-        } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
             return null;
         }
@@ -897,16 +892,6 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public List<CodeFragment> insertLocalElement(LocalElement element) {
-        try {
-            document.insertString(abbreviation.getStartOffset(), element.toString(), null);
-            return Collections.singletonList(element);
-        } catch (BadLocationException ex) {
-            Exceptions.printStackTrace(ex);
-            return null;
-        }
-    }
-
     List<Keyword> collectKeywords() {
         List<Keyword> keywords = new ArrayList<>();
         ConstantDataManager.KEYWORDS.forEach(keyword -> {
@@ -919,16 +904,6 @@ public class JavaSourceHelper {
             return keyword1.toString().compareTo(keyword2.toString());
         });
         return Collections.unmodifiableList(keywords);
-    }
-
-    public List<CodeFragment> insertKeyword(Keyword keyword) {
-        try {
-            document.insertString(abbreviation.getStartOffset(), keyword.toString(), null);
-            return Collections.singletonList(keyword);
-        } catch (BadLocationException ex) {
-            Exceptions.printStackTrace(ex);
-            return null;
-        }
     }
 
     boolean isMemberSelection() {
@@ -1038,28 +1013,6 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public List<CodeFragment> insertFieldAccess(FieldAccess fieldAccess) {
-        List<CodeFragment> fieldAccesses = new ArrayList<>();
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeMaker make = copy.getTreeMaker();
-                MemberSelectTree cs = make.MemberSelect(make.Identifier(fieldAccess.getScope()), fieldAccess.getName());
-                try {
-                    document.insertString(abbreviation.getStartOffset(), cs.toString(), null);
-                    addImport(fieldAccess.getScope());
-                    fieldAccesses.add(fieldAccess);
-                } catch (BadLocationException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        return Collections.unmodifiableList(fieldAccesses);
-    }
-
     List<Type> collectTypes() {
         List<TypeElement> types = collectTypesByAbbreviation();
         return types.stream()
@@ -1071,16 +1024,6 @@ public class JavaSourceHelper {
     private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-    }
-
-    public List<CodeFragment> insertType(Type type) {
-        try {
-            document.insertString(abbreviation.getStartOffset(), type.toString(), null);
-            return Collections.singletonList(type);
-        } catch (BadLocationException ex) {
-            Exceptions.printStackTrace(ex);
-            return null;
-        }
     }
 
     public List<CodeFragment> insertName(Name name) {
@@ -1341,31 +1284,6 @@ public class JavaSourceHelper {
         return methodType.get();
     }
 
-    public void insertReturnStatement(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.RETURN) {
-                    return;
-                }
-                ReturnTree currentReturnTree = (ReturnTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                Tree newReturnTree = make.Return(methodInvocation);
-                copy.rewrite(currentReturnTree, newReturnTree);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
     public ExpressionTree createMethodInvocationWithoutReturnValue(MethodInvocation methodInvocation) {
         AtomicReference<ExpressionTree> expression = new AtomicReference<>();
         try {
@@ -1386,132 +1304,6 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
         return expression.get();
-    }
-
-    public void insertWhileStatement(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.WHILE_LOOP) {
-                    return;
-                }
-                WhileLoopTree currentWhileTree = (WhileLoopTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                WhileLoopTree newWhileTree =
-                        make.WhileLoop(
-                                methodInvocation,
-                                currentWhileTree.getStatement());
-                copy.rewrite(currentWhileTree, newWhileTree);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    public void insertVariable(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.VARIABLE) {
-                    return;
-                }
-                VariableTree currentVariable = (VariableTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                String initializer = currentVariable.getInitializer().toString();
-                int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
-                if (errorIndex >= 0) {
-                    initializer = initializer.substring(0, errorIndex)
-                            .concat(methodInvocation.toString())
-                            .concat(initializer.substring(errorIndex + 7));
-                }
-                VariableTree newVariable =
-                        make.Variable(
-                                currentVariable.getModifiers(),
-                                currentVariable.getName(),
-                                currentVariable.getType(),
-                                make.Identifier(initializer));
-                copy.rewrite(currentVariable, newVariable);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    public void insertParenthesized(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.PARENTHESIZED) {
-                    return;
-                }
-                ParenthesizedTree currentParenthesized = (ParenthesizedTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                ParenthesizedTree newParenthesized = make.Parenthesized(methodInvocation);
-                copy.rewrite(currentParenthesized, newParenthesized);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    public void insertBlockStatement(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                int insertIndex = findInsertIndexInBlock(currentBlock);
-                if (insertIndex == -1) {
-                    return;
-                }
-                BlockTree newBlock;
-                MethodInvocation invocation = (MethodInvocation) fragment;
-                if (isMethodReturnVoid(invocation.getMethod())) {
-                    ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
-                    newBlock = make.insertBlockStatement(currentBlock, insertIndex, methodInvocation);
-                } else {
-                    VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
-                    newBlock = make.insertBlockStatement(currentBlock, insertIndex, methodInvocation);
-                }
-                copy.rewrite(currentBlock, newBlock);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     public boolean isMethodReturnVoid(ExecutableElement method) {
@@ -1576,986 +1368,195 @@ public class JavaSourceHelper {
         return variable.get();
     }
 
-    private void insertAssignment(CodeFragment fragment) {
+    private void insertAssignmentTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        AssignmentTree currentTree = (AssignmentTree) getCurrentTreeOfKind(copy, Tree.Kind.ASSIGNMENT);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        AssignmentTree newTree = make.Assignment(currentTree.getVariable(), expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private Tree getCurrentTreeOfKind(WorkingCopy copy, Tree.Kind kind) {
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return null;
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != kind) {
+            return null;
+        }
+        return currentTree;
+    }
+
+    private void insertBinaryTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make, Tree.Kind kind) {
+        BinaryTree currentTree = (BinaryTree) getCurrentTreeOfKind(copy, kind);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        BinaryTree newTree = make.Binary(kind, currentTree.getLeftOperand(), expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    public void insertBlockTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        if (fragment.getKind() != CodeFragment.Kind.METHOD_INVOCATION) {
+            return;
+        }
+        BlockTree currentTree = (BlockTree) getCurrentTreeOfKind(copy, Tree.Kind.BLOCK);
+        if (currentTree == null) {
+            return;
+        }
+        int insertIndex = findInsertIndexInBlock(currentTree);
+        if (insertIndex == -1) {
+            return;
+        }
+        BlockTree newTree;
+        MethodInvocation invocation = (MethodInvocation) fragment;
+        if (isMethodReturnVoid(invocation.getMethod())) {
+            ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
+            newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+        } else {
+            VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
+            newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+        }
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertCompoundAssignmentTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make, Tree.Kind kind) {
+        CompoundAssignmentTree currentTree = (CompoundAssignmentTree) getCurrentTreeOfKind(copy, kind);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        CompoundAssignmentTree newTree = make.CompoundAssignment(kind, currentTree.getVariable(), expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertConditionalExpressionTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        ConditionalExpressionTree currentTree =
+                (ConditionalExpressionTree) getCurrentTreeOfKind(copy, Tree.Kind.CONDITIONAL_EXPRESSION);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+        sequence.move(abbreviation.getStartOffset());
+        boolean questionFound = false;
+        boolean colonFound = false;
+        while (sequence.moveNext() && sequence.token().id() != JavaTokenId.SEMICOLON) {
+            TokenId tokenId = sequence.token().id();
+            if (tokenId == JavaTokenId.QUESTION) {
+                questionFound = true;
+            } else if (tokenId == JavaTokenId.COLON) {
+                colonFound = true;
+            }
+        }
+        ConditionalExpressionTree newTree;
+        if (colonFound) {
+            if (questionFound) {
+                newTree =
+                        make.ConditionalExpression(
+                                expression,
+                                currentTree.getTrueExpression(),
+                                currentTree.getFalseExpression());
+            } else {
+                newTree =
+                        make.ConditionalExpression(
+                                currentTree.getCondition(),
+                                expression,
+                                currentTree.getFalseExpression());
+            }
+        } else {
+            newTree =
+                    make.ConditionalExpression(
+                            currentTree.getCondition(),
+                            currentTree.getTrueExpression(),
+                            expression);
+        }
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertForLoopTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        ForLoopTree currentTree = (ForLoopTree) getCurrentTreeOfKind(copy, Tree.Kind.FOR_LOOP);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+        sequence.move(abbreviation.getStartOffset());
+        int semicolonCount = 0;
+        while (sequence.movePrevious() && sequence.token().id() != JavaTokenId.FOR) {
+            TokenId tokenId = sequence.token().id();
+            if (tokenId == JavaTokenId.SEMICOLON) {
+                semicolonCount++;
+            }
+        }
+        ForLoopTree newTree;
+        switch (semicolonCount) {
+            case 0: {
+                newTree = make.addForLoopInitializer(currentTree, make.ExpressionStatement(expression));
+                break;
+            }
+            case 1: {
+                newTree = make.ForLoop(
+                        currentTree.getInitializer(),
+                        expression,
+                        currentTree.getUpdate(),
+                        currentTree.getStatement());
+                break;
+            }
+            default: {
+                newTree = make.addForLoopUpdate(currentTree, make.ExpressionStatement(expression));
+            }
+        }
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertMemberSelectTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        MemberSelectTree currentTree = (MemberSelectTree) getCurrentTreeOfKind(copy, Tree.Kind.MEMBER_SELECT);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        MemberSelectTree newTree = make.MemberSelect(currentTree.getExpression(), expression.toString());
+        SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
+        long startPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), currentTree);
+        long endPosition = sourcePositions.getEndPosition(copy.getCompilationUnit(), currentTree);
+        long dotCount = currentTree.toString().chars().filter(ch -> ch == '.').count();
+        String next = ""; //NOI18N
+        if (dotCount > 1) {
+            TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+            sequence.move(abbreviation.getStartOffset());
+            while (sequence.moveNext() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+            }
+            next = Character.toString(sequence.token().text().charAt(0));
+        }
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.ASSIGNMENT) {
-                    return;
-                }
-                AssignmentTree currentAssignment = (AssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                AssignmentTree newAssignment = make.Assignment(currentAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentAssignment, newAssignment);
-            }).commit();
-        } catch (IOException ex) {
+            document.remove((int) startPosition, (int) (endPosition - startPosition));
+            if (next.isEmpty()) {
+                document.insertString((int) startPosition, newTree.toString(), null);
+            } else {
+                document.insertString((int) startPosition, newTree.toString() + next, null);
+                component.setCaretPosition(component.getCaretPosition() - 1);
+            }
+        } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
         }
     }
 
-    private void insertConditionalOr(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.CONDITIONAL_OR) {
-                    return;
-                }
-                BinaryTree currentConditionalOr = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newConditionalOr = make.Binary(
-                        Tree.Kind.CONDITIONAL_OR, currentConditionalOr.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentConditionalOr, newConditionalOr);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+    private void insertMethodInvocationTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        MethodInvocationTree currentTree =
+                (MethodInvocationTree) getCurrentTreeOfKind(copy, Tree.Kind.METHOD_INVOCATION);
+        if (currentTree == null) {
+            return;
         }
-    }
-
-    private void insertAnd(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.AND) {
-                    return;
-                }
-                BinaryTree currentAnd = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newAnd = make.Binary(Tree.Kind.AND, currentAnd.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentAnd, newAnd);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertAndAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.AND_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentAndAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newAndAssignment =
-                        make.CompoundAssignment(Tree.Kind.AND, currentAndAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentAndAssignment, newAndAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertConditionalAnd(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.CONDITIONAL_AND) {
-                    return;
-                }
-                BinaryTree currentConditionalAnd = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newConditionalAnd = make.Binary(
-                        Tree.Kind.CONDITIONAL_AND, currentConditionalAnd.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentConditionalAnd, newConditionalAnd);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertDivide(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.DIVIDE) {
-                    return;
-                }
-                BinaryTree currentDivide = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newDivide = make.Binary(
-                        Tree.Kind.DIVIDE, currentDivide.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentDivide, newDivide);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertDivideAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.DIVIDE_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentDivideAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newDivideAssignment = make.CompoundAssignment(
-                        Tree.Kind.DIVIDE_ASSIGNMENT, currentDivideAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentDivideAssignment, newDivideAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertEqualTo(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.EQUAL_TO) {
-                    return;
-                }
-                BinaryTree currentEqualTo = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newEqualTo =
-                        make.Binary(Tree.Kind.EQUAL_TO, currentEqualTo.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentEqualTo, newEqualTo);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertGreaterThan(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.GREATER_THAN) {
-                    return;
-                }
-                BinaryTree currentGreaterThan = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newGreaterThan =
-                        make.Binary(Tree.Kind.GREATER_THAN, currentGreaterThan.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentGreaterThan, newGreaterThan);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertGreaterThanEqual(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.GREATER_THAN_EQUAL) {
-                    return;
-                }
-                BinaryTree currentGreaterThanEqual = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newGreaterThanEqual = make.Binary(
-                        Tree.Kind.GREATER_THAN_EQUAL, currentGreaterThanEqual.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentGreaterThanEqual, newGreaterThanEqual);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertLeftShift(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.LEFT_SHIFT) {
-                    return;
-                }
-                BinaryTree currentLeftShift = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newLeftShift = make.Binary(
-                        Tree.Kind.LEFT_SHIFT, currentLeftShift.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentLeftShift, newLeftShift);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    public void insertLeftShiftAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.LEFT_SHIFT_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentLeftShiftAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newLeftShiftAssignment = make.CompoundAssignment(
-                        Tree.Kind.LEFT_SHIFT_ASSIGNMENT, currentLeftShiftAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentLeftShiftAssignment, newLeftShiftAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertLessThan(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.LESS_THAN) {
-                    return;
-                }
-                BinaryTree currentLessThan = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newLessThan = make.Binary(
-                        Tree.Kind.LESS_THAN, currentLessThan.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentLessThan, newLessThan);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertLessThanEqual(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.LESS_THAN_EQUAL) {
-                    return;
-                }
-                BinaryTree currentLessThanEqual = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newLessThanEqual = make.Binary(
-                        Tree.Kind.LESS_THAN_EQUAL, currentLessThanEqual.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentLessThanEqual, newLessThanEqual);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertLogicalComplement(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.LOGICAL_COMPLEMENT) {
-                    return;
-                }
-                UnaryTree currentLogicalComplement = (UnaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                UnaryTree newLogicalComplement = make.Unary(Tree.Kind.LOGICAL_COMPLEMENT, methodInvocation);
-                copy.rewrite(currentLogicalComplement, newLogicalComplement);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertMemberSelect(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.MEMBER_SELECT) {
-                    return;
-                }
-                MemberSelectTree currentMemberSelect = (MemberSelectTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                MemberSelectTree newMemberSelect =
-                        make.MemberSelect(currentMemberSelect.getExpression(), methodInvocation.toString());
-                copy.rewrite(currentMemberSelect, newMemberSelect);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertMinus(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.MINUS) {
-                    return;
-                }
-                BinaryTree currentMinus = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newMinus = make.Binary(Tree.Kind.MINUS, currentMinus.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentMinus, newMinus);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertMinusAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.MINUS_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentMinusAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newMinusAssignment = make.CompoundAssignment(
-                        Tree.Kind.MINUS_ASSIGNMENT, currentMinusAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentMinusAssignment, newMinusAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertMultiply(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.MULTIPLY) {
-                    return;
-                }
-                BinaryTree currentMultiply = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newMultiply =
-                        make.Binary(Tree.Kind.MULTIPLY, currentMultiply.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentMultiply, newMultiply);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertMultiplyAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.MULTIPLY_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentMultiplyAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newMultiplyAssignment = make.CompoundAssignment(
-                        Tree.Kind.MULTIPLY_ASSIGNMENT, currentMultiplyAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentMultiplyAssignment, newMultiplyAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertNotEqualTo(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.NOT_EQUAL_TO) {
-                    return;
-                }
-                BinaryTree currentNotEqualTo = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newNotEqualTo =
-                        make.Binary(Tree.Kind.NOT_EQUAL_TO, currentNotEqualTo.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentNotEqualTo, newNotEqualTo);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertOr(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.OR) {
-                    return;
-                }
-                BinaryTree currentOr = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newOr = make.Binary(Tree.Kind.OR, currentOr.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentOr, newOr);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertOrAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.OR_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentOrAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newOrAssignment = make.CompoundAssignment(
-                        Tree.Kind.OR_ASSIGNMENT, currentOrAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentOrAssignment, newOrAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertPlus(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.PLUS) {
-                    return;
-                }
-                BinaryTree currentPlus = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newPlus = make.Binary(Tree.Kind.PLUS, currentPlus.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentPlus, newPlus);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertPlusAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.PLUS_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentPlusAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newPlusAssignment = make.CompoundAssignment(
-                        Tree.Kind.PLUS_ASSIGNMENT, currentPlusAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentPlusAssignment, newPlusAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertRemainder(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.REMAINDER) {
-                    return;
-                }
-                BinaryTree currentRemainder = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newRemainder =
-                        make.Binary(Tree.Kind.REMAINDER, currentRemainder.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentRemainder, newRemainder);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertRemainderAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.REMAINDER_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentRemainderAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newRemainderAssignment = make.CompoundAssignment(
-                        Tree.Kind.REMAINDER_ASSIGNMENT, currentRemainderAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentRemainderAssignment, newRemainderAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertRightShift(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.RIGHT_SHIFT) {
-                    return;
-                }
-                BinaryTree currentRightShift = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newRightShift =
-                        make.Binary(Tree.Kind.RIGHT_SHIFT, currentRightShift.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentRightShift, newRightShift);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertRightShiftAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.RIGHT_SHIFT_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentRightShiftAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newRightShiftAssignment = make.CompoundAssignment(
-                        Tree.Kind.RIGHT_SHIFT_ASSIGNMENT, currentRightShiftAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentRightShiftAssignment, newRightShiftAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertUnaryMinus(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.UNARY_MINUS) {
-                    return;
-                }
-                UnaryTree currentUnaryMinus = (UnaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                UnaryTree newUnaryMinus = make.Unary(Tree.Kind.UNARY_MINUS, methodInvocation);
-                copy.rewrite(currentUnaryMinus, newUnaryMinus);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertUnaryPlus(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.UNARY_PLUS) {
-                    return;
-                }
-                UnaryTree currentUnaryPlus = (UnaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                UnaryTree newUnaryPlus = make.Unary(Tree.Kind.UNARY_PLUS, methodInvocation);
-                copy.rewrite(currentUnaryPlus, newUnaryPlus);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertUnsignedRightShift(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.UNSIGNED_RIGHT_SHIFT) {
-                    return;
-                }
-                BinaryTree currentUnsignedRightShift = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newUnsignedRightShift = make.Binary(
-                        Tree.Kind.UNSIGNED_RIGHT_SHIFT, currentUnsignedRightShift.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentUnsignedRightShift, newUnsignedRightShift);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertUnsignedRightShiftAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.UNSIGNED_RIGHT_SHIFT_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentUnsignedRightShiftAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newUnsignedRightShiftAssignment = make.CompoundAssignment(
-                        Tree.Kind.UNSIGNED_RIGHT_SHIFT_ASSIGNMENT,
-                        currentUnsignedRightShiftAssignment.getVariable(),
-                        methodInvocation);
-                copy.rewrite(currentUnsignedRightShiftAssignment, newUnsignedRightShiftAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertXor(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.XOR) {
-                    return;
-                }
-                BinaryTree currentXor = (BinaryTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                BinaryTree newXor = make.Binary(Tree.Kind.XOR, currentXor.getLeftOperand(), methodInvocation);
-                copy.rewrite(currentXor, newXor);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertXorAssignment(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.XOR_ASSIGNMENT) {
-                    return;
-                }
-                CompoundAssignmentTree currentXorAssignment = (CompoundAssignmentTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                CompoundAssignmentTree newXorAssignment = make.CompoundAssignment(
-                        Tree.Kind.XOR, currentXorAssignment.getVariable(), methodInvocation);
-                copy.rewrite(currentXorAssignment, newXorAssignment);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertForLoop(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.FOR_LOOP) {
-                    return;
-                }
-                ForLoopTree currentForLoop = (ForLoopTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
-                sequence.move(abbreviation.getStartOffset());
-                int semicolonCount = 0;
-                while (sequence.movePrevious() && sequence.token().id() != JavaTokenId.FOR) {
-                    TokenId tokenId = sequence.token().id();
-                    if (tokenId == JavaTokenId.SEMICOLON) {
-                        semicolonCount++;
-                    }
-                }
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                ForLoopTree newForLoop;
-                switch (semicolonCount) {
-                    case 0: {
-                        newForLoop =
-                                make.addForLoopInitializer(currentForLoop, make.ExpressionStatement(methodInvocation));
-                        break;
-                    }
-                    case 1: {
-                        newForLoop = make.ForLoop(
-                                currentForLoop.getInitializer(),
-                                methodInvocation,
-                                currentForLoop.getUpdate(),
-                                currentForLoop.getStatement());
-                        break;
-                    }
-                    default: {
-                        newForLoop = make.addForLoopUpdate(currentForLoop, make.ExpressionStatement(methodInvocation));
-                    }
-                }
-                copy.rewrite(currentForLoop, newForLoop);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    private void insertMethodInvocation(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.METHOD_INVOCATION) {
-                    return;
-                }
-                MethodInvocationTree currentMethodInvocation = (MethodInvocationTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                int insertIndex = findInsertIndexForInvocationArgument(currentMethodInvocation);
-                MethodInvocationTree newMethodInvocation =
-                        make.insertMethodInvocationArgument(currentMethodInvocation, insertIndex, methodInvocation);
-                copy.rewrite(currentMethodInvocation, newMethodInvocation);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        int insertIndex = findInsertIndexForInvocationArgument(currentTree);
+        MethodInvocationTree newTree = make.insertMethodInvocationArgument(currentTree, insertIndex, expression);
+        copy.rewrite(currentTree, newTree);
     }
 
     private int findInsertIndexForInvocationArgument(MethodInvocationTree methodInvocationTree) {
@@ -2576,92 +1577,90 @@ public class JavaSourceHelper {
         return -1;
     }
 
-    private void insertNewClass(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.NEW_CLASS) {
-                    return;
-                }
-                NewClassTree currentNewClass = (NewClassTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                int insertIndex = findInsertIndexForInvocationArgument(currentNewClass);
-                NewClassTree newNewClass =
-                        make.insertNewClassArgument(currentNewClass, insertIndex, methodInvocation);
-                copy.rewrite(currentNewClass, newNewClass);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+    private void insertNewClassTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        NewClassTree currentTree = (NewClassTree) getCurrentTreeOfKind(copy, Tree.Kind.NEW_CLASS);
+        if (currentTree == null) {
+            return;
         }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        int insertIndex = findInsertIndexForInvocationArgument(currentTree);
+        NewClassTree newTree = make.insertNewClassArgument(currentTree, insertIndex, expression);
+        copy.rewrite(currentTree, newTree);
     }
 
     private int findInsertIndexForInvocationArgument(NewClassTree newClassTree) {
         return findInsertIndexForArgument(newClassTree.getArguments());
     }
 
-    private void insertConditionalStatement(CodeFragment fragment) {
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToResolvedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.CONDITIONAL_EXPRESSION) {
-                    return;
-                }
-                ConditionalExpressionTree currentConditionalOperator = (ConditionalExpressionTree) currentTree;
-                TreeMaker make = copy.getTreeMaker();
-                ExpressionTree methodInvocation = createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
-                TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
-                sequence.move(abbreviation.getStartOffset());
-                boolean questionFound = false;
-                boolean colonFound = false;
-                while (sequence.moveNext() && sequence.token().id() != JavaTokenId.SEMICOLON) {
-                    TokenId tokenId = sequence.token().id();
-                    if (tokenId == JavaTokenId.QUESTION) {
-                        questionFound = true;
-                    } else if (tokenId == JavaTokenId.COLON) {
-                        colonFound = true;
-                    }
-                }
-                ConditionalExpressionTree newConditionalOperator;
-                if (colonFound) {
-                    if (questionFound) {
-                        newConditionalOperator =
-                                make.ConditionalExpression(
-                                        methodInvocation,
-                                        currentConditionalOperator.getTrueExpression(),
-                                        currentConditionalOperator.getFalseExpression());
-                    } else {
-                        newConditionalOperator =
-                                make.ConditionalExpression(
-                                        currentConditionalOperator.getCondition(),
-                                        methodInvocation,
-                                        currentConditionalOperator.getFalseExpression());
-                    }
-                } else {
-                    newConditionalOperator =
-                            make.ConditionalExpression(
-                                    currentConditionalOperator.getCondition(),
-                                    currentConditionalOperator.getTrueExpression(),
-                                    methodInvocation);
-                }
-                copy.rewrite(currentConditionalOperator, newConditionalOperator);
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+    private void insertParenthesized(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        ParenthesizedTree currentTree = (ParenthesizedTree) getCurrentTreeOfKind(copy, Tree.Kind.PARENTHESIZED);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        ParenthesizedTree newTree = make.Parenthesized(expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertReturnTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        ReturnTree currentTree = (ReturnTree) getCurrentTreeOfKind(copy, Tree.Kind.RETURN);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        Tree newTree = make.Return(expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertUnaryTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make, Tree.Kind kind) {
+        UnaryTree currentTree = (UnaryTree) getCurrentTreeOfKind(copy, kind);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        UnaryTree newTree = make.Unary(kind, expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    public void insertVariableTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        VariableTree currentTree = (VariableTree) getCurrentTreeOfKind(copy, Tree.Kind.VARIABLE);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        String initializer = currentTree.getInitializer().toString();
+        int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
+        if (errorIndex >= 0) {
+            initializer = initializer.substring(0, errorIndex)
+                    .concat(expression.toString())
+                    .concat(initializer.substring(errorIndex + 7));
+        }
+        VariableTree newTree =
+                make.Variable(
+                        currentTree.getModifiers(),
+                        currentTree.getName(),
+                        currentTree.getType(),
+                        make.Identifier(initializer));
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private ExpressionTree getExpressionToInsert(CodeFragment fragment, TreeMaker make) {
+        switch (fragment.getKind()) {
+            case FIELD_ACCESS: {
+                return make.MemberSelect(
+                        make.Identifier(((FieldAccess) fragment).getScope()), ((FieldAccess) fragment).getName());
+            }
+            case KEYWORD:
+            case LOCAL_ELEMENT:
+            case TYPE: {
+                return make.Identifier(fragment.toString());
+            }
+            case METHOD_INVOCATION: {
+                return createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
+            }
+            default: {
+                return null;
+            }
         }
     }
 }
