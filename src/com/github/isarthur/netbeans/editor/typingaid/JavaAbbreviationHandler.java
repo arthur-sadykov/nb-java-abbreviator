@@ -60,6 +60,9 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
     public List<CodeFragment> process(Abbreviation abbreviation) {
         helper.setAbbreviation(abbreviation);
         if (abbreviation.getContent().contains(".")) { //NOI18N
+            if (helper.isCaseLabel()) {
+                return null;
+            }
             List<Element> elements = helper.getElementsByAbbreviation();
             if (!elements.isEmpty()) {
                 List<MethodInvocation> methodInvocations = Collections.emptyList();
@@ -201,64 +204,85 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         }
                     }
                 } else {
-                    List<LocalElement> localElements = Collections.emptyList();
-                    if (Settings.getSettingForLocalVariable()) {
-                        localElements = helper.collectLocalElements();
-                    }
-                    List<MethodInvocation> localMethodInvocations = Collections.emptyList();
-                    if (Settings.getSettingForLocalMethodInvocation()) {
-                        localMethodInvocations = helper.collectLocalMethodInvocations();
-                    }
-                    List<Type> types = Collections.emptyList();
-                    if (Settings.getSettingForExternalType()) {
-                        types = helper.collectTypes();
-                    }
-                    List<Keyword> keywords = Collections.emptyList();
-                    if (Settings.getSettingForKeyword()) {
-                        keywords = helper.collectKeywords();
-                    }
-                    int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
-                            + keywords.size();
-                    switch (matchesCount) {
-                        case 0: {
-                            return null;
-                        }
-                        case 1: {
-                            if (!localElements.isEmpty()) {
-                                return helper.insertCodeFragment(localElements.get(0));
-                            } else if (!localMethodInvocations.isEmpty()) {
-                                return helper.insertCodeFragment(localMethodInvocations.get(0));
-                            } else if (!types.isEmpty()) {
-                                return helper.insertCodeFragment(types.get(0));
-                            } else {
-                                Keyword keyword = keywords.get(0);
-                                switch (keyword.getName()) {
-                                    case "case": { //NOI18N
-                                        return helper.insertCaseStatement();
-                                    }
-                                    case "if": { //NOI18N
-                                        return helper.insertIfStatement();
-                                    }
-                                    case "return": {//NOI18N
-                                        return helper.insertReturnStatement();
-                                    }
-                                    case "switch": {//NOI18N
-                                        return helper.insertSwitchStatement();
-                                    }
-                                    default: {
-                                        return helper.insertCodeFragment(keyword);
-                                    }
+                    if (helper.isCaseLabel()) {
+                        if (Settings.getSettingForEnumConstant()) {
+                            List<LocalElement> enumConstants = helper.collectEnumConstantsOfSwitchExpressionType();
+                            int matchesCount = enumConstants.size();
+                            switch (matchesCount) {
+                                case 0: {
+                                    return null;
+                                }
+                                case 1: {
+                                    return helper.insertCodeFragment(enumConstants.get(0));
+                                }
+                                default: {
+                                    List<CodeFragment> codeFragments = new ArrayList<>(enumConstants);
+                                    showPopup(codeFragments);
+                                    return codeFragments;
                                 }
                             }
                         }
-                        default: {
-                            List<CodeFragment> codeFragments = new ArrayList<>();
-                            codeFragments.addAll(localElements);
-                            codeFragments.addAll(localMethodInvocations);
-                            codeFragments.addAll(types);
-                            codeFragments.addAll(keywords);
-                            showPopup(codeFragments);
-                            return codeFragments;
+                        return null;
+                    } else {
+                        List<LocalElement> localElements = Collections.emptyList();
+                        if (Settings.getSettingForLocalVariable()) {
+                            localElements = helper.collectLocalElements();
+                        }
+                        List<MethodInvocation> localMethodInvocations = Collections.emptyList();
+                        if (Settings.getSettingForLocalMethodInvocation()) {
+                            localMethodInvocations = helper.collectLocalMethodInvocations();
+                        }
+                        List<Type> types = Collections.emptyList();
+                        if (Settings.getSettingForExternalType()) {
+                            types = helper.collectTypes();
+                        }
+                        List<Keyword> keywords = Collections.emptyList();
+                        if (Settings.getSettingForKeyword()) {
+                            keywords = helper.collectKeywords();
+                        }
+                        int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
+                                + keywords.size();
+                        switch (matchesCount) {
+                            case 0: {
+                                return null;
+                            }
+                            case 1: {
+                                if (!localElements.isEmpty()) {
+                                    return helper.insertCodeFragment(localElements.get(0));
+                                } else if (!localMethodInvocations.isEmpty()) {
+                                    return helper.insertCodeFragment(localMethodInvocations.get(0));
+                                } else if (!types.isEmpty()) {
+                                    return helper.insertCodeFragment(types.get(0));
+                                } else {
+                                    Keyword keyword = keywords.get(0);
+                                    switch (keyword.getName()) {
+                                        case "case": { //NOI18N
+                                            return helper.insertCaseStatement();
+                                        }
+                                        case "if": { //NOI18N
+                                            return helper.insertIfStatement();
+                                        }
+                                        case "return": {//NOI18N
+                                            return helper.insertReturnStatement();
+                                        }
+                                        case "switch": {//NOI18N
+                                            return helper.insertSwitchStatement();
+                                        }
+                                        default: {
+                                            return helper.insertCodeFragment(keyword);
+                                        }
+                                    }
+                                }
+                            }
+                            default: {
+                                List<CodeFragment> codeFragments = new ArrayList<>();
+                                codeFragments.addAll(localElements);
+                                codeFragments.addAll(localMethodInvocations);
+                                codeFragments.addAll(types);
+                                codeFragments.addAll(keywords);
+                                showPopup(codeFragments);
+                                return codeFragments;
+                            }
                         }
                     }
                 }

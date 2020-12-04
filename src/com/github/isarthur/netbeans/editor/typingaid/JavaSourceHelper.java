@@ -227,6 +227,17 @@ public class JavaSourceHelper {
                     case PARENTHESIZED: {
                         return;
                     }
+                    case CASE: {
+                        TreePath switchPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
+                        if (switchPath == null) {
+                            break;
+                        }
+                        SwitchTree switchTree = (SwitchTree) switchPath.getLeaf();
+                        ExpressionTree expression = switchTree.getExpression();
+                        TreePath expressionPath = TreePath.getPath(switchPath, expression);
+                        typeMirror.set(trees.getTypeMirror(expressionPath));
+                        break;
+                    }
                     case DIVIDE:
                     case EQUAL_TO:
                     case GREATER_THAN:
@@ -318,7 +329,7 @@ public class JavaSourceHelper {
             List<Element> localElements = new ArrayList<>();
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
@@ -429,7 +440,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
                 TypeMirror typeMirror = element.asType();
@@ -651,7 +662,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 Trees trees = copy.getTrees();
                 CompilationUnitTree compilationUnit = copy.getCompilationUnit();
                 Tree tree = compilationUnit.getTypeDecls().get(0);
@@ -730,7 +741,7 @@ public class JavaSourceHelper {
             List<Element> localElements = new ArrayList<>();
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 Types types = copy.getTypes();
                 ElementUtilities elementUtilities = copy.getElementUtilities();
@@ -876,7 +887,7 @@ public class JavaSourceHelper {
             List<Element> localElements = new ArrayList<>();
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
@@ -920,7 +931,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
                 if (currentPath == null) {
@@ -970,12 +981,62 @@ public class JavaSourceHelper {
         return memberSelection.get();
     }
 
+    boolean isCaseLabel() {
+        AtomicBoolean caseLabel = new AtomicBoolean();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    caseLabel.set(false);
+                } else {
+                    TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+                    sequence.move(abbreviation.getStartOffset());
+                    while (sequence.movePrevious() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+                    }
+                    caseLabel.set(sequence.token().id() == JavaTokenId.CASE);
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return caseLabel.get();
+    }
+
+    List<LocalElement> collectEnumConstantsOfSwitchExpressionType() {
+        List<LocalElement> result = new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                Types types = copy.getTypes();
+                TypeMirror type = getTypeInContext();
+                if (type == null) {
+                    return;
+                }
+                Element typeElement = types.asElement(type);
+                if (typeElement == null) {
+                    return;
+                }
+                List<VariableElement> enumConstants = getEnumConstants(typeElement);
+                enumConstants = getFieldsOrEnumConstantsByAbbreviation(enumConstants);
+                enumConstants.forEach(enumConstant -> result.add(new LocalElement(enumConstant)));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        Collections.sort(result);
+        return Collections.unmodifiableList(result);
+    }
+
     List<MethodInvocation> collectChainedMethodInvocations() {
         List<MethodInvocation> methodInvocations = new ArrayList<>();
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 Types types = copy.getTypes();
                 TypeMirror type = getTypeInContext();
                 if (type == null) {
@@ -1029,7 +1090,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 Types types = copy.getTypes();
                 TypeMirror type = getTypeInContext();
                 if (type == null) {
@@ -1055,7 +1116,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
                 TypeMirror typeMirror = element.asType();
@@ -1083,7 +1144,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 Types types = copy.getTypes();
                 TypeMirror type = getTypeInContext();
                 if (type == null) {
@@ -1109,7 +1170,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
                 TypeMirror typeMirror = element.asType();
@@ -1186,7 +1247,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TokenHierarchy<?> tokenHierarchy = copy.getTokenHierarchy();
                 TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
                 tokenSequence.move(abbreviation.getStartOffset());
@@ -1212,7 +1273,7 @@ public class JavaSourceHelper {
             List<Element> fields = new ArrayList<>();
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
@@ -1276,7 +1337,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 Trees trees = copy.getTrees();
                 CompilationUnitTree compilationUnit = copy.getCompilationUnit();
                 List<? extends CaseTree> cases = switchTree.getCases();
@@ -1456,7 +1517,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runUserActionTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 Trees trees = copy.getTrees();
                 CompilationUnitTree compilationUnit = copy.getCompilationUnit();
                 List<? extends StatementTree> statements = blockTree.getStatements();
@@ -1598,7 +1659,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
-                copy.toPhase(Phase.RESOLVED);
+                moveStateToResolvedPhase(copy);
                 TreeMaker make = copy.getTreeMaker();
                 MethodInvocationTree methodInvocationTree = make.MethodInvocation(Collections.emptyList(),
                         make.Identifier(methodInvocation.getMethod()), methodInvocation.getArguments());
@@ -1749,9 +1810,98 @@ public class JavaSourceHelper {
         if (currentTree == null) {
             return;
         }
+        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+        sequence.move(abbreviation.getStartOffset());
+        while (sequence.movePrevious() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+        }
+        CaseTree newTree;
         ExpressionTree expression = getExpressionToInsert(fragment, make);
-        CaseTree newTree = make.Case(expression, currentTree.getStatements());
+        if (sequence.token().id() != JavaTokenId.CASE) {
+            int insertIndex = findInsertIndexInCaseTree(currentTree);
+            newTree = make.insertCaseStatement(currentTree, insertIndex, make.ExpressionStatement(expression));
+        } else {
+            newTree = make.Case(expression, currentTree.getStatements());
+        }
         copy.rewrite(currentTree, newTree);
+    }
+
+    private int findInsertIndexInCaseTree(CaseTree caseTree) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends StatementTree> statements = caseTree.getStatements();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = statements.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        StatementTree currentStatement = statements.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    case 2: {
+                        StatementTree previousStatement = statements.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousStatement);
+                        StatementTree currentStatement = statements.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                            insertIndex.set(size);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            StatementTree previousStatement = statements.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousStatement);
+                            StatementTree currentStatement = statements.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                            if (i < size - 1) {
+                                if (abbreviation.getStartOffset() < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < abbreviation.getStartOffset()
+                                        && abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return insertIndex.get();
     }
 
     private void insertCompoundAssignmentTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make, Tree.Kind kind) {
