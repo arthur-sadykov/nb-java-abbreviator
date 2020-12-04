@@ -1005,6 +1005,31 @@ public class JavaSourceHelper {
         return caseLabel.get();
     }
 
+    public boolean isCaseStatement() {
+        AtomicBoolean caseLabel = new AtomicBoolean();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    caseLabel.set(false);
+                } else {
+                    TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+                    sequence.move(abbreviation.getStartOffset());
+                    while (sequence.movePrevious() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+                    }
+                    caseLabel.set(currentPath.getLeaf().getKind() == Tree.Kind.CASE
+                            && sequence.token().id() != JavaTokenId.CASE);
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return caseLabel.get();
+    }
+
     List<LocalElement> collectEnumConstantsOfSwitchExpressionType() {
         List<LocalElement> result = new ArrayList<>();
         try {
@@ -1411,7 +1436,7 @@ public class JavaSourceHelper {
         return insertIndex.get();
     }
 
-    public List<CodeFragment> insertIfStatement() {
+    public List<CodeFragment> insertIfStatementInBlock() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -1423,7 +1448,7 @@ public class JavaSourceHelper {
                     return;
                 }
                 Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK && currentTree.getKind() != Tree.Kind.CASE) {
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
                     return;
                 }
                 BlockTree currentBlock = (BlockTree) currentTree;
@@ -1435,6 +1460,38 @@ public class JavaSourceHelper {
                 IfTree ifStatement = make.If(make.Identifier("true"), make.Block(Collections.emptyList(), false), null); //NOI18N
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, ifStatement);
                 copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(ifStatement.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    public List<CodeFragment> insertIfStatementInCaseTree() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.CASE) {
+                    return;
+                }
+                CaseTree currentCase = (CaseTree) currentTree;
+                int insertIndex = findInsertIndexInCaseTree(currentCase);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                IfTree ifStatement = make.If(make.Identifier("true"), make.Block(Collections.emptyList(), false), null); //NOI18N
+                CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, ifStatement);
+                copy.rewrite(currentCase, newCase);
                 statements.add(new Statement(ifStatement.toString()));
             }).commit();
         } catch (IOException ex) {

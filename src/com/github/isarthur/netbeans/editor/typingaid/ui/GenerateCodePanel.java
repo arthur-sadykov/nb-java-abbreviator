@@ -179,7 +179,11 @@ public class GenerateCodePanel extends javax.swing.JPanel {
                     break;
                 }
                 case "if": { //NOI18N
-                    helper.insertIfStatement();
+                    if (helper.isCaseStatement()) {
+                        helper.insertIfStatementInCaseTree();
+                    } else {
+                        helper.insertIfStatementInBlock();
+                    }
                     break;
                 }
                 case "return": {//NOI18N

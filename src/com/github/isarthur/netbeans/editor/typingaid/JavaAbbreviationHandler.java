@@ -260,7 +260,11 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                             return helper.insertCaseStatement();
                                         }
                                         case "if": { //NOI18N
-                                            return helper.insertIfStatement();
+                                            if (helper.isCaseStatement()) {
+                                                helper.insertIfStatementInCaseTree();
+                                            } else {
+                                                return helper.insertIfStatementInBlock();
+                                            }
                                         }
                                         case "return": {//NOI18N
                                             return helper.insertReturnStatement();
