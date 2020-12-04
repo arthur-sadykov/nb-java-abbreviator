@@ -233,6 +233,9 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             } else {
                                 Keyword keyword = keywords.get(0);
                                 switch (keyword.getName()) {
+                                    case "case": { //NOI18N
+                                        return helper.insertCaseStatement();
+                                    }
                                     case "if": { //NOI18N
                                         return helper.insertIfStatement();
                                     }

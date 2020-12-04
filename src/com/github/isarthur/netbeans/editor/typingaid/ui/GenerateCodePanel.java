@@ -174,6 +174,10 @@ public class GenerateCodePanel extends javax.swing.JPanel {
         if (codeFragment instanceof Keyword) {
             Keyword keyword = (Keyword) codeFragment;
             switch (keyword.getName()) {
+                case "case": { //NOI18N
+                    helper.insertCaseStatement();
+                    break;
+                }
                 case "if": { //NOI18N
                     helper.insertIfStatement();
                     break;

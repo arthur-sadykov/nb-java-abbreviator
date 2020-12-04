@@ -31,6 +31,7 @@ import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
 import com.sun.source.tree.ConditionalExpressionTree;
@@ -1233,6 +1234,117 @@ public class JavaSourceHelper {
         }
         Collections.sort(result);
         return Collections.unmodifiableList(result);
+    }
+
+    public List<CodeFragment> insertCaseStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.SWITCH) {
+                    return;
+                }
+                SwitchTree currentSwitch = (SwitchTree) currentTree;
+                int insertIndex = findInsertIndexInSwitchStatement(currentSwitch);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                CaseTree newCase = make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))); //NOI18N
+                SwitchTree newSwitch = make.insertSwitchCase(currentSwitch, insertIndex, newCase);
+                copy.rewrite(currentSwitch, newSwitch);
+                statements.add(new Statement(newCase.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private int findInsertIndexInSwitchStatement(SwitchTree switchTree) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends CaseTree> cases = switchTree.getCases();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = cases.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        CaseTree currentCase = cases.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCase);
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    case 2: {
+                        CaseTree previousCase = cases.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousCase);
+                        CaseTree currentCase = cases.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCase);
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                            insertIndex.set(size);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            CaseTree previousCase = cases.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousCase);
+                            CaseTree currentCase = cases.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentCase);
+                            if (i < size - 1) {
+                                if (abbreviation.getStartOffset() < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < abbreviation.getStartOffset()
+                                        && abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return insertIndex.get();
     }
 
     public List<CodeFragment> insertIfStatement() {
