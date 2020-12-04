@@ -182,6 +182,10 @@ public class GenerateCodePanel extends javax.swing.JPanel {
                     helper.insertReturnStatement();
                     break;
                 }
+                case "switch": {//NOI18N
+                    helper.insertSwitchStatement();
+                    break;
+                }
                 default: {
                     helper.insertCodeFragment(keyword);
                     break;

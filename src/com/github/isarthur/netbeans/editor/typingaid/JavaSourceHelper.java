@@ -47,6 +47,7 @@ import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Scope;
 import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.SwitchTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
@@ -1292,6 +1293,42 @@ public class JavaSourceHelper {
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, returnStatement);
                 copy.rewrite(currentBlock, newBlock);
                 statements.add(new Statement(returnStatement.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    public List<CodeFragment> insertSwitchStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                SwitchTree switchStatement =
+                        make.Switch(
+                                make.Identifier(""), //NOI18N
+                                Collections.singletonList(
+                                        make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, switchStatement);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(switchStatement.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
