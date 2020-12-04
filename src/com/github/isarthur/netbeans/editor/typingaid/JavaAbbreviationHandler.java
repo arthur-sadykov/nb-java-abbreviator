@@ -22,6 +22,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Name;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
@@ -240,8 +241,12 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         if (Settings.getSettingForKeyword()) {
                             keywords = helper.collectKeywords();
                         }
+                        List<Modifier> modifiers = Collections.emptyList();
+                        if (Settings.getSettingForModifier()) {
+                            modifiers = helper.collectModifiers();
+                        }
                         int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
-                                + keywords.size();
+                                + keywords.size() + modifiers.size();
                         switch (matchesCount) {
                             case 0: {
                                 return null;
@@ -253,7 +258,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                     return helper.insertCodeFragment(localMethodInvocations.get(0));
                                 } else if (!types.isEmpty()) {
                                     return helper.insertCodeFragment(types.get(0));
-                                } else {
+                                } else if (!keywords.isEmpty()) {
                                     Keyword keyword = keywords.get(0);
                                     switch (keyword.getName()) {
                                         case "case": { //NOI18N
@@ -276,6 +281,8 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                             return helper.insertCodeFragment(keyword);
                                         }
                                     }
+                                } else {
+                                    return helper.insertCodeFragment(modifiers.get(0));
                                 }
                             }
                             default: {
@@ -284,6 +291,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 codeFragments.addAll(localMethodInvocations);
                                 codeFragments.addAll(types);
                                 codeFragments.addAll(keywords);
+                                codeFragments.addAll(modifiers);
                                 showPopup(codeFragments);
                                 return codeFragments;
                             }

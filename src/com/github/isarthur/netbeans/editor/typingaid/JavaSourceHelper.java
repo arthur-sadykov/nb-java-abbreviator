@@ -926,6 +926,18 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(keywords);
     }
 
+    List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> collectModifiers() {
+        List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers = new ArrayList<>();
+        ConstantDataManager.MODIFIERS.forEach(modifier -> {
+            String modifierAbbreviation = StringUtilities.getElementAbbreviation(modifier);
+            if (modifierAbbreviation.equals(abbreviation.getName())) {
+                modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier));
+            }
+        });
+        Collections.sort(modifiers);
+        return Collections.unmodifiableList(modifiers);
+    }
+
     boolean isMemberSelection() {
         AtomicBoolean memberSelection = new AtomicBoolean();
         try {
@@ -2191,7 +2203,8 @@ public class JavaSourceHelper {
                 }
             }
             case KEYWORD:
-            case LOCAL_ELEMENT: {
+            case LOCAL_ELEMENT:
+            case MODIFIER: {
                 return make.Identifier(fragment.toString());
             }
             case TYPE: {

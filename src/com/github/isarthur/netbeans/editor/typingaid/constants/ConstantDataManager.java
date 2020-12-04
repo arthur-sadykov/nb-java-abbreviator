@@ -41,6 +41,7 @@ public class ConstantDataManager {
     public static final String JAVA_SOURCE_NOT_ASSOCIATED_TO_DOCUMENT = "The Java source is not associated to document!"; //NOI18N
     public static final Set<String> KEYWORDS;
     public static final String LONG_ZERO_LITERAL = "0L"; //NOI18N
+    public static final Set<String> MODIFIERS;
     public static final String NULL = "null"; //NOI18N
     public static final String PARENTHESIZED_ERROR = "(ERROR)"; //NOI18N
     public static final String SHOULD_SET_CARET_POSITION_AND_COLLECT_LOCAL_ELEMENTS =
@@ -49,14 +50,14 @@ public class ConstantDataManager {
     public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
-    private static final int KEYWORD_COUNT = 50;
+    private static final int KEYWORD_COUNT = 37;
+    private static final int MODIFIER_COUNT = 11;
 
     private ConstantDataManager() {
     }
 
     static {
         KEYWORDS = new HashSet<>(KEYWORD_COUNT);
-        KEYWORDS.add("abstract"); //NOI18N
         KEYWORDS.add("assert"); //NOI18N
         KEYWORDS.add("boolean"); //NOI18N
         KEYWORDS.add("break"); //NOI18N
@@ -71,7 +72,6 @@ public class ConstantDataManager {
         KEYWORDS.add("enum"); //NOI18N
         KEYWORDS.add("extends"); //NOI18N
         KEYWORDS.add("false"); //NOI18N
-        KEYWORDS.add("final"); //NOI18N
         KEYWORDS.add("finally"); //NOI18N
         KEYWORDS.add("float"); //NOI18N
         KEYWORDS.add("if"); //NOI18N
@@ -81,28 +81,31 @@ public class ConstantDataManager {
         KEYWORDS.add("implements"); //NOI18N
         KEYWORDS.add("import"); //NOI18N
         KEYWORDS.add("long"); //NOI18N
-        KEYWORDS.add("native"); //NOI18N
         KEYWORDS.add("null"); //NOI18N
         KEYWORDS.add("Object"); //NOI18N
         KEYWORDS.add("package"); //NOI18N
-        KEYWORDS.add("private"); //NOI18N
-        KEYWORDS.add("protected"); //NOI18N
-        KEYWORDS.add("public"); //NOI18N
         KEYWORDS.add("return"); //NOI18N
         KEYWORDS.add("short"); //NOI18N
-        KEYWORDS.add("static"); //NOI18N
-        KEYWORDS.add("strictfp"); //NOI18N
         KEYWORDS.add("String"); //NOI18N
         KEYWORDS.add("super"); //NOI18N
         KEYWORDS.add("switch"); //NOI18N
-        KEYWORDS.add("synchronized"); //NOI18N
         KEYWORDS.add("this"); //NOI18N
         KEYWORDS.add("throw"); //NOI18N
         KEYWORDS.add("throws"); //NOI18N
-        KEYWORDS.add("transient"); //NOI18N
         KEYWORDS.add("true"); //NOI18N
         KEYWORDS.add("void"); //NOI18N
-        KEYWORDS.add("volatile"); //NOI18N
         KEYWORDS.add("while"); //NOI18N
+        MODIFIERS = new HashSet<>(MODIFIER_COUNT);
+        MODIFIERS.add("abstract"); //NOI18N
+        MODIFIERS.add("final"); //NOI18N
+        MODIFIERS.add("native"); //NOI18N
+        MODIFIERS.add("private"); //NOI18N
+        MODIFIERS.add("protected"); //NOI18N
+        MODIFIERS.add("public"); //NOI18N
+        MODIFIERS.add("static"); //NOI18N
+        MODIFIERS.add("strictfp"); //NOI18N
+        MODIFIERS.add("synchronized"); //NOI18N
+        MODIFIERS.add("transient"); //NOI18N
+        MODIFIERS.add("volatile"); //NOI18N
     }
 }

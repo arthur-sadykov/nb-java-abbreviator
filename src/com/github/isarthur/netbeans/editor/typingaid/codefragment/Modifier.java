@@ -13,24 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.spi;
+package com.github.isarthur.netbeans.editor.typingaid.codefragment;
+
+import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public interface CodeFragment {
+public class Modifier implements CodeFragment, Comparable<Modifier> {
 
-    Kind getKind();
+    private final String name;
 
-    public enum Kind {
-        FIELD_ACCESS,
-        KEYWORD,
-        LOCAL_ELEMENT,
-        METHOD_INVOCATION,
-        MODIFIER,
-        NAME,
-        STATEMENT,
-        TYPE
+    public Modifier(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.MODIFIER;
+    }
+
+    @Override
+    public int compareTo(Modifier other) {
+        return toString().compareTo(other.toString());
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
