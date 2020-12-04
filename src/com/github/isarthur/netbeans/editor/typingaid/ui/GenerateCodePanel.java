@@ -17,11 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid.ui;
 
 import com.github.isarthur.netbeans.editor.typingaid.JavaSourceHelper;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocation;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.FocusAdapter;
@@ -177,10 +173,19 @@ public class GenerateCodePanel extends javax.swing.JPanel {
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
         if (codeFragment instanceof Keyword) {
             Keyword keyword = (Keyword) codeFragment;
-            if (keyword.getName().equals("return")) { //NOI18N
-                helper.insertReturnStatement();
-            } else {
-                helper.insertCodeFragment(keyword);
+            switch (keyword.getName()) {
+                case "if": { //NOI18N
+                    helper.insertIfStatement();
+                    break;
+                }
+                case "return": {//NOI18N
+                    helper.insertReturnStatement();
+                    break;
+                }
+                default: {
+                    helper.insertCodeFragment(keyword);
+                    break;
+                }
             }
         } else {
             helper.insertCodeFragment(codeFragment);

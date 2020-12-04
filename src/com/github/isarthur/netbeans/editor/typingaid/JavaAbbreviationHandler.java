@@ -199,7 +199,8 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     if (Settings.getSettingForKeyword()) {
                         keywords = helper.collectKeywords();
                     }
-                    int matchesCount = localElements.size() + localMethodInvocations.size() + types.size() + keywords.size();
+                    int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
+                            + keywords.size();
                     switch (matchesCount) {
                         case 0: {
                             return null;
@@ -213,10 +214,16 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 return helper.insertCodeFragment(types.get(0));
                             } else {
                                 Keyword keyword = keywords.get(0);
-                                if (keyword.getName().equals("return")) { //NOI18N
-                                    return helper.insertReturnStatement();
-                                } else {
-                                    return helper.insertCodeFragment(keyword);
+                                switch (keyword.getName()) {
+                                    case "if": { //NOI18N
+                                        return helper.insertIfStatement();
+                                    }
+                                    case "return": {//NOI18N
+                                        return helper.insertReturnStatement();
+                                    }
+                                    default: {
+                                        return helper.insertCodeFragment(keyword);
+                                    }
                                 }
                             }
                         }
