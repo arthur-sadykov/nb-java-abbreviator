@@ -1019,6 +1019,123 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(fieldAccesses);
     }
 
+    List<FieldAccess> collectChainedFieldAccesses() {
+        List<FieldAccess> fieldAccesses = new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                Types types = copy.getTypes();
+                TypeMirror type = getTypeInContext();
+                if (type == null) {
+                    return;
+                }
+                Element typeElement = types.asElement(type);
+                if (typeElement == null) {
+                    return;
+                }
+                List<VariableElement> fields = getPublicStaticFieldsInClassAndSuperclasses(typeElement);
+                fields = getFieldsOrEnumConstantsByAbbreviation(fields);
+                fields.forEach(field -> fieldAccesses.add(new FieldAccess(null, field)));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        Collections.sort(fieldAccesses);
+        return Collections.unmodifiableList(fieldAccesses);
+    }
+
+    private List<VariableElement> getPublicStaticFieldsInClassAndSuperclasses(Element element) {
+        List<VariableElement> fields = new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                TypeMirror typeMirror = element.asType();
+                Iterable<? extends Element> members;
+                try {
+                    members = elementUtilities.getMembers(typeMirror, (e, t) -> {
+                        return !elements.isDeprecated(e)
+                                && e.getKind() == ElementKind.FIELD
+                                && e.getModifiers().contains(Modifier.PUBLIC)
+                                && e.getModifiers().contains(Modifier.STATIC);
+                    });
+                } catch (AssertionError error) {
+                    return;
+                }
+                members.forEach(member -> fields.add((VariableElement) member));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(fields);
+    }
+
+    List<FieldAccess> collectChainedEnumConstantAccesses() {
+        List<FieldAccess> result = new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                Types types = copy.getTypes();
+                TypeMirror type = getTypeInContext();
+                if (type == null) {
+                    return;
+                }
+                Element typeElement = types.asElement(type);
+                if (typeElement == null) {
+                    return;
+                }
+                List<VariableElement> enumConstants = getEnumConstants(typeElement);
+                enumConstants = getFieldsOrEnumConstantsByAbbreviation(enumConstants);
+                enumConstants.forEach(enumConstant -> result.add(new FieldAccess(null, enumConstant)));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        Collections.sort(result);
+        return Collections.unmodifiableList(result);
+    }
+
+    private List<VariableElement> getEnumConstants(Element element) {
+        List<VariableElement> enumConstants = new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                copy.toPhase(Phase.RESOLVED);
+                ElementUtilities elementUtilities = copy.getElementUtilities();
+                Elements elements = copy.getElements();
+                TypeMirror typeMirror = element.asType();
+                Iterable<? extends Element> members;
+                try {
+                    members = elementUtilities.getMembers(typeMirror, (e, t) -> {
+                        return !elements.isDeprecated(e) && e.getKind() == ElementKind.ENUM_CONSTANT;
+                    });
+                } catch (AssertionError error) {
+                    return;
+                }
+                members.forEach(member -> enumConstants.add((VariableElement) member));
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(enumConstants);
+    }
+
+    private List<VariableElement> getFieldsOrEnumConstantsByAbbreviation(List<VariableElement> fieldsOrEnumConstants) {
+        List<VariableElement> result = new ArrayList<>();
+        fieldsOrEnumConstants.forEach(fieldOrEnumConstant -> {
+            String fieldOrEnumConstantAbbreviation =
+                    StringUtilities.getElementAbbreviation(fieldOrEnumConstant.getSimpleName().toString());
+            if (fieldOrEnumConstantAbbreviation.equals(abbreviation.getName())) {
+                result.add(fieldOrEnumConstant);
+            }
+        });
+        return Collections.unmodifiableList(result);
+    }
+
     List<Type> collectTypes() {
         List<TypeElement> types = collectTypesByAbbreviation();
         return types.stream()
@@ -1697,8 +1814,12 @@ public class JavaSourceHelper {
     private ExpressionTree getExpressionToInsert(CodeFragment fragment, TreeMaker make) {
         switch (fragment.getKind()) {
             case FIELD_ACCESS: {
-                return make.MemberSelect(
-                        make.QualIdent(((FieldAccess) fragment).getScope()), ((FieldAccess) fragment).getName());
+                FieldAccess fieldAccess = (FieldAccess) fragment;
+                if (fieldAccess.getScope() == null) {
+                    return make.Identifier(fieldAccess.getName());
+                } else {
+                    return make.MemberSelect(make.QualIdent(fieldAccess.getScope()), fieldAccess.getName());
+                }
             }
             case KEYWORD:
             case LOCAL_ELEMENT: {

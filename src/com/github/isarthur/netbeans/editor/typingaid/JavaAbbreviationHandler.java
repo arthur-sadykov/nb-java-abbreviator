@@ -150,16 +150,34 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     if (Settings.getSettingForChainedMethodInvocation()) {
                         chainedMethodInvocations = helper.collectChainedMethodInvocations();
                     }
-                    int matchesCount = chainedMethodInvocations.size();
+                    List<FieldAccess> fieldAccesses = Collections.emptyList();
+                    if (Settings.getSettingForField()) {
+                        fieldAccesses = helper.collectChainedFieldAccesses();
+                    }
+                    List<FieldAccess> enumConstantAccesses = Collections.emptyList();
+                    if (Settings.getSettingForEnumConstant()) {
+                        enumConstantAccesses = helper.collectChainedEnumConstantAccesses();
+                    }
+                    int matchesCount =
+                            chainedMethodInvocations.size() + fieldAccesses.size() + enumConstantAccesses.size();
                     switch (matchesCount) {
                         case 0: {
                             return null;
                         }
                         case 1: {
-                            return helper.insertCodeFragment(chainedMethodInvocations.get(0));
+                            if (!chainedMethodInvocations.isEmpty()) {
+                                return helper.insertCodeFragment(chainedMethodInvocations.get(0));
+                            } else if (!fieldAccesses.isEmpty()) {
+                                return helper.insertCodeFragment(fieldAccesses.get(0));
+                            } else {
+                                return helper.insertCodeFragment(enumConstantAccesses.get(0));
+                            }
                         }
                         default: {
-                            ArrayList<CodeFragment> codeFragments = new ArrayList<>(chainedMethodInvocations);
+                            ArrayList<CodeFragment> codeFragments = new ArrayList<>();
+                            codeFragments.addAll(chainedMethodInvocations);
+                            codeFragments.addAll(fieldAccesses);
+                            codeFragments.addAll(enumConstantAccesses);
                             showPopup(codeFragments);
                             return codeFragments;
                         }

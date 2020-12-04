@@ -61,6 +61,10 @@ public class FieldAccess implements CodeFragment, Comparable<FieldAccess> {
 
     @Override
     public String toString() {
-        return scope + "." + name; //NOI18N
+        if (scope == null) {
+            return name.getSimpleName().toString();
+        } else {
+            return scope + "." + name; //NOI18N
+        }
     }
 }
