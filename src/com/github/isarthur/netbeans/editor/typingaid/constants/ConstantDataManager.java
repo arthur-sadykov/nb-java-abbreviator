@@ -49,7 +49,7 @@ public class ConstantDataManager {
     public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
-    private static final int KEYWORD_COUNT = 49;
+    private static final int KEYWORD_COUNT = 50;
 
     private ConstantDataManager() {
     }
@@ -61,45 +61,46 @@ public class ConstantDataManager {
         KEYWORDS.add("boolean"); //NOI18N
         KEYWORDS.add("break"); //NOI18N
         KEYWORDS.add("byte"); //NOI18N
-        KEYWORDS.add("char"); //NOI18N
         KEYWORDS.add("case"); //NOI18N
+        KEYWORDS.add("char"); //NOI18N
         KEYWORDS.add("class"); //NOI18N
         KEYWORDS.add("continue"); //NOI18N
-        KEYWORDS.add("double"); //NOI18N
         KEYWORDS.add("default"); //NOI18N
+        KEYWORDS.add("double"); //NOI18N
         KEYWORDS.add("else"); //NOI18N
         KEYWORDS.add("enum"); //NOI18N
         KEYWORDS.add("extends"); //NOI18N
         KEYWORDS.add("false"); //NOI18N
         KEYWORDS.add("final"); //NOI18N
-        KEYWORDS.add("float"); //NOI18N
         KEYWORDS.add("finally"); //NOI18N
+        KEYWORDS.add("float"); //NOI18N
         KEYWORDS.add("if"); //NOI18N
-        KEYWORDS.add("int"); //NOI18N
-        KEYWORDS.add("implements"); //NOI18N
-        KEYWORDS.add("interface"); //NOI18N
         KEYWORDS.add("instanceof"); //NOI18N
+        KEYWORDS.add("int"); //NOI18N
+        KEYWORDS.add("interface"); //NOI18N
+        KEYWORDS.add("implements"); //NOI18N
         KEYWORDS.add("import"); //NOI18N
         KEYWORDS.add("long"); //NOI18N
-        KEYWORDS.add("null"); //NOI18N
         KEYWORDS.add("native"); //NOI18N
+        KEYWORDS.add("null"); //NOI18N
         KEYWORDS.add("Object"); //NOI18N
         KEYWORDS.add("package"); //NOI18N
         KEYWORDS.add("private"); //NOI18N
         KEYWORDS.add("protected"); //NOI18N
         KEYWORDS.add("public"); //NOI18N
         KEYWORDS.add("return"); //NOI18N
-        KEYWORDS.add("strictfp"); //NOI18N
         KEYWORDS.add("short"); //NOI18N
         KEYWORDS.add("static"); //NOI18N
+        KEYWORDS.add("strictfp"); //NOI18N
+        KEYWORDS.add("String"); //NOI18N
         KEYWORDS.add("super"); //NOI18N
         KEYWORDS.add("switch"); //NOI18N
         KEYWORDS.add("synchronized"); //NOI18N
-        KEYWORDS.add("true"); //NOI18N
         KEYWORDS.add("this"); //NOI18N
-        KEYWORDS.add("transient"); //NOI18N
         KEYWORDS.add("throw"); //NOI18N
         KEYWORDS.add("throws"); //NOI18N
+        KEYWORDS.add("transient"); //NOI18N
+        KEYWORDS.add("true"); //NOI18N
         KEYWORDS.add("void"); //NOI18N
         KEYWORDS.add("volatile"); //NOI18N
         KEYWORDS.add("while"); //NOI18N
