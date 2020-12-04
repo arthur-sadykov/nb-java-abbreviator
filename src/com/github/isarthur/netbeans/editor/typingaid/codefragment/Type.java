@@ -41,6 +41,6 @@ public class Type implements CodeFragment {
 
     @Override
     public String toString() {
-        return type.getSimpleName().toString();
+        return type.getQualifiedName().toString();
     }
 }

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 
 /**
  *
@@ -36,9 +37,9 @@ public class MethodInvocation implements CodeFragment {
     private final int argumentsNumber;
     private final JavaSourceHelper helper;
 
-    public MethodInvocation(Element element, ExecutableElement method, List<ExpressionTree> arguments,
+    public MethodInvocation(Element scope, ExecutableElement method, List<ExpressionTree> arguments,
             JavaSourceHelper helper) {
-        this.scope = element;
+        this.scope = scope;
         this.method = method;
         this.arguments = arguments;
         this.argumentsNumber = method.getParameters().size();

@@ -1296,8 +1296,11 @@ public class JavaSourceHelper {
                 if (methodInvocation.getScope() == null) {
                     expression.set(methodInvocationTree);
                 } else {
-                    expression.set(make.MemberSelect(make.Identifier(
-                            methodInvocation.getScope()), methodInvocationTree.toString()));
+                    expression.set(make.MemberSelect(
+                            TypeElement.class.isInstance(methodInvocation.getScope())
+                            ? make.QualIdent(methodInvocation.getScope().toString())
+                            : make.Identifier(methodInvocation.getScope()),
+                            methodInvocationTree.toString()));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -1655,12 +1658,14 @@ public class JavaSourceHelper {
         switch (fragment.getKind()) {
             case FIELD_ACCESS: {
                 return make.MemberSelect(
-                        make.Identifier(((FieldAccess) fragment).getScope()), ((FieldAccess) fragment).getName());
+                        make.QualIdent(((FieldAccess) fragment).getScope()), ((FieldAccess) fragment).getName());
             }
             case KEYWORD:
-            case LOCAL_ELEMENT:
-            case TYPE: {
+            case LOCAL_ELEMENT: {
                 return make.Identifier(fragment.toString());
+            }
+            case TYPE: {
+                return make.QualIdent(fragment.toString());
             }
             case METHOD_INVOCATION: {
                 return createMethodInvocationWithoutReturnValue((MethodInvocation) fragment);
