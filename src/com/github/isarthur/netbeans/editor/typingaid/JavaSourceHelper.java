@@ -1374,7 +1374,14 @@ public class JavaSourceHelper {
             return;
         }
         ExpressionTree expression = getExpressionToInsert(fragment, make);
-        AssignmentTree newTree = make.Assignment(currentTree.getVariable(), expression);
+        String expr = currentTree.getExpression().toString();
+        int errorIndex = expr.indexOf("(ERROR)"); //NOI18N
+        if (errorIndex >= 0) {
+            expr = expr.substring(0, errorIndex)
+                    .concat(expression.toString())
+                    .concat(expr.substring(errorIndex + 7));
+        }
+        AssignmentTree newTree = make.Assignment(currentTree.getVariable(), make.Identifier(expr));
         copy.rewrite(currentTree, newTree);
     }
 
