@@ -481,6 +481,9 @@ public class JavaSourceHelper {
                     case BLOCK:
                         insertBlockTree(fragment, copy, make);
                         break;
+                    case CASE:
+                        insertCaseTree(fragment, copy, make);
+                        break;
                     case CONDITIONAL_AND:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.CONDITIONAL_AND);
                         break;
@@ -1738,6 +1741,16 @@ public class JavaSourceHelper {
             VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
             newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
         }
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private void insertCaseTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        CaseTree currentTree = (CaseTree) getCurrentTreeOfKind(copy, Tree.Kind.CASE);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        CaseTree newTree = make.Case(expression, currentTree.getStatements());
         copy.rewrite(currentTree, newTree);
     }
 
