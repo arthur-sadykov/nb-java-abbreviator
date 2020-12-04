@@ -21,7 +21,7 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
  *
  * @author Arthur Sadykov
  */
-public class Name implements CodeFragment {
+public class Name implements CodeFragment, Comparable<Name> {
 
     private final String name;
 
@@ -32,6 +32,11 @@ public class Name implements CodeFragment {
     @Override
     public Kind getKind() {
         return Kind.NAME;
+    }
+
+    @Override
+    public int compareTo(Name other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override

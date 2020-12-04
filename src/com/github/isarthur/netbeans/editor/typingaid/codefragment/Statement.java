@@ -21,7 +21,7 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
  *
  * @author Arthur Sadykov
  */
-public class Statement implements CodeFragment {
+public class Statement implements CodeFragment, Comparable<Statement> {
 
     private final String content;
 
@@ -36,6 +36,11 @@ public class Statement implements CodeFragment {
     @Override
     public Kind getKind() {
         return Kind.STATEMENT;
+    }
+
+    @Override
+    public int compareTo(Statement other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override

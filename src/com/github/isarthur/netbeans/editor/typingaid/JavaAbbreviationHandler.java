@@ -185,7 +185,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                 } else {
                     List<LocalElement> localElements = Collections.emptyList();
                     if (Settings.getSettingForLocalVariable()) {
-                        localElements = helper.findLocalElements();
+                        localElements = helper.collectLocalElements();
                     }
                     List<MethodInvocation> localMethodInvocations = Collections.emptyList();
                     if (Settings.getSettingForLocalMethodInvocation()) {

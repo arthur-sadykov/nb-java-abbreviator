@@ -21,7 +21,7 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
  *
  * @author Arthur Sadykov
  */
-public class Keyword implements CodeFragment {
+public class Keyword implements CodeFragment, Comparable<Keyword> {
 
     private final String name;
 
@@ -36,6 +36,11 @@ public class Keyword implements CodeFragment {
     @Override
     public Kind getKind() {
         return Kind.KEYWORD;
+    }
+
+    @Override
+    public int compareTo(Keyword other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override

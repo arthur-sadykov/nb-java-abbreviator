@@ -22,7 +22,7 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Arthur Sadykov
  */
-public class Type implements CodeFragment {
+public class Type implements CodeFragment, Comparable<Type> {
 
     private final TypeElement type;
 
@@ -37,6 +37,11 @@ public class Type implements CodeFragment {
     @Override
     public Kind getKind() {
         return Kind.TYPE;
+    }
+
+    @Override
+    public int compareTo(Type other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override

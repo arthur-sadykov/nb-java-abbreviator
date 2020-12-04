@@ -22,7 +22,7 @@ import javax.lang.model.element.Element;
  *
  * @author Arthur Sadykov
  */
-public class LocalElement implements CodeFragment {
+public class LocalElement implements CodeFragment, Comparable<LocalElement> {
 
     private final Element element;
 
@@ -37,6 +37,11 @@ public class LocalElement implements CodeFragment {
     @Override
     public Kind getKind() {
         return Kind.LOCAL_ELEMENT;
+    }
+
+    @Override
+    public int compareTo(LocalElement other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override

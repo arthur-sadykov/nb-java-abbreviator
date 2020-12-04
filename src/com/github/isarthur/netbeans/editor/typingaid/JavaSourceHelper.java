@@ -194,6 +194,7 @@ public class JavaSourceHelper {
         variableNames.stream()
                 .filter(name -> StringUtilities.getElementAbbreviation(name).equals(abbreviation.getName()))
                 .forEach(name -> names.add(new Name(name)));
+        Collections.sort(names);
         return Collections.unmodifiableList(names);
     }
 
@@ -410,6 +411,7 @@ public class JavaSourceHelper {
                 methodInvocations.add(new MethodInvocation(element, method, arguments, this));
             });
         });
+        Collections.sort(methodInvocations);
         return Collections.unmodifiableList(methodInvocations);
     }
 
@@ -611,6 +613,7 @@ public class JavaSourceHelper {
             List<ExpressionTree> arguments = evaluateMethodArguments(method);
             methodInvocations.add(new MethodInvocation(null, method, arguments, this));
         });
+        Collections.sort(methodInvocations);
         return Collections.unmodifiableList(methodInvocations);
     }
 
@@ -836,6 +839,7 @@ public class JavaSourceHelper {
                 methodInvocations.add(new MethodInvocation(element, method, arguments, this));
             });
         });
+        Collections.sort(methodInvocations);
         return Collections.unmodifiableList(methodInvocations);
     }
 
@@ -860,7 +864,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    List<LocalElement> findLocalElements() {
+    List<LocalElement> collectLocalElements() {
         List<LocalElement> result = new ArrayList<>();
         try {
             List<Element> localElements = new ArrayList<>();
@@ -889,6 +893,7 @@ public class JavaSourceHelper {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        Collections.sort(result);
         return Collections.unmodifiableList(result);
     }
 
@@ -900,9 +905,7 @@ public class JavaSourceHelper {
                 keywords.add(new Keyword(keyword));
             }
         });
-        Collections.sort(keywords, (keyword1, keyword2) -> {
-            return keyword1.toString().compareTo(keyword2.toString());
-        });
+        Collections.sort(keywords);
         return Collections.unmodifiableList(keywords);
     }
 
@@ -986,12 +989,13 @@ public class JavaSourceHelper {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        Collections.sort(methodInvocations);
         return Collections.unmodifiableList(methodInvocations);
     }
 
     List<FieldAccess> collectFieldAccesses() {
         List<TypeElement> typeElements = collectTypesByAbbreviation();
-        List<FieldAccess> result = new ArrayList<>();
+        List<FieldAccess> fieldAccesses = new ArrayList<>();
         typeElements.forEach(typeElement -> {
             try {
                 List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
@@ -1004,13 +1008,14 @@ public class JavaSourceHelper {
                     String elementName = element.getSimpleName().toString();
                     String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
                     if (abbreviation.getName().equals(elementAbbreviation)) {
-                        result.add(new FieldAccess(typeElement, element));
+                        fieldAccesses.add(new FieldAccess(typeElement, element));
                     }
                 });
             } catch (AssertionError ex) {
             }
         });
-        return Collections.unmodifiableList(result);
+        Collections.sort(fieldAccesses);
+        return Collections.unmodifiableList(fieldAccesses);
     }
 
     List<Type> collectTypes() {
@@ -1018,6 +1023,7 @@ public class JavaSourceHelper {
         return types.stream()
                 .filter(distinctByKey(element -> element.getSimpleName().toString()))
                 .map(type -> new Type(type))
+                .sorted()
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -1106,6 +1112,7 @@ public class JavaSourceHelper {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        Collections.sort(result);
         return Collections.unmodifiableList(result);
     }
 

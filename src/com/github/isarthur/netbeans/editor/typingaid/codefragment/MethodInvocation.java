@@ -23,13 +23,12 @@ import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class MethodInvocation implements CodeFragment {
+public class MethodInvocation implements CodeFragment, Comparable<MethodInvocation> {
 
     private final Element scope;
     private final ExecutableElement method;
@@ -65,6 +64,11 @@ public class MethodInvocation implements CodeFragment {
     @Override
     public Kind getKind() {
         return Kind.METHOD_INVOCATION;
+    }
+
+    @Override
+    public int compareTo(MethodInvocation other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override
