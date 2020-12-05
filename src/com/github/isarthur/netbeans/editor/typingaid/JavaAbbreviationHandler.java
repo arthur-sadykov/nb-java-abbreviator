@@ -62,7 +62,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
         helper.setAbbreviation(abbreviation);
         if (abbreviation.getContent().contains(".")) { //NOI18N
             if (helper.isCaseLabel()) {
-                return null;
+                return Collections.emptyList();
             }
             List<Element> elements = helper.getElementsByAbbreviation();
             if (!elements.isEmpty()) {
@@ -81,7 +81,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                 int matchesCount = methodInvocations.size() + staticMethodInvocations.size() + fieldAccesses.size();
                 switch (matchesCount) {
                     case 0: {
-                        return null;
+                        return Collections.emptyList();
                     }
                     case 1: {
                         if (!methodInvocations.isEmpty()) {
@@ -113,7 +113,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                 int matchesCount = staticMethodInvocations.size() + fieldAccesses.size();
                 switch (matchesCount) {
                     case 0: {
-                        return null;
+                        return Collections.emptyList();
                     }
                     case 1: {
                         if (!staticMethodInvocations.isEmpty()) {
@@ -138,7 +138,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     int matchesCount = fields.size();
                     switch (matchesCount) {
                         case 0: {
-                            return null;
+                            return Collections.emptyList();
                         }
                         case 1: {
                             return helper.insertCodeFragment(fields.get(0));
@@ -166,7 +166,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             chainedMethodInvocations.size() + fieldAccesses.size() + enumConstantAccesses.size();
                     switch (matchesCount) {
                         case 0: {
-                            return null;
+                            return Collections.emptyList();
                         }
                         case 1: {
                             if (!chainedMethodInvocations.isEmpty()) {
@@ -193,7 +193,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     int matchesCount = variableNames.size();
                     switch (matchesCount) {
                         case 0: {
-                            return null;
+                            return Collections.emptyList();
                         }
                         case 1: {
                             return helper.insertName(variableNames.get(0));
@@ -211,7 +211,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             int matchesCount = enumConstants.size();
                             switch (matchesCount) {
                                 case 0: {
-                                    return null;
+                                    return Collections.emptyList();
                                 }
                                 case 1: {
                                     return helper.insertCodeFragment(enumConstants.get(0));
@@ -223,7 +223,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 }
                             }
                         }
-                        return null;
+                        return Collections.emptyList();
                     } else {
                         List<LocalElement> localElements = Collections.emptyList();
                         if (Settings.getSettingForLocalVariable()) {
@@ -249,7 +249,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 + keywords.size() + modifiers.size();
                         switch (matchesCount) {
                             case 0: {
-                                return null;
+                                return Collections.emptyList();
                             }
                             case 1: {
                                 if (!localElements.isEmpty()) {

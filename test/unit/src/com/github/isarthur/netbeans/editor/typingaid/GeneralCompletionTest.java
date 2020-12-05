@@ -28,6 +28,7 @@ import javax.swing.JEditorPane;
 import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import junit.framework.Test;
+import static org.junit.Assert.assertArrayEquals;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.lexer.Language;
@@ -41,7 +42,7 @@ import org.openide.filesystems.FileUtil;
  *
  * @author: Arthur Sadykov
  */
-public class JavaAbbreviationHandlerTest extends NbTestCase {
+public class GeneralCompletionTest extends NbTestCase {
 
     private static final String JAVA_MIME_TYPE = "text/x-java";
     private static final String MIME_TYPE = "mimeType";
@@ -55,6 +56,7 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
     private FileObject testFile;
     private Document document;
     private boolean keyword;
+    private boolean modifier;
     private boolean externalType;
     private boolean internalType;
     private boolean resourceVariable;
@@ -69,12 +71,12 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
     private boolean staticMethodInvocation;
     private boolean methodInvocation;
 
-    public JavaAbbreviationHandlerTest(String testName) {
+    public GeneralCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(JavaAbbreviationHandlerTest.class)
+        return NbModuleSuite.createConfiguration(GeneralCompletionTest.class)
                 .clusters(EXTIDE_CLUSTER)
                 .clusters(IDE_CLUSTER)
                 .clusters(JAVA_CLUSTER)
@@ -98,10 +100,10 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
         JavaSourceHelper helper = new JavaSourceHelper(editor);
         handler = new JavaAbbreviationHandler(helper);
         abbreviation = JavaAbbreviation.getInstance();
-        getSettings();
+        storeSettings();
     }
 
-    private void getSettings() {
+    private void storeSettings() {
         methodInvocation = Settings.getSettingForMethodInvocation();
         staticMethodInvocation = Settings.getSettingForStaticMethodInvocation();
         chainedMethodInvocation = Settings.getSettingForChainedMethodInvocation();
@@ -116,6 +118,7 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
         internalType = Settings.getSettingForInternalType();
         externalType = Settings.getSettingForExternalType();
         keyword = Settings.getSettingForKeyword();
+        modifier = Settings.getSettingForModifier();
     }
 
     public void testShouldSuggestCompletionForParameterName() throws IOException {
@@ -123,12 +126,14 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "nos",
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        |\n"
+                + "        if (|) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        numberOfSpaces\n"
+                + "        if (numberOfSpaces) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("numberOfSpaces"));
@@ -140,13 +145,15 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    private String branchName;\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        |\n"
+                + "        if (|) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
                 + "    private String branchName;\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        branchName\n"
+                + "        if (branchName) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("branchName"));
@@ -158,13 +165,15 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String applicationContext = \"\";\n"
-                + "        |\n"
+                + "        if (|) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String applicationContext = \"\";\n"
-                + "        applicationContext\n"
+                + "        if (applicationContext) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("applicationContext"));
@@ -185,6 +194,7 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
         Settings.setSettingForInternalType(false);
         Settings.setSettingForExternalType(false);
         Settings.setSettingForKeyword(true);
+        Settings.setSettingForModifier(false);
         doAbbreviationInsert(
                 "s",
                 "public class Test {\n"
@@ -199,7 +209,7 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("short", "static", "strictfp", "synchronized", "switch", "super"));
+                Arrays.asList("String", "short", "super", "switch"));
     }
 
     public void testShouldSuggestCompletionForMultipleMatchesOfLocalElements() throws IOException {
@@ -208,18 +218,18 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    private int newObjectState;\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        String networkOperatingSystem = \"\";\n"
+                + "        String nativeOriginalSystem = \"\";\n"
                 + "        |\n"
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
                 + "    private int newObjectState;\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        String networkOperatingSystem = \"\";\n"
+                + "        String nativeOriginalSystem = \"\";\n"
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("newObjectState", "numberOfSpaces", "networkOperatingSystem"));
+                Arrays.asList("nativeOriginalSystem", "newObjectState", "numberOfSpaces"));
     }
 
     public void testShouldSuggestCompletionForMethodInvocation() throws IOException {
@@ -234,18 +244,11 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
+                + "        boolean b = branchName.isEmpty();\n"
                 + "        \n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("boolean b = branchName.isEmpty();"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        boolean b = branchName.isEmpty();\n"
-                + "        \n"
-                + "    }\n"
-                + "}");
     }
 
     public void testWhenMethodInvocationIsPartOfIfConditionThenSuggestRightSideOfStatementWithoutSemicolon()
@@ -263,21 +266,12 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        if () {\n"
+                + "        if (branchName.isEmpty()) {\n"
                 + "            \n"
                 + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("boolean b = branchName.isEmpty();"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testWhenMethodInvocationIsPartOfWhileConditionThenSuggestRightSideOfStatementWithoutSemicolon()
@@ -295,21 +289,12 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        while () {\n"
+                + "        while (branchName.isEmpty()) {\n"
                 + "            \n"
                 + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("boolean b = branchName.isEmpty();"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        while (branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testWhenMethodInvocationIsPartOfConditionalAndThenSuggestRightSideOfStatementWithoutSemicolon()
@@ -327,21 +312,12 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && ) {\n"
+                + "        if (branchName.isBlank() && branchName.isEmpty()) {\n"
                 + "            \n"
                 + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("boolean b = branchName.isEmpty();"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testWhenMethodInvocationIsPartOfLogicalComplementThenSuggestRightSideOfStatementWithoutSemicolon()
@@ -359,21 +335,12 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && !) {\n"
+                + "        if (branchName.isBlank() && !branchName.isEmpty()) {\n"
                 + "            \n"
                 + "        }\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("boolean b = branchName.isEmpty();"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && !branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testShouldSuggestCompletionForChainedMethodInvocation() throws IOException {
@@ -388,17 +355,10 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        branchName.isEmpty();\n"
+                + "        branchName.;\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("isEmpty()"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        branchName.;\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsMethodArgument() throws IOException {
@@ -413,17 +373,10 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        System.out.println(branchName.isEmpty());\n"
+                + "        System.out.println(branchName.);\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("isEmpty()"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        System.out.println(branchName.);\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsVariableInitializer() throws IOException {
@@ -438,17 +391,10 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        boolean empty = branchName.isEmpty();\n"
+                + "        boolean empty = branchName.;\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("isEmpty()"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        boolean empty = branchName.;\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testShouldSuggestCompletionForParameterNameBasedOnType() throws IOException {
@@ -459,15 +405,10 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
-                + "    public void test(StringBuilder stringBuilder) {\n"
+                + "    public void test(StringBuilder ) {\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("stringBuilder"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    public void test(StringBuilder ) {\n"
-                + "    }\n"
-                + "}");
     }
 
     public void testShouldSuggestCompletionForFieldNameBasedOnType() throws IOException {
@@ -479,17 +420,11 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
-                + "    private StringBuilder stringBuilder;\n"
+                + "    private StringBuilder ;\n"
                 + "    public void test() {\n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("stringBuilder"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    private StringBuilder ;\n"
-                + "    public void test() {\n"
-                + "    }\n"
-                + "}");
     }
 
     public void shouldNotAddDuplicatesToTheResultingList() throws IOException {
@@ -506,18 +441,10 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
                 + "    private int numberOfSpaces;\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String numberOfSpaces = \"\";\n"
-                + "        numberOfSpaces\n"
+                + "        \n"
                 + "    }\n"
                 + "}",
                 Arrays.asList("numberOfSpaces"));
-        assertTestFileText(
-                "public class Test {\n"
-                + "    private int numberOfSpaces;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String numberOfSpaces = \"\";\n"
-                + "        \n"
-                + "    }\n"
-                + "}");
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
@@ -534,15 +461,8 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
             abbreviation.append(abbrev.charAt(i));
         }
         List<CodeFragment> codeFragments = handler.process(abbreviation);
-        assertEquals(proposals.size(), codeFragments.size());
-        for (int i = 0; i < codeFragments.size(); i++) {
-            assertTrue(proposals.contains(codeFragments.get(i).toString()));
-        }
-        assertEquals(golden, editor.getText());
-    }
-
-    private void assertTestFileText(String text) throws IOException {
-        assertEquals(text, testFile.asText());
+        assertArrayEquals(proposals.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
+        assertEquals(golden, testFile.asText());
     }
 
     @Override
@@ -567,6 +487,7 @@ public class JavaAbbreviationHandlerTest extends NbTestCase {
         Settings.setSettingForInternalType(internalType);
         Settings.setSettingForExternalType(externalType);
         Settings.setSettingForKeyword(keyword);
+        Settings.setSettingForModifier(modifier);
     }
 
     @Override

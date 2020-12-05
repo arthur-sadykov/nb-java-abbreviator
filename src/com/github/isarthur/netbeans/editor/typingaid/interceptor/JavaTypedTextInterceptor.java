@@ -93,7 +93,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
             if (abbreviation.isEmpty()) {
                 return;
             }
-            if (result == null) {
+            if (result.isEmpty()) {
                 context.setText(abbreviation.getContent() + " ", abbreviation.length() + 1); //NOI18N
             } else {
                 context.setText("", 0);
@@ -136,7 +136,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
 
     @Override
     public void afterInsert(Context context) throws BadLocationException {
-        if (result != null) {
+        if (!result.isEmpty()) {
             if (context.getText().isEmpty()) {
                 JTextComponent component = context.getComponent();
                 component.setCaretPosition(caretPosition);

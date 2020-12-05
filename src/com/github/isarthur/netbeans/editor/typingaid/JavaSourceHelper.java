@@ -32,6 +32,7 @@ import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.CaseTree;
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
 import com.sun.source.tree.ConditionalExpressionTree;
@@ -42,6 +43,7 @@ import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ParenthesizedTree;
@@ -62,6 +64,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +73,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -463,7 +467,7 @@ public class JavaSourceHelper {
     private List<ExecutableElement> filterNonStaticMethods(List<ExecutableElement> methods) {
         return methods.stream()
                 .filter(method -> (!method.getModifiers().contains(Modifier.STATIC)))
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
     }
 
     public List<CodeFragment> insertCodeFragment(CodeFragment fragment) {
@@ -495,6 +499,12 @@ public class JavaSourceHelper {
                     case CASE:
                         insertCaseTree(fragment, copy, make);
                         break;
+                    case CLASS:
+                        insertClassEnumOrInterfaceTree(fragment, copy, make);
+                        break;
+                    case COMPILATION_UNIT:
+                        insertCompilationUnitTree(fragment, copy, make);
+                        break;
                     case CONDITIONAL_AND:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.CONDITIONAL_AND);
                         break;
@@ -510,6 +520,9 @@ public class JavaSourceHelper {
                     case DIVIDE_ASSIGNMENT:
                         insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.DIVIDE_ASSIGNMENT);
                         break;
+                    case ENUM:
+                        insertClassEnumOrInterfaceTree(fragment, copy, make);
+                        break;
                     case EQUAL_TO:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.EQUAL_TO);
                         break;
@@ -521,6 +534,9 @@ public class JavaSourceHelper {
                         break;
                     case GREATER_THAN_EQUAL:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.GREATER_THAN_EQUAL);
+                        break;
+                    case INTERFACE:
+                        insertClassEnumOrInterfaceTree(fragment, copy, make);
                         break;
                     case LEFT_SHIFT:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.LEFT_SHIFT);
@@ -540,6 +556,9 @@ public class JavaSourceHelper {
                     case MEMBER_SELECT:
                         insertMemberSelectTree(fragment, copy, make);
                         break;
+                    case METHOD:
+                        insertMethodTree(fragment, copy, make);
+                        break;
                     case METHOD_INVOCATION:
                         insertMethodInvocationTree(fragment, copy, make);
                         break;
@@ -548,6 +567,9 @@ public class JavaSourceHelper {
                         break;
                     case MINUS_ASSIGNMENT:
                         insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.MINUS_ASSIGNMENT);
+                        break;
+                    case MODIFIERS:
+                        insertModifiersTree(fragment, copy, make);
                         break;
                     case MULTIPLY:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.MULTIPLY);
@@ -568,7 +590,7 @@ public class JavaSourceHelper {
                         insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.OR_ASSIGNMENT);
                         break;
                     case PARENTHESIZED:
-                        insertParenthesized(fragment, copy, make);
+                        insertParenthesizedTree(fragment, copy, make);
                         break;
                     case PLUS:
                         insertBinaryTree(fragment, copy, make, Tree.Kind.PLUS);
@@ -618,7 +640,7 @@ public class JavaSourceHelper {
             return Collections.singletonList(fragment);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
-            return null;
+            return Collections.emptyList();
         }
     }
 
@@ -928,14 +950,1024 @@ public class JavaSourceHelper {
 
     List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> collectModifiers() {
         List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers = new ArrayList<>();
-        ConstantDataManager.MODIFIERS.forEach(modifier -> {
-            String modifierAbbreviation = StringUtilities.getElementAbbreviation(modifier);
-            if (modifierAbbreviation.equals(abbreviation.getName())) {
-                modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier));
-            }
-        });
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                Tree.Kind currentContext = currentTree.getKind();
+                TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+                sequence.move(abbreviation.getStartOffset());
+                TokenId tokenId;
+                TreePath path;
+                ModifiersTree modifiersTree;
+                switch (currentContext) {
+                    case BLOCK:
+                        moveToNextNonWhitespaceToken(sequence);
+                        moveToNextNonWhitespaceToken(sequence);
+                        path = treeUtilities.getPathElementOfKind(
+                                EnumSet.of(Tree.Kind.VARIABLE, Tree.Kind.CLASS),
+                                treeUtilities.pathFor(sequence.offset()));
+                        if (path != null) {
+                            switch (path.getLeaf().getKind()) {
+                                case CLASS:
+                                    ClassTree clazz = (ClassTree) path.getLeaf();
+                                    modifiersTree = clazz.getModifiers();
+                                    filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
+                                    break;
+                                case VARIABLE:
+                                    VariableTree variable = (VariableTree) path.getLeaf();
+                                    modifiersTree = variable.getModifiers();
+                                    if (!modifiersTree.getFlags().contains(Modifier.FINAL)
+                                            && StringUtilities.getElementAbbreviation("final").equals(abbreviation.getName())) {
+                                        modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier("final")); //NOI18N
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+                    case CLASS:
+                        moveToNextNonWhitespaceToken(sequence);
+                        moveToNextNonWhitespaceToken(sequence);
+                        path = treeUtilities.getPathElementOfKind(
+                                EnumSet.of(Tree.Kind.VARIABLE, Tree.Kind.METHOD, Tree.Kind.CLASS, Tree.Kind.INTERFACE,
+                                        Tree.Kind.ENUM),
+                                treeUtilities.pathFor(sequence.offset()));
+                        TreePath parentPath;
+                        if (path != null) {
+                            switch (path.getLeaf().getKind()) {
+                                case CLASS:
+                                    ClassTree clazz = (ClassTree) path.getLeaf();
+                                    modifiersTree = clazz.getModifiers();
+                                    parentPath = path.getParentPath();
+                                    if (parentPath != null) {
+                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                        switch (parentKind) {
+                                            case BLOCK:
+                                                filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
+                                                break;
+                                            case COMPILATION_UNIT:
+                                                filterTopLevelClassModifiers(modifiersTree, modifiers);
+                                                break;
+                                            default:
+                                                filterInnerClassModifiers(modifiersTree, modifiers);
+                                        }
+                                    }
+                                    break;
+                                case ENUM:
+                                    ClassTree enumeration = (ClassTree) path.getLeaf();
+                                    modifiersTree = enumeration.getModifiers();
+                                    parentPath = path.getParentPath();
+                                    if (parentPath != null) {
+                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                        switch (parentKind) {
+                                            case COMPILATION_UNIT:
+                                                filterTopLevelEnumModifiers(modifiersTree, modifiers);
+                                                break;
+                                            default:
+                                                filterInnerEnumModifiers(modifiersTree, modifiers);
+                                        }
+                                    }
+                                    break;
+                                case INTERFACE:
+                                    ClassTree interfaze = (ClassTree) path.getLeaf();
+                                    modifiersTree = interfaze.getModifiers();
+                                    parentPath = path.getParentPath();
+                                    if (parentPath != null) {
+                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                        switch (parentKind) {
+                                            case COMPILATION_UNIT:
+                                                filterTopLevelInterfaceModifiers(modifiersTree, modifiers);
+                                                break;
+                                            default:
+                                                filterInnerInterfaceModifiers(modifiersTree, modifiers);
+                                        }
+                                    }
+                                    break;
+                                case METHOD:
+                                    MethodTree method = (MethodTree) path.getLeaf();
+                                    modifiersTree = method.getModifiers();
+                                    filterMethodModifiers(modifiersTree, modifiers);
+                                    break;
+                                case VARIABLE:
+                                    VariableTree variable = (VariableTree) path.getLeaf();
+                                    modifiersTree = variable.getModifiers();
+                                    filterFieldModifiers(modifiersTree, modifiers);
+                                    break;
+                            }
+                        }
+                        break;
+                    case COMPILATION_UNIT:
+                        moveToNextNonWhitespaceToken(sequence);
+                        moveToNextNonWhitespaceToken(sequence);
+                        path = treeUtilities.getPathElementOfKind(
+                                EnumSet.of(Tree.Kind.CLASS, Tree.Kind.INTERFACE, Tree.Kind.ENUM),
+                                treeUtilities.pathFor(sequence.offset()));
+                        if (path != null) {
+                            switch (path.getLeaf().getKind()) {
+                                case CLASS:
+                                    ClassTree clazz = (ClassTree) path.getLeaf();
+                                    modifiersTree = clazz.getModifiers();
+                                    filterTopLevelClassModifiers(modifiersTree, modifiers);
+                                    break;
+                                case ENUM:
+                                    ClassTree enumeration = (ClassTree) path.getLeaf();
+                                    modifiersTree = enumeration.getModifiers();
+                                    filterTopLevelEnumModifiers(modifiersTree, modifiers);
+                                    break;
+                                case INTERFACE:
+                                    ClassTree interfaze = (ClassTree) path.getLeaf();
+                                    modifiersTree = interfaze.getModifiers();
+                                    filterTopLevelInterfaceModifiers(modifiersTree, modifiers);
+                                    break;
+                            }
+                        }
+                        break;
+                    case ENUM:
+                        moveToNextNonWhitespaceToken(sequence);
+                        moveToNextNonWhitespaceToken(sequence);
+                        path = treeUtilities.getPathElementOfKind(
+                                EnumSet.of(Tree.Kind.ENUM),
+                                treeUtilities.pathFor(sequence.offset()));
+                        if (path != null) {
+                            ClassTree enumeration = (ClassTree) path.getLeaf();
+                            modifiersTree = enumeration.getModifiers();
+                            parentPath = path.getParentPath();
+                            if (parentPath != null) {
+                                Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                switch (parentKind) {
+                                    case CLASS:
+                                    case INTERFACE:
+                                        filterInnerEnumModifiers(modifiersTree, modifiers);
+                                        break;
+                                    case COMPILATION_UNIT:
+                                        filterTopLevelEnumModifiers(modifiersTree, modifiers);
+                                        break;
+                                }
+                            }
+                        }
+                        break;
+                    case INTERFACE:
+                        moveToNextNonWhitespaceToken(sequence);
+                        moveToNextNonWhitespaceToken(sequence);
+                        path = treeUtilities.getPathElementOfKind(
+                                EnumSet.of(Tree.Kind.INTERFACE),
+                                treeUtilities.pathFor(sequence.offset()));
+                        if (path != null) {
+                            ClassTree interfaze = (ClassTree) path.getLeaf();
+                            modifiersTree = interfaze.getModifiers();
+                            parentPath = path.getParentPath();
+                            if (parentPath != null) {
+                                Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                switch (parentKind) {
+                                    case CLASS:
+                                    case INTERFACE:
+                                        filterInnerInterfaceModifiers(modifiersTree, modifiers);
+                                        break;
+                                    case COMPILATION_UNIT:
+                                        filterTopLevelInterfaceModifiers(modifiersTree, modifiers);
+                                        break;
+                                }
+                            }
+                        }
+                        break;
+                    case METHOD:
+                        tokenId = moveToPreviousNonWhitespaceToken(sequence);
+                        if (isModifier(tokenId)) {
+                            MethodTree method = (MethodTree) currentTree;
+                            modifiersTree = method.getModifiers();
+                            filterMethodModifiers(modifiersTree, modifiers);
+                        } else if (tokenId == JavaTokenId.COMMA || tokenId == JavaTokenId.LPAREN) {
+                            moveToNextNonWhitespaceToken(sequence);
+                            TreePath parameterPath = treeUtilities.pathFor(sequence.offset());
+                            if (parameterPath != null) {
+                                Tree.Kind kind = parameterPath.getLeaf().getKind();
+                                if (kind == Tree.Kind.VARIABLE) {
+                                    VariableTree variable = (VariableTree) parameterPath.getLeaf();
+                                    modifiersTree = variable.getModifiers();
+                                    if (StringUtilities.getElementAbbreviation("final").equals(abbreviation.getName()) //NOI18N
+                                            && !modifiersTree.getFlags().contains(Modifier.FINAL)) {
+                                        modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier("final")); //NOI18N
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case MODIFIERS:
+                        path = treeUtilities.getPathElementOfKind(
+                                EnumSet.of(Tree.Kind.VARIABLE, Tree.Kind.METHOD, Tree.Kind.CLASS, Tree.Kind.INTERFACE,
+                                        Tree.Kind.ENUM),
+                                currentPath);
+                        if (path != null) {
+                            switch (path.getLeaf().getKind()) {
+                                case CLASS:
+                                    ClassTree clazz = (ClassTree) path.getLeaf();
+                                    modifiersTree = clazz.getModifiers();
+                                    parentPath = path.getParentPath();
+                                    if (parentPath != null) {
+                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                        switch (parentKind) {
+                                            case BLOCK:
+                                                filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
+                                                break;
+                                            case COMPILATION_UNIT:
+                                                filterTopLevelClassModifiers(modifiersTree, modifiers);
+                                                break;
+                                            default:
+                                                filterInnerClassModifiers(modifiersTree, modifiers);
+                                        }
+                                    }
+                                    break;
+                                case ENUM:
+                                    ClassTree enumeration = (ClassTree) path.getLeaf();
+                                    modifiersTree = enumeration.getModifiers();
+                                    parentPath = path.getParentPath();
+                                    if (parentPath != null) {
+                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                        switch (parentKind) {
+                                            case COMPILATION_UNIT:
+                                                filterTopLevelEnumModifiers(modifiersTree, modifiers);
+                                                break;
+                                            default:
+                                                filterInnerEnumModifiers(modifiersTree, modifiers);
+                                        }
+                                    }
+                                    break;
+                                case INTERFACE:
+                                    ClassTree interfaze = (ClassTree) path.getLeaf();
+                                    modifiersTree = interfaze.getModifiers();
+                                    parentPath = path.getParentPath();
+                                    if (parentPath != null) {
+                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                        switch (parentKind) {
+                                            case COMPILATION_UNIT:
+                                                filterTopLevelInterfaceModifiers(modifiersTree, modifiers);
+                                                break;
+                                            default:
+                                                filterInnerInterfaceModifiers(modifiersTree, modifiers);
+                                        }
+                                    }
+                                    break;
+                                case METHOD:
+                                    MethodTree method = (MethodTree) path.getLeaf();
+                                    modifiersTree = method.getModifiers();
+                                    filterMethodModifiers(modifiersTree, modifiers);
+                                    break;
+                                case VARIABLE:
+                                    VariableTree variable = (VariableTree) path.getLeaf();
+                                    modifiersTree = variable.getModifiers();
+                                    filterFieldModifiers(modifiersTree, modifiers);
+                                    break;
+                            }
+                        }
+                        break;
+                    case VARIABLE:
+                        tokenId = moveToPreviousNonWhitespaceToken(sequence);
+                        if (isModifier(tokenId)) {
+                            VariableTree variable = (VariableTree) currentTree;
+                            modifiersTree = variable.getModifiers();
+                            filterFieldModifiers(modifiersTree, modifiers);
+                        }
+                        break;
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         Collections.sort(modifiers);
         return Collections.unmodifiableList(modifiers);
+    }
+
+    private TokenId moveToNextNonWhitespaceToken(TokenSequence<?> sequence) {
+        while (sequence.moveNext() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+        }
+        return sequence.token().id();
+    }
+
+    private TokenId moveToPreviousNonWhitespaceToken(TokenSequence<?> sequence) {
+        while (sequence.movePrevious() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+        }
+        return sequence.token().id();
+    }
+
+    private boolean isModifier(TokenId tokenId) {
+        return tokenId == JavaTokenId.ABSTRACT
+                || tokenId == JavaTokenId.FINAL
+                || tokenId == JavaTokenId.NATIVE
+                || tokenId == JavaTokenId.PRIVATE
+                || tokenId == JavaTokenId.PROTECTED
+                || tokenId == JavaTokenId.PUBLIC
+                || tokenId == JavaTokenId.STATIC
+                || tokenId == JavaTokenId.STRICTFP
+                || tokenId == JavaTokenId.SYNCHRONIZED
+                || tokenId == JavaTokenId.TRANSIENT
+                || tokenId == JavaTokenId.VOLATILE;
+    }
+
+    private void filterTopLevelClassModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)
+                || modifiersTree.getFlags().contains(Modifier.FINAL)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("abstract") //NOI18N
+                            || modifier.equals("final") //NOI18N
+                            || modifier.equals("public") //NOI18N
+                            || modifier.equals("strictfp"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterTopLevelInterfaceModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("abstract") //NOI18N
+                            || modifier.equals("public") //NOI18N
+                            || modifier.equals("strictfp"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterTopLevelEnumModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("public") //NOI18N
+                            || modifier.equals("strictfp"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterInnerInterfaceModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                || modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                || modifiersTree.getFlags().contains(Modifier.PRIVATE)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("abstract") //NOI18N
+                            || modifier.equals("public") //NOI18N
+                            || modifier.equals("protected") //NOI18N
+                            || modifier.equals("private") //NOI18N
+                            || modifier.equals("strictfp") //NOI18N
+                            || modifier.equals("static"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterInnerEnumModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                || modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                || modifiersTree.getFlags().contains(Modifier.PRIVATE)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("public") //NOI18N
+                            || modifier.equals("protected") //NOI18N
+                            || modifier.equals("private") //NOI18N
+                            || modifier.equals("strictfp") //NOI18N
+                            || modifier.equals("static"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterMethodLocalInnerClassModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)
+                || modifiersTree.getFlags().contains(Modifier.FINAL)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("abstract") //NOI18N
+                            || modifier.equals("final") //NOI18N
+                            || modifier.equals("strictfp"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterInnerClassModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)
+                || modifiersTree.getFlags().contains(Modifier.FINAL)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PRIVATE)
+                || modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                || modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("abstract") //NOI18N
+                            || modifier.equals("final") //NOI18N
+                            || modifier.equals("public") //NOI18N
+                            || modifier.equals("protected") //NOI18N
+                            || modifier.equals("private") //NOI18N
+                            || modifier.equals("strictfp") //NOI18N
+                            || modifier.equals("static"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterMethodModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.NATIVE)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.FINAL)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("native") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.NATIVE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PRIVATE)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("native") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.NATIVE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                || modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("native") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.NATIVE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("abstract") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.ABSTRACT))
+                            || (modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("native") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.NATIVE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("native") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.NATIVE))
+                            || (modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("strictfp") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STRICTFP))
+                            || (modifier.equals("synchronized") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("abstract") //NOI18N
+                            || modifier.equals("final") //NOI18N
+                            || modifier.equals("native") //NOI18N
+                            || modifier.equals("public") //NOI18N
+                            || modifier.equals("protected") //NOI18N
+                            || modifier.equals("private") //NOI18N
+                            || modifier.equals("strictfp") //NOI18N
+                            || modifier.equals("static") //NOI18N
+                            || modifier.equals("synchronized"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
+    }
+
+    private void filterFieldModifiers(ModifiersTree modifiersTree,
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+        if (modifiersTree.getFlags().contains(Modifier.FINAL)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("transient") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.TRANSIENT))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.VOLATILE)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("private") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("protected") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("public") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
+                            && !modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                            && !modifiersTree.getFlags().contains(Modifier.PRIVATE))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("transient") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.TRANSIENT))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else if (modifiersTree.getFlags().contains(Modifier.PRIVATE)
+                || modifiersTree.getFlags().contains(Modifier.PROTECTED)
+                || modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && ((modifier.equals("final") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.FINAL))
+                            || (modifier.equals("static") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.STATIC))
+                            || (modifier.equals("transient") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.TRANSIENT))
+                            || (modifier.equals("volatile") //NOI18N
+                            && !modifiersTree.getFlags().contains(Modifier.VOLATILE))))
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        } else {
+            ConstantDataManager.MODIFIERS.stream()
+                    .filter(modifier ->
+                            StringUtilities.getElementAbbreviation(modifier).equals(abbreviation.getName())
+                            && (modifier.equals("final") //NOI18N
+                            || modifier.equals("public") //NOI18N
+                            || modifier.equals("protected") //NOI18N
+                            || modifier.equals("private") //NOI18N
+                            || modifier.equals("static") //NOI18N
+                            || modifier.equals("transient") //NOI18N
+                            || modifier.equals("volatile"))) //NOI18N
+                    .forEach(modifier ->
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+        }
     }
 
     boolean isMemberSelection() {
@@ -975,14 +2007,9 @@ public class JavaSourceHelper {
                     }
                     TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
                     sequence.move(abbreviation.getStartOffset());
-                    while (sequence.movePrevious()) {
-                        if (sequence.token().id() == JavaTokenId.EQ) {
-                            memberSelection.set(false);
-                            break;
-                        } else if (sequence.token().id() != JavaTokenId.WHITESPACE) {
-                            memberSelection.set(true);
-                            break;
-                        }
+                    moveToPreviousNonWhitespaceToken(sequence);
+                    if (sequence.token().id() == JavaTokenId.EQ || isModifier(sequence.token().id())) {
+                        memberSelection.set(false);
                     }
                 }
             },
@@ -1008,7 +2035,11 @@ public class JavaSourceHelper {
                     sequence.move(abbreviation.getStartOffset());
                     while (sequence.movePrevious() && sequence.token().id() == JavaTokenId.WHITESPACE) {
                     }
-                    caseLabel.set(sequence.token().id() == JavaTokenId.CASE);
+                    Token<?> token = sequence.token();
+                    if (token == null) {
+                        return;
+                    }
+                    caseLabel.set(token.id() == JavaTokenId.CASE);
                 }
             }, true);
         } catch (IOException ex) {
@@ -1245,7 +2276,7 @@ public class JavaSourceHelper {
                 .filter(distinctByKey(element -> element.getSimpleName().toString()))
                 .map(type -> new Type(type))
                 .sorted()
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
     }
 
     private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
@@ -1259,7 +2290,7 @@ public class JavaSourceHelper {
             return Collections.singletonList(name);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
-            return null;
+            return Collections.emptyList();
         }
     }
 
@@ -1851,27 +2882,64 @@ public class JavaSourceHelper {
     }
 
     public void insertBlockTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        if (fragment.getKind() != CodeFragment.Kind.METHOD_INVOCATION) {
-            return;
-        }
         BlockTree currentTree = (BlockTree) getCurrentTreeOfKind(copy, Tree.Kind.BLOCK);
         if (currentTree == null) {
             return;
         }
-        int insertIndex = findInsertIndexInBlock(currentTree);
-        if (insertIndex == -1) {
-            return;
+        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+        sequence.move(abbreviation.getStartOffset());
+        moveToNextNonWhitespaceToken(sequence);
+        moveToNextNonWhitespaceToken(sequence);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath path = treeUtilities.getPathElementOfKind(
+                EnumSet.of(Tree.Kind.BLOCK, Tree.Kind.CLASS, Tree.Kind.VARIABLE),
+                treeUtilities.pathFor(sequence.offset()));
+        Supplier<Void> insertStatementInBlock = () -> {
+            int insertIndex = findInsertIndexInBlock(currentTree);
+            if (insertIndex == -1) {
+                return null;
+            }
+            BlockTree newTree;
+            MethodInvocation invocation = (MethodInvocation) fragment;
+            if (isMethodReturnVoid(invocation.getMethod())) {
+                ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
+                newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+            } else {
+                VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
+                newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+            }
+            copy.rewrite(currentTree, newTree);
+            return null;
+        };
+        if (path != null) {
+            switch (path.getLeaf().getKind()) {
+                case CLASS:
+                    ClassTree classTree = (ClassTree) path.getLeaf();
+                    int[] classBodySpan = treeUtilities.findBodySpan(classTree);
+                    SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
+                    long blockStartPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), currentTree);
+                    if (blockStartPosition < classBodySpan[0]) {
+                        ModifiersTree modifiers = classTree.getModifiers();
+                        ExpressionTree expression = getExpressionToInsert(fragment, make);
+                        ModifiersTree newModifiers =
+                                make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                        copy.rewrite(modifiers, newModifiers);
+                    } else {
+                        insertStatementInBlock.get();
+                    }
+                    break;
+                case VARIABLE:
+                    VariableTree variable = (VariableTree) path.getLeaf();
+                    ModifiersTree modifiers = variable.getModifiers();
+                    ExpressionTree expression = getExpressionToInsert(fragment, make);
+                    ModifiersTree newModifiers =
+                            make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                    copy.rewrite(modifiers, newModifiers);
+                    break;
+                default:
+                    insertStatementInBlock.get();
+            }
         }
-        BlockTree newTree;
-        MethodInvocation invocation = (MethodInvocation) fragment;
-        if (isMethodReturnVoid(invocation.getMethod())) {
-            ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
-            newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
-        } else {
-            VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
-            newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
-        }
-        copy.rewrite(currentTree, newTree);
     }
 
     private void insertCaseTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
@@ -1971,6 +3039,68 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
         return insertIndex.get();
+    }
+
+    private void insertClassEnumOrInterfaceTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+        sequence.move(abbreviation.getStartOffset());
+        moveToNextNonWhitespaceToken(sequence);
+        moveToNextNonWhitespaceToken(sequence);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath path = treeUtilities.getPathElementOfKind(
+                EnumSet.of(Tree.Kind.METHOD, Tree.Kind.CLASS, Tree.Kind.INTERFACE, Tree.Kind.ENUM, Tree.Kind.VARIABLE),
+                treeUtilities.pathFor(sequence.offset()));
+        if (path == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        ModifiersTree modifiers;
+        ModifiersTree newModifiers;
+        switch (path.getLeaf().getKind()) {
+            case METHOD:
+                MethodTree methodTree = (MethodTree) path.getLeaf();
+                modifiers = methodTree.getModifiers();
+                newModifiers =
+                        make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                copy.rewrite(modifiers, newModifiers);
+                break;
+            case CLASS:
+            case ENUM:
+            case INTERFACE:
+                ClassTree classTree = (ClassTree) path.getLeaf();
+                modifiers = classTree.getModifiers();
+                newModifiers =
+                        make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                copy.rewrite(modifiers, newModifiers);
+                break;
+            case VARIABLE:
+                VariableTree variableTree = (VariableTree) path.getLeaf();
+                modifiers = variableTree.getModifiers();
+                newModifiers =
+                        make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                copy.rewrite(modifiers, newModifiers);
+                break;
+        }
+    }
+
+    private void insertCompilationUnitTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+        sequence.move(abbreviation.getStartOffset());
+        moveToNextNonWhitespaceToken(sequence);
+        moveToNextNonWhitespaceToken(sequence);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath path = treeUtilities.getPathElementOfKind(
+                EnumSet.of(Tree.Kind.CLASS, Tree.Kind.INTERFACE, Tree.Kind.ENUM),
+                treeUtilities.pathFor(sequence.offset()));
+        if (path == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        ClassTree classTree = (ClassTree) path.getLeaf();
+        ModifiersTree modifiers = classTree.getModifiers();
+        ModifiersTree newModifiers =
+                make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+        copy.rewrite(modifiers, newModifiers);
     }
 
     private void insertCompoundAssignmentTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make, Tree.Kind kind) {
@@ -2095,6 +3225,18 @@ public class JavaSourceHelper {
         }
     }
 
+    private void insertMethodTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        MethodTree currentTree = (MethodTree) getCurrentTreeOfKind(copy, Tree.Kind.METHOD);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        ModifiersTree modifiers = currentTree.getModifiers();
+        ModifiersTree newModifiers =
+                make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+        copy.rewrite(modifiers, newModifiers);
+    }
+
     private void insertMethodInvocationTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
         MethodInvocationTree currentTree =
                 (MethodInvocationTree) getCurrentTreeOfKind(copy, Tree.Kind.METHOD_INVOCATION);
@@ -2125,6 +3267,17 @@ public class JavaSourceHelper {
         return -1;
     }
 
+    private void insertModifiersTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        ModifiersTree currentTree = (ModifiersTree) getCurrentTreeOfKind(copy, Tree.Kind.MODIFIERS);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        ModifiersTree newTree = make.addModifiersModifier(
+                currentTree, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+        copy.rewrite(currentTree, newTree);
+    }
+
     private void insertNewClassTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
         NewClassTree currentTree = (NewClassTree) getCurrentTreeOfKind(copy, Tree.Kind.NEW_CLASS);
         if (currentTree == null) {
@@ -2140,7 +3293,7 @@ public class JavaSourceHelper {
         return findInsertIndexForArgument(newClassTree.getArguments());
     }
 
-    private void insertParenthesized(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+    private void insertParenthesizedTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
         ParenthesizedTree currentTree = (ParenthesizedTree) getCurrentTreeOfKind(copy, Tree.Kind.PARENTHESIZED);
         if (currentTree == null) {
             return;
@@ -2176,20 +3329,27 @@ public class JavaSourceHelper {
             return;
         }
         ExpressionTree expression = getExpressionToInsert(fragment, make);
-        String initializer = currentTree.getInitializer().toString();
-        int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
-        if (errorIndex >= 0) {
-            initializer = initializer.substring(0, errorIndex)
-                    .concat(expression.toString())
-                    .concat(initializer.substring(errorIndex + 7));
+        if (fragment.getKind() == CodeFragment.Kind.MODIFIER) {
+            ModifiersTree modifiers = currentTree.getModifiers();
+            ModifiersTree newModifiers =
+                    make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+            copy.rewrite(modifiers, newModifiers);
+        } else {
+            String initializer = currentTree.getInitializer().toString();
+            int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
+            if (errorIndex >= 0) {
+                initializer = initializer.substring(0, errorIndex)
+                        .concat(expression.toString())
+                        .concat(initializer.substring(errorIndex + 7));
+            }
+            VariableTree newTree =
+                    make.Variable(
+                            currentTree.getModifiers(),
+                            currentTree.getName(),
+                            currentTree.getType(),
+                            make.Identifier(initializer));
+            copy.rewrite(currentTree, newTree);
         }
-        VariableTree newTree =
-                make.Variable(
-                        currentTree.getModifiers(),
-                        currentTree.getName(),
-                        currentTree.getType(),
-                        make.Identifier(initializer));
-        copy.rewrite(currentTree, newTree);
     }
 
     private ExpressionTree getExpressionToInsert(CodeFragment fragment, TreeMaker make) {
