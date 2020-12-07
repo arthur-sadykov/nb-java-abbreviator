@@ -17,13 +17,11 @@ package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -358,6 +356,24 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Collections.singletonList("while (true) {" + System.lineSeparator() + "}"));
+    }
+
+    public void testDoWhileKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "d",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        do {\n"
+                + "        } while (true);\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("do {" + System.lineSeparator() + "} while (true);"));
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)

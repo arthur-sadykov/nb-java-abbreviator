@@ -268,7 +268,9 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                         case "case": //NOI18N
                                             return helper.insertCaseStatement();
                                         case "continue": //NOI18N
-                                            helper.insertContinueStatement();
+                                            return helper.insertContinueStatement();
+                                        case "do": //NOI18N
+                                            return helper.insertDoWhileStatement();
                                         case "if": //NOI18N
                                             if (helper.isCaseStatement()) {
                                                 return helper.insertIfStatementInCaseTree();

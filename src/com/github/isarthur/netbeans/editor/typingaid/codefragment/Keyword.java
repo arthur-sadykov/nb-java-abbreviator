@@ -69,6 +69,9 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
             case "default": //NOI18N
                 contexts.add(Tree.Kind.SWITCH);
                 break;
+            case "do": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
             case "double": //NOI18N
                 contexts.add(Tree.Kind.VARIABLE);
                 break;

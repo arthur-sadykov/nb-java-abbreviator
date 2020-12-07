@@ -51,7 +51,7 @@ public class ConstantDataManager {
     public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
-    private static final int KEYWORD_COUNT = 37;
+    private static final int KEYWORD_COUNT = 38;
     private static final int MODIFIER_COUNT = 11;
 
     private ConstantDataManager() {
@@ -68,6 +68,7 @@ public class ConstantDataManager {
         KEYWORD.add(new Keyword("class")); //NOI18N
         KEYWORD.add(new Keyword("continue")); //NOI18N
         KEYWORD.add(new Keyword("default")); //NOI18N
+        KEYWORD.add(new Keyword("do")); //NOI18N
         KEYWORD.add(new Keyword("double")); //NOI18N
         KEYWORD.add(new Keyword("else")); //NOI18N
         KEYWORD.add(new Keyword("enum")); //NOI18N

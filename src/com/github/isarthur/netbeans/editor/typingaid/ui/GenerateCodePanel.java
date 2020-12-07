@@ -186,6 +186,9 @@ public class GenerateCodePanel extends javax.swing.JPanel {
                 case "continue": //NOI18N
                     helper.insertContinueStatement();
                     break;
+                case "do": //NOI18N
+                    helper.insertDoWhileStatement();
+                    break;
                 case "if": //NOI18N
                     if (helper.isCaseStatement()) {
                         helper.insertIfStatementInCaseTree();

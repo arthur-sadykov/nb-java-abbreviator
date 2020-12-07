@@ -39,6 +39,7 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
 import com.sun.source.tree.ConditionalExpressionTree;
 import com.sun.source.tree.ContinueTree;
+import com.sun.source.tree.DoWhileLoopTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ForLoopTree;
@@ -2540,6 +2541,39 @@ public class JavaSourceHelper {
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, continueTree);
                 copy.rewrite(currentBlock, newBlock);
                 statements.add(new Statement(continueTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    public List<CodeFragment> insertDoWhileStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                DoWhileLoopTree doWhileLoopTree =
+                        make.DoWhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, doWhileLoopTree);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(doWhileLoopTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
