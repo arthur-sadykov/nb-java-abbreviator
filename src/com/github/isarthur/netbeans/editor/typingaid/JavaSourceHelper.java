@@ -56,6 +56,7 @@ import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Scope;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.SwitchTree;
+import com.sun.source.tree.ThrowTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.TryTree;
 import com.sun.source.tree.UnaryTree;
@@ -679,6 +680,8 @@ public class JavaSourceHelper {
                 return insertReturnStatement();
             case "switch": //NOI18N
                 return insertSwitchStatement();
+            case "throw": //NOI18N
+                return insertThrowStatement();
             case "try": //NOI18N
                 return insertTryStatement();
             case "while": //NOI18N
@@ -2911,6 +2914,38 @@ public class JavaSourceHelper {
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, tryTree);
                 copy.rewrite(currentBlock, newBlock);
                 statements.add(new Statement(tryTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertThrowStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                ThrowTree throwTree = make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, throwTree);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(throwTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
