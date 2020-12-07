@@ -665,6 +665,8 @@ public class JavaSourceHelper {
                 return insertContinueStatement();
             case "do": //NOI18N
                 return insertDoWhileStatement();
+            case "finally": //NOI18N
+                return insertFinallyTree();
             case "for": //NOI18N
                 return insertForStatement();
             case "if": //NOI18N
@@ -3615,6 +3617,39 @@ public class JavaSourceHelper {
                             expression);
         }
         copy.rewrite(currentTree, newTree);
+    }
+
+    private List<CodeFragment> insertFinallyTree() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.TRY) {
+                    return;
+                }
+                TryTree currentTry = (TryTree) currentTree;
+                int insertIndex = findInsertIndexInTryStatement(currentTry);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                BlockTree finallyBlock = make.Block(Collections.emptyList(), false);
+                TryTree newTry =
+                        make.Try(currentTry.getBlock(), currentTry.getCatches(), finallyBlock);
+                copy.rewrite(currentTry, newTry);
+                statements.add(new Statement(finallyBlock.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
     }
 
     private void insertForLoopTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {

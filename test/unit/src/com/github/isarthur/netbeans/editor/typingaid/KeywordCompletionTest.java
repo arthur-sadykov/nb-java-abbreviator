@@ -428,7 +428,28 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList(" catch (Exception e) {" + System.lineSeparator() + "}"));
+                Collections.singletonList(" catch (Exception e) {" + System.lineSeparator() + "}"));
+    }
+
+    public void testFinallyKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } |catch (IndexOutOfBoundsException e) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (IndexOutOfBoundsException e) {\n"
+                + "        } finally {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("{" + System.lineSeparator() + "}"));
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)

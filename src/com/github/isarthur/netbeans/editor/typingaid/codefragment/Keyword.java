@@ -105,6 +105,8 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 break;
             case "for": //NOI18N
                 allowedContexts.add(Tree.Kind.BLOCK);
+                forbiddenContexts.add(Tree.Kind.TRY);
+                forbiddenContexts.add(Tree.Kind.CATCH);
                 break;
             case "if": //NOI18N
                 allowedContexts.add(Tree.Kind.BLOCK);
