@@ -16,6 +16,10 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment;
 
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.Tree;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -24,13 +28,143 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 public class Keyword implements CodeFragment, Comparable<Keyword> {
 
     private final String name;
+    private Set<Tree.Kind> contexts;
 
     public Keyword(String name) {
         this.name = name;
+        this.contexts = new HashSet<>();
+        switch (name) {
+            case "assert": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "boolean": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "break": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "byte": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "case": //NOI18N
+                contexts.add(Tree.Kind.SWITCH);
+                break;
+            case "char": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "class": //NOI18N
+                contexts.add(Tree.Kind.COMPILATION_UNIT);
+                contexts.add(Tree.Kind.CLASS);
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "continue": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "default": //NOI18N
+                contexts.add(Tree.Kind.SWITCH);
+                break;
+            case "double": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "else": //NOI18N
+                contexts.add(Tree.Kind.IF);
+                break;
+            case "enum": //NOI18N
+                contexts.add(Tree.Kind.COMPILATION_UNIT);
+                contexts.add(Tree.Kind.CLASS);
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "extends": //NOI18N
+                contexts.add(Tree.Kind.CLASS);
+                contexts.add(Tree.Kind.TYPE_PARAMETER);
+                break;
+            case "false": //NOI18N
+                contexts.add(Tree.Kind.ASSIGNMENT);
+                break;
+            case "finally": //NOI18N
+                contexts.add(Tree.Kind.TRY);
+                break;
+            case "float": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "if": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "instanceof": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "int": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "interface": //NOI18N
+                contexts.add(Tree.Kind.COMPILATION_UNIT);
+                contexts.add(Tree.Kind.CLASS);
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "implements": //NOI18N
+                contexts.add(Tree.Kind.CLASS);
+                break;
+            case "import": //NOI18N
+                contexts.add(Tree.Kind.IMPORT);
+                break;
+            case "long": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "null": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "Object": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "package": //NOI18N
+                contexts.add(Tree.Kind.COMPILATION_UNIT);
+                break;
+            case "return": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "short": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "String": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "super": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "switch": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "this": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "throw": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+            case "throws": //NOI18N
+                contexts.add(Tree.Kind.METHOD);
+                break;
+            case "true": //NOI18N
+                contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "void": //NOI18N
+                contexts.add(Tree.Kind.METHOD);
+                break;
+            case "while": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
+        }
     }
 
     public String getName() {
         return name;
+    }
+
+    public boolean isAbbreviationEqualTo(String abbreviation) {
+        return StringUtilities.getElementAbbreviation(name).equals(abbreviation);
+    }
+
+    public boolean isApplicableInContext(Tree.Kind context) {
+        return contexts.contains(context);
     }
 
     @Override

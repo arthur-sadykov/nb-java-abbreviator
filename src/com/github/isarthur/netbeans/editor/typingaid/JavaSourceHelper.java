@@ -28,6 +28,7 @@ import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManag
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.AssertTree;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
@@ -938,12 +939,24 @@ public class JavaSourceHelper {
 
     List<Keyword> collectKeywords() {
         List<Keyword> keywords = new ArrayList<>();
-        ConstantDataManager.KEYWORDS.forEach(keyword -> {
-            String keywordAbbreviation = StringUtilities.getElementAbbreviation(keyword);
-            if (keywordAbbreviation.equals(abbreviation.getName())) {
-                keywords.add(new Keyword(keyword));
-            }
-        });
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree.Kind currentContext = currentPath.getLeaf().getKind();
+                ConstantDataManager.KEYWORD.stream()
+                        .filter(keyword -> keyword.isApplicableInContext(currentContext)
+                                && keyword.isAbbreviationEqualTo(abbreviation.getName()))
+                        .forEach(keywords::add);
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         Collections.sort(keywords);
         return Collections.unmodifiableList(keywords);
     }
@@ -2366,6 +2379,38 @@ public class JavaSourceHelper {
         }
         Collections.sort(result);
         return Collections.unmodifiableList(result);
+    }
+
+    public List<CodeFragment> insertAssertStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                AssertTree assertStatement = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertStatement);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(assertStatement.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
     }
 
     public List<CodeFragment> insertCaseStatement() {

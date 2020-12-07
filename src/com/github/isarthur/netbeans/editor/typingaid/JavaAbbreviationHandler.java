@@ -261,25 +261,22 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 } else if (!keywords.isEmpty()) {
                                     Keyword keyword = keywords.get(0);
                                     switch (keyword.getName()) {
-                                        case "case": { //NOI18N
+                                        case "assert": //NOI18N
+                                            return helper.insertAssertStatement();
+                                        case "case": //NOI18N
                                             return helper.insertCaseStatement();
-                                        }
-                                        case "if": { //NOI18N
+                                        case "if": //NOI18N
                                             if (helper.isCaseStatement()) {
-                                                helper.insertIfStatementInCaseTree();
+                                                return helper.insertIfStatementInCaseTree();
                                             } else {
                                                 return helper.insertIfStatementInBlock();
                                             }
-                                        }
-                                        case "return": {//NOI18N
+                                        case "return": //NOI18N
                                             return helper.insertReturnStatement();
-                                        }
-                                        case "switch": {//NOI18N
+                                        case "switch": //NOI18N
                                             return helper.insertSwitchStatement();
-                                        }
-                                        default: {
+                                        default:
                                             return helper.insertCodeFragment(keyword);
-                                        }
                                     }
                                 } else {
                                     return helper.insertCodeFragment(modifiers.get(0));
