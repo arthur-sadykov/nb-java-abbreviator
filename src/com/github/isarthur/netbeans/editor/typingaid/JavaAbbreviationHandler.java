@@ -279,6 +279,8 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                             return helper.insertReturnStatement();
                                         case "switch": //NOI18N
                                             return helper.insertSwitchStatement();
+                                        case "while": //NOI18N
+                                            return helper.insertWhileStatement();
                                         default:
                                             return helper.insertCodeFragment(keyword);
                                     }

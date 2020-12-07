@@ -199,6 +199,9 @@ public class GenerateCodePanel extends javax.swing.JPanel {
                 case "switch": //NOI18N
                     helper.insertSwitchStatement();
                     break;
+                case "while": //NOI18N
+                    helper.insertWhileStatement();
+                    break;
                 default: {
                     helper.insertCodeFragment(keyword);
                     break;
