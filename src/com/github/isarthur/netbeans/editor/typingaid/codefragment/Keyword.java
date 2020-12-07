@@ -29,143 +29,150 @@ import java.util.Set;
 public class Keyword implements CodeFragment, Comparable<Keyword> {
 
     private final String name;
-    private Set<Tree.Kind> contexts;
+    private Set<Tree.Kind> allowedContexts;
+    private Set<Tree.Kind> forbiddenContexts;
 
     public Keyword(String name) {
         this.name = name;
-        this.contexts = new HashSet<>();
+        this.allowedContexts = new HashSet<>();
+        this.forbiddenContexts = new HashSet<>();
         switch (name) {
             case "assert": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "boolean": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "break": //NOI18N
-                contexts.add(Tree.Kind.DO_WHILE_LOOP);
-                contexts.add(Tree.Kind.FOR_LOOP);
-                contexts.add(Tree.Kind.SWITCH);
-                contexts.add(Tree.Kind.WHILE_LOOP);
+                allowedContexts.add(Tree.Kind.DO_WHILE_LOOP);
+                allowedContexts.add(Tree.Kind.FOR_LOOP);
+                allowedContexts.add(Tree.Kind.SWITCH);
+                allowedContexts.add(Tree.Kind.WHILE_LOOP);
                 break;
             case "byte": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "case": //NOI18N
-                contexts.add(Tree.Kind.SWITCH);
+                allowedContexts.add(Tree.Kind.SWITCH);
+                break;
+            case "catch": //NOI18N
+                allowedContexts.add(Tree.Kind.TRY);
                 break;
             case "char": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "class": //NOI18N
-                contexts.add(Tree.Kind.COMPILATION_UNIT);
-                contexts.add(Tree.Kind.CLASS);
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
+                allowedContexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.BLOCK);
+                forbiddenContexts.add(Tree.Kind.TRY);
+                forbiddenContexts.add(Tree.Kind.CATCH);
                 break;
             case "continue": //NOI18N
-                contexts.add(Tree.Kind.DO_WHILE_LOOP);
-                contexts.add(Tree.Kind.FOR_LOOP);
-                contexts.add(Tree.Kind.WHILE_LOOP);
+                allowedContexts.add(Tree.Kind.DO_WHILE_LOOP);
+                allowedContexts.add(Tree.Kind.FOR_LOOP);
+                allowedContexts.add(Tree.Kind.WHILE_LOOP);
                 break;
             case "default": //NOI18N
-                contexts.add(Tree.Kind.SWITCH);
+                allowedContexts.add(Tree.Kind.SWITCH);
                 break;
             case "do": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "double": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "else": //NOI18N
-                contexts.add(Tree.Kind.IF);
+                allowedContexts.add(Tree.Kind.IF);
                 break;
             case "enum": //NOI18N
-                contexts.add(Tree.Kind.COMPILATION_UNIT);
-                contexts.add(Tree.Kind.CLASS);
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
+                allowedContexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "extends": //NOI18N
-                contexts.add(Tree.Kind.CLASS);
-                contexts.add(Tree.Kind.TYPE_PARAMETER);
+                allowedContexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.TYPE_PARAMETER);
                 break;
             case "false": //NOI18N
-                contexts.add(Tree.Kind.ASSIGNMENT);
+                allowedContexts.add(Tree.Kind.ASSIGNMENT);
                 break;
             case "finally": //NOI18N
-                contexts.add(Tree.Kind.TRY);
+                allowedContexts.add(Tree.Kind.TRY);
                 break;
             case "float": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "for": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "if": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "instanceof": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "int": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "interface": //NOI18N
-                contexts.add(Tree.Kind.COMPILATION_UNIT);
-                contexts.add(Tree.Kind.CLASS);
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
+                allowedContexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "implements": //NOI18N
-                contexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.CLASS);
                 break;
             case "import": //NOI18N
-                contexts.add(Tree.Kind.IMPORT);
+                allowedContexts.add(Tree.Kind.IMPORT);
                 break;
             case "long": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "null": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "Object": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "package": //NOI18N
-                contexts.add(Tree.Kind.COMPILATION_UNIT);
+                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
                 break;
             case "return": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "short": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "String": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "super": //NOI18N
-                contexts.add(Tree.Kind.OTHER);
+                allowedContexts.add(Tree.Kind.OTHER);
                 break;
             case "switch": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "this": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "throw": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "throws": //NOI18N
-                contexts.add(Tree.Kind.THROW);
+                allowedContexts.add(Tree.Kind.THROW);
                 break;
             case "true": //NOI18N
-                contexts.add(Tree.Kind.VARIABLE);
+                allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "try": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "void": //NOI18N
-                contexts.add(Tree.Kind.METHOD);
+                allowedContexts.add(Tree.Kind.METHOD);
                 break;
             case "while": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.BLOCK);
                 break;
         }
     }
@@ -179,7 +186,11 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
     }
 
     public boolean isApplicableInContexts(List<Tree.Kind> contexts) {
-        return contexts.stream().anyMatch(context -> this.contexts.contains(context));
+        return contexts.stream().anyMatch(context -> this.allowedContexts.contains(context));
+    }
+
+    public boolean isForbiddenInContexts(List<Tree.Kind> contexts) {
+        return contexts.stream().anyMatch(context -> this.forbiddenContexts.contains(context));
     }
 
     @Override

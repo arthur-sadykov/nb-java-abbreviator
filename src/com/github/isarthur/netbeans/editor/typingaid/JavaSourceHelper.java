@@ -34,6 +34,7 @@ import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.BreakTree;
 import com.sun.source.tree.CaseTree;
+import com.sun.source.tree.CatchTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
@@ -658,6 +659,8 @@ public class JavaSourceHelper {
                 return insertBreakStatement();
             case "case": //NOI18N
                 return insertCaseStatement();
+            case "catch": //NOI18N
+                return insertCatchTree();
             case "continue": //NOI18N
                 return insertContinueStatement();
             case "do": //NOI18N
@@ -989,6 +992,7 @@ public class JavaSourceHelper {
                 List<Tree.Kind> enclosingContexts = getEnclosingContexts(currentPath);
                 ConstantDataManager.KEYWORDS.stream()
                         .filter(keyword -> keyword.isApplicableInContexts(enclosingContexts)
+                                && !keyword.isForbiddenInContexts(enclosingContexts)
                                 && keyword.isAbbreviationEqualTo(abbreviation.getName()))
                         .forEach(keywords::add);
             }, true);
@@ -3352,6 +3356,124 @@ public class JavaSourceHelper {
                             StatementTree currentStatement = statements.get(i);
                             long currentStartPosition =
                                     sourcePositions.getStartPosition(compilationUnit, currentStatement);
+                            if (i < size - 1) {
+                                if (abbreviation.getStartOffset() < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < abbreviation.getStartOffset()
+                                        && abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return insertIndex.get();
+    }
+
+    private List<CodeFragment> insertCatchTree() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.TRY) {
+                    return;
+                }
+                TryTree currentTry = (TryTree) currentTree;
+                int insertIndex = findInsertIndexInTryStatement(currentTry);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                CatchTree catchTree =
+                        make.Catch(
+                                make.Variable(
+                                        make.Modifiers(Collections.emptySet()),
+                                        "e", //NOI18N
+                                        make.Identifier("Exception"), //NOI18N
+                                        null),
+                                make.Block(Collections.emptyList(), false));
+                TryTree newTry = make.insertTryCatch(currentTry, insertIndex, catchTree);
+                copy.rewrite(currentTry, newTry);
+                statements.add(new Statement(catchTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private int findInsertIndexInTryStatement(TryTree tryTree) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends CatchTree> catches = tryTree.getCatches();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = catches.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        CatchTree currentCatch = catches.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCatch);
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    case 2: {
+                        CatchTree previousCatch = catches.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousCatch);
+                        CatchTree currentCatch = catches.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCatch);
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            insertIndex.set(0);
+                            break;
+                        } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                            insertIndex.set(size);
+                            break;
+                        } else {
+                            insertIndex.set(1);
+                            break;
+                        }
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            CatchTree previousCatch = catches.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousCatch);
+                            CatchTree currentCatch = catches.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentCatch);
                             if (i < size - 1) {
                                 if (abbreviation.getStartOffset() < previousStartPosition) {
                                     insertIndex.set(i - 1);

@@ -410,6 +410,27 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("this", "throw", "try"));
     }
 
+    public void testCatchKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } |catch (IndexOutOfBoundsException e) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (IndexOutOfBoundsException e) {\n"
+                + "        } catch (Exception e) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList(" catch (Exception e) {" + System.lineSeparator() + "}"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
