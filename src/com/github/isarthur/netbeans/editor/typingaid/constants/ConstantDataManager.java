@@ -40,7 +40,7 @@ public class ConstantDataManager {
     public static final String INVALID_CHARS_COUNT = "Invalid characters count!"; //NOI18N
     public static final String INVALID_POSITION = "The 'position' argument is out of bounds of document!"; //NOI18N
     public static final String JAVA_SOURCE_NOT_ASSOCIATED_TO_DOCUMENT = "The Java source is not associated to document!"; //NOI18N
-    public static final Set<Keyword> KEYWORD;
+    public static final Set<Keyword> KEYWORDS;
     public static final String LONG_ZERO_LITERAL = "0L"; //NOI18N
     public static final Set<String> MODIFIERS;
     public static final String NULL = "null"; //NOI18N
@@ -51,53 +51,54 @@ public class ConstantDataManager {
     public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
-    private static final int KEYWORD_COUNT = 39;
+    private static final int KEYWORD_COUNT = 40;
     private static final int MODIFIER_COUNT = 11;
 
     private ConstantDataManager() {
     }
 
     static {
-        KEYWORD = new HashSet<>(KEYWORD_COUNT);
-        KEYWORD.add(new Keyword("assert")); //NOI18N
-        KEYWORD.add(new Keyword("boolean")); //NOI18N
-        KEYWORD.add(new Keyword("break")); //NOI18N
-        KEYWORD.add(new Keyword("byte")); //NOI18N
-        KEYWORD.add(new Keyword("case")); //NOI18N
-        KEYWORD.add(new Keyword("char")); //NOI18N
-        KEYWORD.add(new Keyword("class")); //NOI18N
-        KEYWORD.add(new Keyword("continue")); //NOI18N
-        KEYWORD.add(new Keyword("default")); //NOI18N
-        KEYWORD.add(new Keyword("do")); //NOI18N
-        KEYWORD.add(new Keyword("double")); //NOI18N
-        KEYWORD.add(new Keyword("else")); //NOI18N
-        KEYWORD.add(new Keyword("enum")); //NOI18N
-        KEYWORD.add(new Keyword("extends")); //NOI18N
-        KEYWORD.add(new Keyword("false")); //NOI18N
-        KEYWORD.add(new Keyword("finally")); //NOI18N
-        KEYWORD.add(new Keyword("float")); //NOI18N
-        KEYWORD.add(new Keyword("for")); //NOI18N
-        KEYWORD.add(new Keyword("if")); //NOI18N
-        KEYWORD.add(new Keyword("instanceof")); //NOI18N
-        KEYWORD.add(new Keyword("int")); //NOI18N
-        KEYWORD.add(new Keyword("interface")); //NOI18N
-        KEYWORD.add(new Keyword("implements")); //NOI18N
-        KEYWORD.add(new Keyword("import")); //NOI18N
-        KEYWORD.add(new Keyword("long")); //NOI18N
-        KEYWORD.add(new Keyword("null")); //NOI18N
-        KEYWORD.add(new Keyword("Object")); //NOI18N
-        KEYWORD.add(new Keyword("package")); //NOI18N
-        KEYWORD.add(new Keyword("return")); //NOI18N
-        KEYWORD.add(new Keyword("short")); //NOI18N
-        KEYWORD.add(new Keyword("String")); //NOI18N
-        KEYWORD.add(new Keyword("super")); //NOI18N
-        KEYWORD.add(new Keyword("switch")); //NOI18N
-        KEYWORD.add(new Keyword("this")); //NOI18N
-        KEYWORD.add(new Keyword("throw")); //NOI18N
-        KEYWORD.add(new Keyword("throws")); //NOI18N
-        KEYWORD.add(new Keyword("true")); //NOI18N
-        KEYWORD.add(new Keyword("void")); //NOI18N
-        KEYWORD.add(new Keyword("while")); //NOI18N
+        KEYWORDS = new HashSet<>(KEYWORD_COUNT);
+        KEYWORDS.add(new Keyword("assert")); //NOI18N
+        KEYWORDS.add(new Keyword("boolean")); //NOI18N
+        KEYWORDS.add(new Keyword("break")); //NOI18N
+        KEYWORDS.add(new Keyword("byte")); //NOI18N
+        KEYWORDS.add(new Keyword("case")); //NOI18N
+        KEYWORDS.add(new Keyword("char")); //NOI18N
+        KEYWORDS.add(new Keyword("class")); //NOI18N
+        KEYWORDS.add(new Keyword("continue")); //NOI18N
+        KEYWORDS.add(new Keyword("default")); //NOI18N
+        KEYWORDS.add(new Keyword("do")); //NOI18N
+        KEYWORDS.add(new Keyword("double")); //NOI18N
+        KEYWORDS.add(new Keyword("else")); //NOI18N
+        KEYWORDS.add(new Keyword("enum")); //NOI18N
+        KEYWORDS.add(new Keyword("extends")); //NOI18N
+        KEYWORDS.add(new Keyword("false")); //NOI18N
+        KEYWORDS.add(new Keyword("finally")); //NOI18N
+        KEYWORDS.add(new Keyword("float")); //NOI18N
+        KEYWORDS.add(new Keyword("for")); //NOI18N
+        KEYWORDS.add(new Keyword("if")); //NOI18N
+        KEYWORDS.add(new Keyword("instanceof")); //NOI18N
+        KEYWORDS.add(new Keyword("int")); //NOI18N
+        KEYWORDS.add(new Keyword("interface")); //NOI18N
+        KEYWORDS.add(new Keyword("implements")); //NOI18N
+        KEYWORDS.add(new Keyword("import")); //NOI18N
+        KEYWORDS.add(new Keyword("long")); //NOI18N
+        KEYWORDS.add(new Keyword("null")); //NOI18N
+        KEYWORDS.add(new Keyword("Object")); //NOI18N
+        KEYWORDS.add(new Keyword("package")); //NOI18N
+        KEYWORDS.add(new Keyword("return")); //NOI18N
+        KEYWORDS.add(new Keyword("short")); //NOI18N
+        KEYWORDS.add(new Keyword("String")); //NOI18N
+        KEYWORDS.add(new Keyword("super")); //NOI18N
+        KEYWORDS.add(new Keyword("switch")); //NOI18N
+        KEYWORDS.add(new Keyword("this")); //NOI18N
+        KEYWORDS.add(new Keyword("throw")); //NOI18N
+        KEYWORDS.add(new Keyword("throws")); //NOI18N
+        KEYWORDS.add(new Keyword("true")); //NOI18N
+        KEYWORDS.add(new Keyword("try")); //NOI18N
+        KEYWORDS.add(new Keyword("void")); //NOI18N
+        KEYWORDS.add(new Keyword("while")); //NOI18N
         MODIFIERS = new HashSet<>(MODIFIER_COUNT);
         MODIFIERS.add("abstract"); //NOI18N
         MODIFIERS.add("final"); //NOI18N

@@ -56,6 +56,7 @@ import com.sun.source.tree.Scope;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.SwitchTree;
 import com.sun.source.tree.Tree;
+import com.sun.source.tree.TryTree;
 import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.tree.WhileLoopTree;
@@ -673,6 +674,8 @@ public class JavaSourceHelper {
                 return insertReturnStatement();
             case "switch": //NOI18N
                 return insertSwitchStatement();
+            case "try": //NOI18N
+                return insertTryStatement();
             case "while": //NOI18N
                 return insertWhileStatement();
             default:
@@ -984,7 +987,7 @@ public class JavaSourceHelper {
                     return;
                 }
                 List<Tree.Kind> enclosingContexts = getEnclosingContexts(currentPath);
-                ConstantDataManager.KEYWORD.stream()
+                ConstantDataManager.KEYWORDS.stream()
                         .filter(keyword -> keyword.isApplicableInContexts(enclosingContexts)
                                 && keyword.isAbbreviationEqualTo(abbreviation.getName()))
                         .forEach(keywords::add);
@@ -2851,14 +2854,57 @@ public class JavaSourceHelper {
                     return;
                 }
                 TreeMaker make = copy.getTreeMaker();
-                SwitchTree switchStatement =
+                SwitchTree switchTree =
                         make.Switch(
                                 make.Identifier(""), //NOI18N
                                 Collections.singletonList(
                                         make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, switchStatement);
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, switchTree);
                 copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(switchStatement.toString()));
+                statements.add(new Statement(switchTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertTryStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                TryTree tryTree =
+                        make.Try(
+                                make.Block(Collections.emptyList(), false),
+                                Collections.singletonList(
+                                        make.Catch(
+                                                make.Variable(
+                                                        make.Modifiers(Collections.emptySet()),
+                                                        "e", //NOI18N
+                                                        make.Identifier("Exception"), //NOI18N
+                                                        null),
+                                                make.Block(Collections.emptyList(), false))),
+                                null);
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, tryTree);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(tryTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);

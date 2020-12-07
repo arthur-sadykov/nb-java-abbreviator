@@ -394,6 +394,22 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList("for (int i = 0; i < 10; i++) {" + System.lineSeparator() + "}"));
     }
 
+    public void testTryKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("this", "throw", "try"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

@@ -141,7 +141,7 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 contexts.add(Tree.Kind.VARIABLE);
                 break;
             case "super": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                contexts.add(Tree.Kind.OTHER);
                 break;
             case "switch": //NOI18N
                 contexts.add(Tree.Kind.BLOCK);
@@ -153,10 +153,13 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 contexts.add(Tree.Kind.BLOCK);
                 break;
             case "throws": //NOI18N
-                contexts.add(Tree.Kind.METHOD);
+                contexts.add(Tree.Kind.THROW);
                 break;
             case "true": //NOI18N
                 contexts.add(Tree.Kind.VARIABLE);
+                break;
+            case "try": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
                 break;
             case "void": //NOI18N
                 contexts.add(Tree.Kind.METHOD);
