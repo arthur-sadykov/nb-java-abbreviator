@@ -96,6 +96,9 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
             case "float": //NOI18N
                 contexts.add(Tree.Kind.VARIABLE);
                 break;
+            case "for": //NOI18N
+                contexts.add(Tree.Kind.BLOCK);
+                break;
             case "if": //NOI18N
                 contexts.add(Tree.Kind.BLOCK);
                 break;

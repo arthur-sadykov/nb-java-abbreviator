@@ -172,44 +172,7 @@ public class GenerateCodePanel extends javax.swing.JPanel {
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
         if (codeFragment instanceof Keyword) {
-            Keyword keyword = (Keyword) codeFragment;
-            switch (keyword.getName()) {
-                case "assert": //NOI18N
-                    helper.insertAssertStatement();
-                    break;
-                case "break": //NOI18N
-                    helper.insertBreakStatement();
-                    break;
-                case "case": //NOI18N
-                    helper.insertCaseStatement();
-                    break;
-                case "continue": //NOI18N
-                    helper.insertContinueStatement();
-                    break;
-                case "do": //NOI18N
-                    helper.insertDoWhileStatement();
-                    break;
-                case "if": //NOI18N
-                    if (helper.isCaseStatement()) {
-                        helper.insertIfStatementInCaseTree();
-                    } else {
-                        helper.insertIfStatementInBlock();
-                    }
-                    break;
-                case "return": //NOI18N
-                    helper.insertReturnStatement();
-                    break;
-                case "switch": //NOI18N
-                    helper.insertSwitchStatement();
-                    break;
-                case "while": //NOI18N
-                    helper.insertWhileStatement();
-                    break;
-                default: {
-                    helper.insertCodeFragment(keyword);
-                    break;
-                }
-            }
+            helper.insertKeyword((Keyword) codeFragment);
         } else {
             helper.insertCodeFragment(codeFragment);
         }

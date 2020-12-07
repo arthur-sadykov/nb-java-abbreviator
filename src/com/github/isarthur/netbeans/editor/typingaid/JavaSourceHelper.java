@@ -649,6 +649,37 @@ public class JavaSourceHelper {
         }
     }
 
+    public List<CodeFragment> insertKeyword(Keyword keyword) {
+        switch (keyword.getName()) {
+            case "assert": //NOI18N
+                return insertAssertStatement();
+            case "break": //NOI18N
+                return insertBreakStatement();
+            case "case": //NOI18N
+                return insertCaseStatement();
+            case "continue": //NOI18N
+                return insertContinueStatement();
+            case "do": //NOI18N
+                return insertDoWhileStatement();
+            case "for": //NOI18N
+                return insertForStatement();
+            case "if": //NOI18N
+                if (isCaseStatement()) {
+                    return insertIfStatementInCaseTree();
+                } else {
+                    return insertIfStatementInBlock();
+                }
+            case "return": //NOI18N
+                return insertReturnStatement();
+            case "switch": //NOI18N
+                return insertSwitchStatement();
+            case "while": //NOI18N
+                return insertWhileStatement();
+            default:
+                return insertCodeFragment(keyword);
+        }
+    }
+
     List<MethodInvocation> collectLocalMethodInvocations() {
         List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses();
         methods = getMethodsByAbbreviation(methods);
@@ -2079,7 +2110,7 @@ public class JavaSourceHelper {
         return caseLabel.get();
     }
 
-    public boolean isCaseStatement() {
+    private boolean isCaseStatement() {
         AtomicBoolean caseLabel = new AtomicBoolean();
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2399,7 +2430,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    public List<CodeFragment> insertAssertStatement() {
+    private List<CodeFragment> insertAssertStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2431,7 +2462,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertBreakStatement() {
+    private List<CodeFragment> insertBreakStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2483,7 +2514,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertCaseStatement() {
+    private List<CodeFragment> insertCaseStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2515,7 +2546,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertContinueStatement() {
+    private List<CodeFragment> insertContinueStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2548,7 +2579,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertDoWhileStatement() {
+    private List<CodeFragment> insertDoWhileStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2574,6 +2605,48 @@ public class JavaSourceHelper {
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, doWhileLoopTree);
                 copy.rewrite(currentBlock, newBlock);
                 statements.add(new Statement(doWhileLoopTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertForStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                BlockTree currentBlock = (BlockTree) currentTree;
+                int insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                ForLoopTree forLoopTree = make.ForLoop(
+                        Collections.singletonList(make.Variable(
+                                make.Modifiers(Collections.emptySet()),
+                                "i", //NOI18N
+                                make.PrimitiveType(TypeKind.INT),
+                                make.Literal(0))),
+                        make.Binary(Tree.Kind.LESS_THAN, make.Identifier("i"), make.Literal(10)), //NOI18N
+                        Collections.singletonList(make.ExpressionStatement(
+                                make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
+                        make.Block(Collections.emptyList(), false)
+                );
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, forLoopTree);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(forLoopTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -2660,7 +2733,7 @@ public class JavaSourceHelper {
         return insertIndex.get();
     }
 
-    public List<CodeFragment> insertIfStatementInBlock() {
+    private List<CodeFragment> insertIfStatementInBlock() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2692,7 +2765,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertIfStatementInCaseTree() {
+    private List<CodeFragment> insertIfStatementInCaseTree() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2724,7 +2797,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertReturnStatement() {
+    private List<CodeFragment> insertReturnStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         String returnVar = returnVar();
         try {
@@ -2757,7 +2830,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertSwitchStatement() {
+    private List<CodeFragment> insertSwitchStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
@@ -2793,7 +2866,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    public List<CodeFragment> insertWhileStatement() {
+    private List<CodeFragment> insertWhileStatement() {
         List<CodeFragment> statements = new ArrayList<>(1);
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);

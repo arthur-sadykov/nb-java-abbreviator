@@ -259,33 +259,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 } else if (!types.isEmpty()) {
                                     return helper.insertCodeFragment(types.get(0));
                                 } else if (!keywords.isEmpty()) {
-                                    Keyword keyword = keywords.get(0);
-                                    switch (keyword.getName()) {
-                                        case "assert": //NOI18N
-                                            return helper.insertAssertStatement();
-                                        case "break": //NOI18N
-                                            return helper.insertBreakStatement();
-                                        case "case": //NOI18N
-                                            return helper.insertCaseStatement();
-                                        case "continue": //NOI18N
-                                            return helper.insertContinueStatement();
-                                        case "do": //NOI18N
-                                            return helper.insertDoWhileStatement();
-                                        case "if": //NOI18N
-                                            if (helper.isCaseStatement()) {
-                                                return helper.insertIfStatementInCaseTree();
-                                            } else {
-                                                return helper.insertIfStatementInBlock();
-                                            }
-                                        case "return": //NOI18N
-                                            return helper.insertReturnStatement();
-                                        case "switch": //NOI18N
-                                            return helper.insertSwitchStatement();
-                                        case "while": //NOI18N
-                                            return helper.insertWhileStatement();
-                                        default:
-                                            return helper.insertCodeFragment(keyword);
-                                    }
+                                    return helper.insertKeyword(keywords.get(0));
                                 } else {
                                     return helper.insertCodeFragment(modifiers.get(0));
                                 }
