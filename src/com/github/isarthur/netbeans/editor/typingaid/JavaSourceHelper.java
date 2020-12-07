@@ -38,6 +38,7 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
 import com.sun.source.tree.ConditionalExpressionTree;
+import com.sun.source.tree.ContinueTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ForLoopTree;
@@ -2417,10 +2418,10 @@ public class JavaSourceHelper {
                     return;
                 }
                 TreeMaker make = copy.getTreeMaker();
-                AssertTree assertStatement = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertStatement);
+                AssertTree assertTree = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertTree);
                 copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(assertStatement.toString()));
+                statements.add(new Statement(assertTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -2444,7 +2445,7 @@ public class JavaSourceHelper {
                     return;
                 }
                 TreeMaker make = copy.getTreeMaker();
-                BreakTree breakStatement = make.Break(null);
+                BreakTree breakTree = make.Break(null);
                 int insertIndex;
                 switch (currentTree.getKind()) {
                     case BLOCK:
@@ -2453,9 +2454,9 @@ public class JavaSourceHelper {
                         if (insertIndex == -1) {
                             return;
                         }
-                        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, breakStatement);
+                        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, breakTree);
                         copy.rewrite(currentBlock, newBlock);
-                        statements.add(new Statement(breakStatement.toString()));
+                        statements.add(new Statement(breakTree.toString()));
                         break;
                     case SWITCH:
                         SwitchTree currentSwitch = (SwitchTree) currentTree;
@@ -2468,9 +2469,9 @@ public class JavaSourceHelper {
                         CaseTree newCaseTree = make.insertCaseStatement(
                                 currentCaseTree,
                                 currentCaseTree.getStatements().size(),
-                                breakStatement);
+                                breakTree);
                         copy.rewrite(currentCaseTree, newCaseTree);
-                        statements.add(new Statement(breakStatement.toString()));
+                        statements.add(new Statement(breakTree.toString()));
                         break;
                 }
             }).commit();
@@ -2505,6 +2506,39 @@ public class JavaSourceHelper {
                 SwitchTree newSwitch = make.insertSwitchCase(currentSwitch, insertIndex, newCase);
                 copy.rewrite(currentSwitch, newSwitch);
                 statements.add(new Statement(newCase.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    public List<CodeFragment> insertContinueStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK) {
+                    return;
+                }
+                int insertIndex;
+                BlockTree currentBlock = (BlockTree) currentTree;
+                insertIndex = findInsertIndexInBlock(currentBlock);
+                if (insertIndex == -1) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                ContinueTree continueTree = make.Continue(null);
+                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, continueTree);
+                copy.rewrite(currentBlock, newBlock);
+                statements.add(new Statement(continueTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -2879,7 +2913,8 @@ public class JavaSourceHelper {
                     expression.set(methodInvocationTree);
                 } else {
                     expression.set(make.MemberSelect(
-                            TypeElement.class.isInstance(methodInvocation.getScope())
+                            TypeElement.class
+                                    .isInstance(methodInvocation.getScope())
                             ? make.QualIdent(methodInvocation.getScope().toString())
                             : make.Identifier(methodInvocation.getScope()),
                             methodInvocationTree.toString()));
@@ -2935,7 +2970,8 @@ public class JavaSourceHelper {
                 if (methodInvocation.getScope() == null) {
                     initializer = methodInvocationTree;
                 } else {
-                    if (TypeElement.class.isInstance(methodInvocation.getScope())) {
+                    if (TypeElement.class
+                            .isInstance(methodInvocation.getScope())) {
                         initializer =
                                 make.MemberSelect(make.QualIdent(methodInvocation.getScope()), methodInvocationTree.toString());
                     } else {
@@ -3007,6 +3043,9 @@ public class JavaSourceHelper {
                 EnumSet.of(Tree.Kind.BLOCK, Tree.Kind.CLASS, Tree.Kind.VARIABLE),
                 treeUtilities.pathFor(sequence.offset()));
         Supplier<Void> insertStatementInBlock = () -> {
+            if (fragment.getKind() != CodeFragment.Kind.METHOD_INVOCATION) {
+                return null;
+            }
             int insertIndex = findInsertIndexInBlock(currentTree);
             if (insertIndex == -1) {
                 return null;

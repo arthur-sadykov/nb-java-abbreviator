@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JEditorPane;
@@ -261,6 +262,82 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Collections.emptyList());
+    }
+
+    public void testContinueKeywordCompletionInForLoop() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        for (int i = 0; i < 10; i++) {\n"
+                + "            |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        for (int i = 0; i < 10; i++) {\n"
+                + "            \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("class", "continue"));
+    }
+
+    public void testContinueKeywordCompletionInWhileLoop() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        while (true) {\n"
+                + "            |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        while (true) {\n"
+                + "            \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("class", "continue"));
+    }
+
+    public void testContinueKeywordCompletionInDoWhileLoop() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        do {\n"
+                + "            |\n"
+                + "        } while (true);\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        do {\n"
+                + "            \n"
+                + "        } while (true);\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("class", "continue"));
+    }
+
+    public void testContinueKeywordCompletionInBlock() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("class"));
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)

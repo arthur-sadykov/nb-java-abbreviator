@@ -62,7 +62,9 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 contexts.add(Tree.Kind.BLOCK);
                 break;
             case "continue": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                contexts.add(Tree.Kind.DO_WHILE_LOOP);
+                contexts.add(Tree.Kind.FOR_LOOP);
+                contexts.add(Tree.Kind.WHILE_LOOP);
                 break;
             case "default": //NOI18N
                 contexts.add(Tree.Kind.SWITCH);
