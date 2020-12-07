@@ -157,6 +157,112 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList("assert true : \"\";"));
     }
 
+    public void testBreakKeywordCompletionInForLoop() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        for (int i = 0; i < 10; i++) {\n"
+                + "            |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        for (int i = 0; i < 10; i++) {\n"
+                + "            break;\n"
+                + "            \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("break;"));
+    }
+
+    public void testBreakKeywordCompletionInWhileLoop() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        while (true) {\n"
+                + "            |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        while (true) {\n"
+                + "            break;\n"
+                + "            \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("break;"));
+    }
+
+    public void testBreakKeywordCompletionInDoWhileLoop() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        do {\n"
+                + "            |\n"
+                + "        } while (true);\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        do {\n"
+                + "            break;\n"
+                + "            \n"
+                + "        } while (true);\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("break;"));
+    }
+
+    public void testBreakKeywordCompletionInSwitchStatement() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    int count = 10;\n"
+                + "    void test() {\n"
+                + "        switch (count) {\n"
+                + "            case 0:\n"
+                + "                count = 0;\n"
+                + "                |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    int count = 10;\n"
+                + "    void test() {\n"
+                + "        switch (count) {\n"
+                + "            case 0:\n"
+                + "                count = 0;\n"
+                + "            break;\n"
+                + "                \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("break;"));
+    }
+
+    public void testBreakKeywordCompletionInBlock() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

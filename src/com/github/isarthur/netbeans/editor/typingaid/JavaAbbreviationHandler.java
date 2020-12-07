@@ -263,6 +263,8 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                     switch (keyword.getName()) {
                                         case "assert": //NOI18N
                                             return helper.insertAssertStatement();
+                                        case "break": //NOI18N
+                                            return helper.insertBreakStatement();
                                         case "case": //NOI18N
                                             return helper.insertCaseStatement();
                                         case "if": //NOI18N

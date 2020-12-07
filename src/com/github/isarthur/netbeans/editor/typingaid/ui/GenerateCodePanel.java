@@ -177,6 +177,9 @@ public class GenerateCodePanel extends javax.swing.JPanel {
                 case "assert": //NOI18N
                     helper.insertAssertStatement();
                     break;
+                case "break": //NOI18N
+                    helper.insertBreakStatement();
+                    break;
                 case "case": //NOI18N
                     helper.insertCaseStatement();
                     break;

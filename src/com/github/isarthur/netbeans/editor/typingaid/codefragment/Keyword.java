@@ -19,6 +19,7 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.Tree;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,7 +42,10 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 contexts.add(Tree.Kind.VARIABLE);
                 break;
             case "break": //NOI18N
-                contexts.add(Tree.Kind.BLOCK);
+                contexts.add(Tree.Kind.DO_WHILE_LOOP);
+                contexts.add(Tree.Kind.FOR_LOOP);
+                contexts.add(Tree.Kind.SWITCH);
+                contexts.add(Tree.Kind.WHILE_LOOP);
                 break;
             case "byte": //NOI18N
                 contexts.add(Tree.Kind.VARIABLE);
@@ -163,8 +167,8 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
         return StringUtilities.getElementAbbreviation(name).equals(abbreviation);
     }
 
-    public boolean isApplicableInContext(Tree.Kind context) {
-        return contexts.contains(context);
+    public boolean isApplicableInContexts(List<Tree.Kind> contexts) {
+        return contexts.stream().anyMatch(context -> this.contexts.contains(context));
     }
 
     @Override

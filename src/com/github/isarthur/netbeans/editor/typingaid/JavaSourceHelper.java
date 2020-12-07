@@ -32,6 +32,7 @@ import com.sun.source.tree.AssertTree;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.BreakTree;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
@@ -948,9 +949,9 @@ public class JavaSourceHelper {
                 if (currentPath == null) {
                     return;
                 }
-                Tree.Kind currentContext = currentPath.getLeaf().getKind();
+                List<Tree.Kind> enclosingContexts = getEnclosingContexts(currentPath);
                 ConstantDataManager.KEYWORD.stream()
-                        .filter(keyword -> keyword.isApplicableInContext(currentContext)
+                        .filter(keyword -> keyword.isApplicableInContexts(enclosingContexts)
                                 && keyword.isAbbreviationEqualTo(abbreviation.getName()))
                         .forEach(keywords::add);
             }, true);
@@ -959,6 +960,20 @@ public class JavaSourceHelper {
         }
         Collections.sort(keywords);
         return Collections.unmodifiableList(keywords);
+    }
+
+    private List<Tree.Kind> getEnclosingContexts(TreePath currentPath) {
+        List<Tree.Kind> contexts = new ArrayList<>();
+        contexts.add(currentPath.getLeaf().getKind());
+        TreePath parentPath = currentPath;
+        while (true) {
+            parentPath = parentPath.getParentPath();
+            if (parentPath == null) {
+                break;
+            }
+            contexts.add(parentPath.getLeaf().getKind());
+        }
+        return Collections.unmodifiableList(contexts);
     }
 
     List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> collectModifiers() {
@@ -2406,6 +2421,58 @@ public class JavaSourceHelper {
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertStatement);
                 copy.rewrite(currentBlock, newBlock);
                 statements.add(new Statement(assertStatement.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    public List<CodeFragment> insertBreakStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.BLOCK && currentTree.getKind() != Tree.Kind.SWITCH) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                BreakTree breakStatement = make.Break(null);
+                int insertIndex;
+                switch (currentTree.getKind()) {
+                    case BLOCK:
+                        BlockTree currentBlock = (BlockTree) currentTree;
+                        insertIndex = findInsertIndexInBlock(currentBlock);
+                        if (insertIndex == -1) {
+                            return;
+                        }
+                        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, breakStatement);
+                        copy.rewrite(currentBlock, newBlock);
+                        statements.add(new Statement(breakStatement.toString()));
+                        break;
+                    case SWITCH:
+                        SwitchTree currentSwitch = (SwitchTree) currentTree;
+                        insertIndex = findInsertIndexInSwitchStatement(currentSwitch);
+                        if (insertIndex == -1) {
+                            return;
+                        }
+                        List<? extends CaseTree> cases = currentSwitch.getCases();
+                        CaseTree currentCaseTree = cases.get(insertIndex - 1);
+                        CaseTree newCaseTree = make.insertCaseStatement(
+                                currentCaseTree,
+                                currentCaseTree.getStatements().size(),
+                                breakStatement);
+                        copy.rewrite(currentCaseTree, newCaseTree);
+                        statements.add(new Statement(breakStatement.toString()));
+                        break;
+                }
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
