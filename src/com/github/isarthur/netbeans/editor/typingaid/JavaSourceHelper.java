@@ -678,6 +678,8 @@ public class JavaSourceHelper {
                 }
             case "implements": //NOI18N
                 return insertImplementsTree();
+            case "interface": //NOI18N
+                return insertInterfaceDeclaration();
             case "return": //NOI18N
                 return insertReturnStatement();
             case "switch": //NOI18N
@@ -2689,11 +2691,10 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCase);
                         if (abbreviation.getStartOffset() < currentStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     case 2: {
                         CaseTree previousCase = cases.get(0);
@@ -2703,14 +2704,12 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCase);
                         if (abbreviation.getStartOffset() < previousStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else if (currentStartPosition < abbreviation.getStartOffset()) {
                             insertIndex.set(size);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     default: {
                         for (int i = 1; i < size; i++) {
@@ -2837,6 +2836,212 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertInterfaceDeclaration() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                int insertIndex;
+                TreeMaker make = copy.getTreeMaker();
+                ClassTree interfaceTree =
+                        make.Interface(
+                                make.Modifiers(Collections.emptySet()),
+                                "Interface", //NOI18N
+                                Collections.emptyList(),
+                                Collections.emptyList(),
+                                Collections.emptyList());
+                Tree currentTree = currentPath.getLeaf();
+                switch (currentTree.getKind()) {
+                    case CLASS:
+                    case ENUM:
+                    case INTERFACE:
+                        ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        ClassTree newClassEnumOrInterfaceTree =
+                                make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, interfaceTree);
+                        copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
+                        statements.add(new Statement(interfaceTree.toString()));
+                        break;
+                    case COMPILATION_UNIT:
+                        CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
+                        insertIndex = findInsertIndexInCompilationUnit(currentCompilationUnitTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        CompilationUnitTree newCompilationUnitTree =
+                                make.insertCompUnitTypeDecl(currentCompilationUnitTree, insertIndex, interfaceTree);
+                        copy.rewrite(currentCompilationUnitTree, newCompilationUnitTree);
+                        statements.add(new Statement(interfaceTree.toString()));
+                        break;
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private int findInsertIndexInClassEnumOrInterface(ClassTree classEnumOrInterfaceTree) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends Tree> members = classEnumOrInterfaceTree.getMembers();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = members.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        Tree currentMember = members.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentMember);
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            insertIndex.set(0);
+                        } else {
+                            insertIndex.set(1);
+                        }
+                        break;
+                    }
+                    case 2: {
+                        Tree previousMember = members.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousMember);
+                        Tree currentMember = members.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentMember);
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            insertIndex.set(0);
+                        } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                            insertIndex.set(size);
+                        } else {
+                            insertIndex.set(1);
+                        }
+                        break;
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            Tree previousMember = members.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousMember);
+                            Tree currentMember = members.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentMember);
+                            if (i < size - 1) {
+                                if (abbreviation.getStartOffset() < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < abbreviation.getStartOffset()
+                                        && abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return insertIndex.get();
+    }
+
+    private int findInsertIndexInCompilationUnit(CompilationUnitTree compilationUnitTree) {
+        AtomicInteger insertIndex = new AtomicInteger(-1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                Trees trees = copy.getTrees();
+                CompilationUnitTree compilationUnit = copy.getCompilationUnit();
+                List<? extends Tree> typeDecls = compilationUnitTree.getTypeDecls();
+                SourcePositions sourcePositions = trees.getSourcePositions();
+                int size = typeDecls.size();
+                switch (size) {
+                    case 0: {
+                        insertIndex.set(0);
+                        break;
+                    }
+                    case 1: {
+                        Tree currentTypeDecl = typeDecls.get(0);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeDecl);
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            insertIndex.set(0);
+                        } else {
+                            insertIndex.set(1);
+                        }
+                        break;
+                    }
+                    case 2: {
+                        Tree previousTypeDecl = typeDecls.get(0);
+                        long previousStartPosition =
+                                sourcePositions.getStartPosition(compilationUnit, previousTypeDecl);
+                        Tree currentTypeDecl = typeDecls.get(1);
+                        long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeDecl);
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            insertIndex.set(0);
+                        } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                            insertIndex.set(size);
+                        } else {
+                            insertIndex.set(1);
+                        }
+                        break;
+                    }
+                    default: {
+                        for (int i = 1; i < size; i++) {
+                            Tree previousTypeDecl = typeDecls.get(i - 1);
+                            long previousStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, previousTypeDecl);
+                            Tree currentTypeDecl = typeDecls.get(i);
+                            long currentStartPosition =
+                                    sourcePositions.getStartPosition(compilationUnit, currentTypeDecl);
+                            if (i < size - 1) {
+                                if (abbreviation.getStartOffset() < previousStartPosition) {
+                                    insertIndex.set(i - 1);
+                                    break;
+                                } else if (previousStartPosition < abbreviation.getStartOffset()
+                                        && abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(i);
+                                    break;
+                                }
+                            } else {
+                                if (abbreviation.getStartOffset() < currentStartPosition) {
+                                    insertIndex.set(size - 1);
+                                    break;
+                                }
+                                insertIndex.set(size);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return insertIndex.get();
     }
 
     private List<CodeFragment> insertReturnStatement() {
@@ -3037,11 +3242,10 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
                         if (abbreviation.getStartOffset() < currentStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     case 2: {
                         StatementTree previousStatement = statements.get(0);
@@ -3051,14 +3255,12 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
                         if (abbreviation.getStartOffset() < previousStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else if (currentStartPosition < abbreviation.getStartOffset()) {
                             insertIndex.set(size);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     default: {
                         for (int i = 1; i < size; i++) {
@@ -3392,11 +3594,10 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
                         if (abbreviation.getStartOffset() < currentStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     case 2: {
                         StatementTree previousStatement = statements.get(0);
@@ -3406,14 +3607,12 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
                         if (abbreviation.getStartOffset() < previousStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else if (currentStartPosition < abbreviation.getStartOffset()) {
                             insertIndex.set(size);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     default: {
                         for (int i = 1; i < size; i++) {
@@ -3510,11 +3709,10 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCatch);
                         if (abbreviation.getStartOffset() < currentStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     case 2: {
                         CatchTree previousCatch = catches.get(0);
@@ -3524,14 +3722,12 @@ public class JavaSourceHelper {
                         long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCatch);
                         if (abbreviation.getStartOffset() < previousStartPosition) {
                             insertIndex.set(0);
-                            break;
                         } else if (currentStartPosition < abbreviation.getStartOffset()) {
                             insertIndex.set(size);
-                            break;
                         } else {
                             insertIndex.set(1);
-                            break;
                         }
+                        break;
                     }
                     default: {
                         for (int i = 1; i < size; i++) {

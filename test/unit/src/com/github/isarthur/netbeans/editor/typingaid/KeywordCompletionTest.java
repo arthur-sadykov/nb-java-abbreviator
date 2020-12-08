@@ -488,6 +488,67 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("implements", "interface"));
     }
 
+    public void testInterfaceKeywordCompletionInClass() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "    \n"
+                + "}",
+                Arrays.asList("implements", "interface"));
+    }
+
+    public void testInterfaceKeywordCompletionInInterface() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "interface Test {\n"
+                + "    |\n"
+                + "}",
+                "interface Test {\n"
+                + "\n"
+                + "    interface Interface {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "interface Interface {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testInterfaceKeywordCompletionInEnum() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "enum Test {\n"
+                + "    |\n"
+                + "}",
+                "enum Test {\n"
+                + "    \n"
+                + "}",
+                Arrays.asList("implements", "interface"));
+    }
+
+    public void testInterfaceKeywordCompletionInCompilationUnit() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test {\n"
+                + "}\n"
+                + "|",
+                "class Test {\n"
+                + "}\n"
+                + "\n"
+                + "interface Interface {\n"
+                + "}\n",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "interface Interface {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

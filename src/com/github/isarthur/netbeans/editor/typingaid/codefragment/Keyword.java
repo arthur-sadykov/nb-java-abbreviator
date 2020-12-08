@@ -112,19 +112,22 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 allowedContexts.add(Tree.Kind.BLOCK);
                 break;
             case "instanceof": //NOI18N
-                allowedContexts.add(Tree.Kind.BLOCK);
+                forbiddenContexts.add(Tree.Kind.BLOCK);
                 break;
             case "int": //NOI18N
                 allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
             case "interface": //NOI18N
-                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
                 allowedContexts.add(Tree.Kind.CLASS);
-                allowedContexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
+                allowedContexts.add(Tree.Kind.ENUM);
+                allowedContexts.add(Tree.Kind.INTERFACE);
+                forbiddenContexts.add(Tree.Kind.BLOCK);
                 break;
             case "implements": //NOI18N
                 allowedContexts.add(Tree.Kind.CLASS);
                 allowedContexts.add(Tree.Kind.ENUM);
+                forbiddenContexts.add(Tree.Kind.BLOCK);
                 break;
             case "import": //NOI18N
                 allowedContexts.add(Tree.Kind.IMPORT);
