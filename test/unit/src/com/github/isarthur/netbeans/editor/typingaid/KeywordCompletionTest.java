@@ -718,6 +718,25 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("enum", "extends"));
     }
 
+    public void testElseKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        if |(true) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        if (true) {\n"
+                + "        } else {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("{" + System.lineSeparator() + "}"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

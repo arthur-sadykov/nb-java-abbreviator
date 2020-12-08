@@ -668,6 +668,8 @@ public class JavaSourceHelper {
                 return insertContinueStatement();
             case "do": //NOI18N
                 return insertDoWhileStatement();
+            case "else": //NOI18N
+                return insertElseTree();
             case "enum": //NOI18N
                 return insertEnumDeclaration();
             case "extends": //NOI18N
@@ -4037,6 +4039,34 @@ public class JavaSourceHelper {
                             expression);
         }
         copy.rewrite(currentTree, newTree);
+    }
+
+    private List<CodeFragment> insertElseTree() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.IF) {
+                    return;
+                }
+                IfTree currentIfTree = (IfTree) currentTree;
+                TreeMaker make = copy.getTreeMaker();
+                BlockTree elseTree = make.Block(Collections.emptyList(), false);
+                IfTree newIfTree = make.If(currentIfTree.getCondition(), currentIfTree.getThenStatement(), elseTree);
+                copy.rewrite(currentIfTree, newIfTree);
+                statements.add(new Statement(elseTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
     }
 
     private List<CodeFragment> insertFinallyTree() {
