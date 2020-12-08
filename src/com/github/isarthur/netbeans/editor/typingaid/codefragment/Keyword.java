@@ -96,7 +96,9 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 break;
             case "extends": //NOI18N
                 allowedContexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.INTERFACE);
                 allowedContexts.add(Tree.Kind.TYPE_PARAMETER);
+                forbiddenContexts.add(Tree.Kind.BLOCK);
                 break;
             case "false": //NOI18N
                 allowedContexts.add(Tree.Kind.ASSIGNMENT);

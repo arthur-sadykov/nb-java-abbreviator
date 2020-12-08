@@ -652,18 +652,9 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    |\n"
                 + "}",
                 "interface Test {\n"
-                + "\n"
-                + "    enum Enum {\n"
-                + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "enum Enum {"
-                        + System.lineSeparator()
-                        + ";"
-                        + System.lineSeparator()
-                        + "}"));
+                Arrays.asList("enum", "extends"));
     }
 
     public void testEnumKeywordCompletionInEnum() throws IOException {
@@ -705,6 +696,26 @@ public class KeywordCompletionTest extends NbTestCase {
                         + ";"
                         + System.lineSeparator()
                         + "}"));
+    }
+
+    public void testExtendsKeywordCompletionForClass() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "class Test |{\n"
+                + "}",
+                "class Test {\n"
+                + "}",
+                Arrays.asList("enum", "extends"));
+    }
+
+    public void testExtendsKeywordCompletionForInterface() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "interface Test |{\n"
+                + "}",
+                "interface Test {\n"
+                + "}",
+                Arrays.asList("enum", "extends"));
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)

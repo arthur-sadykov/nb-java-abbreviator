@@ -670,6 +670,8 @@ public class JavaSourceHelper {
                 return insertDoWhileStatement();
             case "enum": //NOI18N
                 return insertEnumDeclaration();
+            case "extends": //NOI18N
+                return insertExtendsTree();
             case "finally": //NOI18N
                 return insertFinallyTree();
             case "for": //NOI18N
@@ -2744,6 +2746,40 @@ public class JavaSourceHelper {
                         statements.add(new Statement(enumTree.toString()));
                         break;
                 }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertExtendsTree() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.CLASS && currentTree.getKind() != Tree.Kind.INTERFACE) {
+                    return;
+                }
+                ClassTree currentClassOrInterfaceTree = (ClassTree) currentTree;
+                TreeMaker make = copy.getTreeMaker();
+                IdentifierTree extendsIdentifier = make.Identifier(""); //NOI18N
+                ClassTree newClassOrInterfaceTree = make.Class(
+                        currentClassOrInterfaceTree.getModifiers(),
+                        currentClassOrInterfaceTree.getSimpleName(),
+                        currentClassOrInterfaceTree.getTypeParameters(),
+                        extendsIdentifier,
+                        currentClassOrInterfaceTree.getImplementsClause(),
+                        currentClassOrInterfaceTree.getMembers());
+                copy.rewrite(currentClassOrInterfaceTree, newClassOrInterfaceTree);
+                statements.add(new Statement(extendsIdentifier.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
