@@ -676,6 +676,8 @@ public class JavaSourceHelper {
                 } else {
                     return insertIfStatementInBlock();
                 }
+            case "implements": //NOI18N
+                return insertImplementsTree();
             case "return": //NOI18N
                 return insertReturnStatement();
             case "switch": //NOI18N
@@ -2802,6 +2804,34 @@ public class JavaSourceHelper {
                 CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, ifStatement);
                 copy.rewrite(currentCase, newCase);
                 statements.add(new Statement(ifStatement.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertImplementsTree() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.CLASS && currentTree.getKind() != Tree.Kind.ENUM) {
+                    return;
+                }
+                ClassTree currentClassOrEnum = (ClassTree) currentTree;
+                TreeMaker make = copy.getTreeMaker();
+                IdentifierTree implementsIdentifier = make.Identifier(""); //NOI18N
+                ClassTree newClassOrEnum = make.addClassImplementsClause(currentClassOrEnum, implementsIdentifier);
+                copy.rewrite(currentClassOrEnum, newClassOrEnum);
+                statements.add(new Statement(implementsIdentifier.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);

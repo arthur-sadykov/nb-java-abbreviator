@@ -124,6 +124,7 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 break;
             case "implements": //NOI18N
                 allowedContexts.add(Tree.Kind.CLASS);
+                allowedContexts.add(Tree.Kind.ENUM);
                 break;
             case "import": //NOI18N
                 allowedContexts.add(Tree.Kind.IMPORT);

@@ -468,6 +468,26 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("this", "throw", "try"));
     }
 
+    public void testImplementsKeywordCompletionForClass() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test |{\n"
+                + "}",
+                "class Test {\n"
+                + "}",
+                Arrays.asList("implements", "interface"));
+    }
+
+    public void testImplementsKeywordCompletionForEnum() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "enum Test |{\n"
+                + "}",
+                "enum Test {\n"
+                + "}",
+                Arrays.asList("implements", "interface"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
