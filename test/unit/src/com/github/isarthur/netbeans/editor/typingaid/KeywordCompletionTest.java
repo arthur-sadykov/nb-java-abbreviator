@@ -633,6 +633,80 @@ public class KeywordCompletionTest extends NbTestCase {
                         + "}"));
     }
 
+    public void testEnumKeywordCompletionInClass() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "    \n"
+                + "}",
+                Arrays.asList("enum", "extends"));
+    }
+
+    public void testEnumKeywordCompletionInInterface() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "interface Test {\n"
+                + "    |\n"
+                + "}",
+                "interface Test {\n"
+                + "\n"
+                + "    enum Enum {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "enum Enum {"
+                        + System.lineSeparator()
+                        + ";"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testEnumKeywordCompletionInEnum() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "enum Test {\n"
+                + "    |\n"
+                + "}",
+                "enum Test {\n"
+                + "\n"
+                + "    enum Enum {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "enum Enum {"
+                        + System.lineSeparator()
+                        + ";"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testEnumKeywordCompletionInCompilationUnit() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "class Test {\n"
+                + "}\n"
+                + "|",
+                "class Test {\n"
+                + "}\n"
+                + "\n"
+                + "enum Enum {\n"
+                + "}\n",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "enum Enum {"
+                        + System.lineSeparator()
+                        + ";"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

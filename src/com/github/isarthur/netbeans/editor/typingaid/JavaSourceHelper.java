@@ -668,6 +668,8 @@ public class JavaSourceHelper {
                 return insertContinueStatement();
             case "do": //NOI18N
                 return insertDoWhileStatement();
+            case "enum": //NOI18N
+                return insertEnumDeclaration();
             case "finally": //NOI18N
                 return insertFinallyTree();
             case "for": //NOI18N
@@ -2689,6 +2691,59 @@ public class JavaSourceHelper {
                 BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, doWhileLoopTree);
                 copy.rewrite(currentBlock, newBlock);
                 statements.add(new Statement(doWhileLoopTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertEnumDeclaration() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                int insertIndex;
+                TreeMaker make = copy.getTreeMaker();
+                ClassTree enumTree =
+                        make.Enum(
+                                make.Modifiers(Collections.emptySet()),
+                                "Enum", //NOI18N
+                                Collections.emptyList(),
+                                Collections.emptyList());
+                Tree currentTree = currentPath.getLeaf();
+                switch (currentTree.getKind()) {
+                    case CLASS:
+                    case ENUM:
+                    case INTERFACE:
+                        ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        ClassTree newClassEnumOrInterfaceTree =
+                                make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, enumTree);
+                        copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
+                        statements.add(new Statement(enumTree.toString()));
+                        break;
+                    case COMPILATION_UNIT:
+                        CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
+                        insertIndex = findInsertIndexInCompilationUnit(currentCompilationUnitTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        CompilationUnitTree newCompilationUnitTree =
+                                make.insertCompUnitTypeDecl(currentCompilationUnitTree, insertIndex, enumTree);
+                        copy.rewrite(currentCompilationUnitTree, newCompilationUnitTree);
+                        statements.add(new Statement(enumTree.toString()));
+                        break;
+                }
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);

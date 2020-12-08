@@ -88,9 +88,11 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
                 allowedContexts.add(Tree.Kind.IF);
                 break;
             case "enum": //NOI18N
-                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
                 allowedContexts.add(Tree.Kind.CLASS);
-                allowedContexts.add(Tree.Kind.BLOCK);
+                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
+                allowedContexts.add(Tree.Kind.ENUM);
+                allowedContexts.add(Tree.Kind.INTERFACE);
+                forbiddenContexts.add(Tree.Kind.BLOCK);
                 break;
             case "extends": //NOI18N
                 allowedContexts.add(Tree.Kind.CLASS);
