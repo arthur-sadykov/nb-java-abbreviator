@@ -324,22 +324,6 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("class", "continue"));
     }
 
-    public void testContinueKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "c",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("class"));
-    }
-
     public void testWhileKeywordCompletion() throws IOException {
         doAbbreviationInsert(
                 "w",
@@ -545,6 +529,106 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList(
                         System.lineSeparator()
                         + "interface Interface {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testClassKeywordCompletionInClass() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    class Class {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "class Class {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testClassKeywordCompletionInInterface() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "interface Test {\n"
+                + "    |\n"
+                + "}",
+                "interface Test {\n"
+                + "\n"
+                + "    class Class {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "class Class {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testClassKeywordCompletionInEnum() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "enum Test {\n"
+                + "    MIDDLE;\n"
+                + "    |\n"
+                + "}",
+                "enum Test {\n"
+                + "    MIDDLE;\n"
+                + "\n"
+                + "    class Class {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "class Class {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testClassKeywordCompletionInCompilationUnit() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "}\n"
+                + "|",
+                "class Test {\n"
+                + "}\n"
+                + "\n"
+                + "class Class {\n"
+                + "}\n",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "class Class {"
+                        + System.lineSeparator()
+                        + "}"));
+    }
+
+    public void testClassKeywordCompletionInBlock() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "\n"
+                + "        class Class {\n"
+                + "        }\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "class Class {"
                         + System.lineSeparator()
                         + "}"));
     }

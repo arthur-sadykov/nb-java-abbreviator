@@ -662,6 +662,8 @@ public class JavaSourceHelper {
                 return insertCaseStatement();
             case "catch": //NOI18N
                 return insertCatchTree();
+            case "class": //NOI18N
+                return insertClassDeclaration();
             case "continue": //NOI18N
                 return insertContinueStatement();
             case "do": //NOI18N
@@ -2555,6 +2557,72 @@ public class JavaSourceHelper {
                 SwitchTree newSwitch = make.insertSwitchCase(currentSwitch, insertIndex, newCase);
                 copy.rewrite(currentSwitch, newSwitch);
                 statements.add(new Statement(newCase.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertClassDeclaration() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                int insertIndex;
+                TreeMaker make = copy.getTreeMaker();
+                ClassTree classTree =
+                        make.Class(
+                                make.Modifiers(Collections.emptySet()),
+                                "Class", //NOI18N
+                                Collections.emptyList(),
+                                null,
+                                Collections.emptyList(),
+                                Collections.emptyList());
+                Tree currentTree = currentPath.getLeaf();
+                switch (currentTree.getKind()) {
+                    case BLOCK:
+                        BlockTree currentBlockTree = (BlockTree) currentTree;
+                        insertIndex = findInsertIndexInBlock(currentBlockTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        BlockTree newBlockTree =
+                                make.insertBlockStatement(currentBlockTree, insertIndex, classTree);
+                        copy.rewrite(currentBlockTree, newBlockTree);
+                        statements.add(new Statement(classTree.toString()));
+                        break;
+                    case CLASS:
+                    case ENUM:
+                    case INTERFACE:
+                        ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        ClassTree newClassEnumOrInterfaceTree =
+                                make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, classTree);
+                        copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
+                        statements.add(new Statement(classTree.toString()));
+                        break;
+                    case COMPILATION_UNIT:
+                        CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
+                        insertIndex = findInsertIndexInCompilationUnit(currentCompilationUnitTree);
+                        if (insertIndex == -1) {
+                            break;
+                        }
+                        CompilationUnitTree newCompilationUnitTree =
+                                make.insertCompUnitTypeDecl(currentCompilationUnitTree, insertIndex, classTree);
+                        copy.rewrite(currentCompilationUnitTree, newCompilationUnitTree);
+                        statements.add(new Statement(classTree.toString()));
+                        break;
+                }
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
