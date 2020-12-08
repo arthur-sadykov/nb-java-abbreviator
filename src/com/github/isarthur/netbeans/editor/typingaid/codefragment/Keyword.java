@@ -147,9 +147,6 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
             case "Object": //NOI18N
                 allowedContexts.add(Tree.Kind.VARIABLE);
                 break;
-            case "package": //NOI18N
-                allowedContexts.add(Tree.Kind.COMPILATION_UNIT);
-                break;
             case "return": //NOI18N
                 allowedContexts.add(Tree.Kind.BLOCK);
                 break;
