@@ -22,11 +22,11 @@ import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
  *
  * @author Arthur Sadykov
  */
-public class Keyword implements CodeFragment, Comparable<Keyword> {
+public class PrimitiveType implements CodeFragment, Comparable<PrimitiveType> {
 
     private final String name;
 
-    public Keyword(String name) {
+    public PrimitiveType(String name) {
         this.name = name;
     }
 
@@ -40,11 +40,11 @@ public class Keyword implements CodeFragment, Comparable<Keyword> {
 
     @Override
     public Kind getKind() {
-        return Kind.KEYWORD;
+        return Kind.PRIMITIVE_TYPE;
     }
 
     @Override
-    public int compareTo(Keyword other) {
+    public int compareTo(PrimitiveType other) {
         return toString().compareTo(other.toString());
     }
 

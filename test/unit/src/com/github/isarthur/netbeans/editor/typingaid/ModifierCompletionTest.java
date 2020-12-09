@@ -58,6 +58,7 @@ public class ModifierCompletionTest extends NbTestCase {
     private Document document;
     private boolean keyword;
     private boolean modifier;
+    private boolean primitiveType;
     private boolean externalType;
     private boolean internalType;
     private boolean resourceVariable;
@@ -121,6 +122,7 @@ public class ModifierCompletionTest extends NbTestCase {
         externalType = Settings.getSettingForExternalType();
         keyword = Settings.getSettingForKeyword();
         modifier = Settings.getSettingForModifier();
+        primitiveType = Settings.getSettingForPrimitiveType();
     }
 
     private void setConfigurationForModifierCompletion() {
@@ -139,6 +141,7 @@ public class ModifierCompletionTest extends NbTestCase {
         Settings.setSettingForExternalType(false);
         Settings.setSettingForKeyword(false);
         Settings.setSettingForModifier(true);
+        Settings.setSettingForPrimitiveType(false);
     }
 
     public void testPublicModifierCompletionForTopLevelClassWithoutModifiers() throws IOException {
@@ -2258,6 +2261,7 @@ public class ModifierCompletionTest extends NbTestCase {
         Settings.setSettingForExternalType(externalType);
         Settings.setSettingForKeyword(keyword);
         Settings.setSettingForModifier(modifier);
+        Settings.setSettingForPrimitiveType(primitiveType);
     }
 
     @Override

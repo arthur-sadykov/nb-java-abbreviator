@@ -38,6 +38,7 @@ public class Settings {
     private static final String EXTERNAL_TYPE = "externalType"; //NOI18N
     private static final String KEYWORD = "keyword"; //NOI18N
     private static final String MODIFIER = "modifier"; //NOI18N
+    private static final String PRIMITIVE_TYPE = "primitiveType"; //NOI18N
 
     private Settings() {
     }
@@ -160,5 +161,13 @@ public class Settings {
 
     public static void setSettingForModifier(boolean modifier) {
         NbPreferences.forModule(Settings.class).putBoolean(MODIFIER, modifier);
+    }
+
+    public static boolean getSettingForPrimitiveType() {
+        return NbPreferences.forModule(Settings.class).getBoolean(PRIMITIVE_TYPE, true);
+    }
+
+    public static void setSettingForPrimitiveType(boolean primitiveType) {
+        NbPreferences.forModule(Settings.class).putBoolean(PRIMITIVE_TYPE, primitiveType);
     }
 }

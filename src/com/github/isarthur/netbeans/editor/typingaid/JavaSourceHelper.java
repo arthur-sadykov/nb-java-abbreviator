@@ -46,6 +46,7 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ForLoopTree;
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
+import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
@@ -1006,12 +1007,203 @@ public class JavaSourceHelper {
                 if (currentPath == null) {
                     return;
                 }
-                List<Tree.Kind> enclosingContexts = getEnclosingContexts(currentPath);
-                ConstantDataManager.KEYWORDS.stream()
-                        .filter(keyword -> keyword.isApplicableInContexts(enclosingContexts)
-                                && !keyword.isForbiddenInContexts(enclosingContexts)
-                                && keyword.isAbbreviationEqualTo(abbreviation.getName()))
-                        .forEach(keywords::add);
+                TreePath parentPath;
+                for (Keyword keyword : ConstantDataManager.KEYWORDS) {
+                    if (keyword.isAbbreviationEqualTo(abbreviation.getName())) {
+                        switch (keyword.getName()) {
+                            case "assert": //NOI18N
+                            case "do": //NOI18N
+                            case "for": //NOI18N
+                            case "if": //NOI18N
+                            case "null": //NOI18N
+                            case "super": //NOI18N
+                            case "switch": //NOI18N
+                            case "this": //NOI18N
+                            case "throw": //NOI18N
+                            case "try": //NOI18N
+                            case "while": //NOI18N
+                                if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "break": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(
+                                        EnumSet.of(Tree.Kind.CASE, Tree.Kind.DO_WHILE_LOOP, Tree.Kind.ENHANCED_FOR_LOOP,
+                                                Tree.Kind.FOR_LOOP, Tree.Kind.SWITCH, Tree.Kind.WHILE_LOOP),
+                                        currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "case": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "catch": //NOI18N
+                            case "finally": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.TRY, currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "class": //NOI18N
+                                switch (currentPath.getLeaf().getKind()) {
+                                    case CLASS:
+                                    case ENUM:
+                                    case INTERFACE:
+                                        TokenSequence<JavaTokenId> sequence =
+                                                treeUtilities.tokensFor(currentPath.getLeaf());
+                                        sequence.moveStart();
+                                        int leftBraceOffset = Integer.MAX_VALUE;
+                                        while (sequence.moveNext()) {
+                                            if (sequence.token().id() == JavaTokenId.LBRACE) {
+                                                leftBraceOffset = sequence.offset();
+                                                break;
+                                            }
+                                        }
+                                        if (leftBraceOffset < abbreviation.getStartOffset()) {
+                                            keywords.add(keyword);
+                                        }
+                                        break;
+                                    case BLOCK:
+                                    case COMPILATION_UNIT:
+                                        keywords.add(keyword);
+                                }
+                                break;
+                            case "continue": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(
+                                        EnumSet.of(Tree.Kind.DO_WHILE_LOOP, Tree.Kind.ENHANCED_FOR_LOOP,
+                                                Tree.Kind.FOR_LOOP, Tree.Kind.WHILE_LOOP),
+                                        currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "default": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "else": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.IF, currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "enum": //NOI18N
+                                switch (currentPath.getLeaf().getKind()) {
+                                    case CLASS:
+                                    case ENUM:
+                                    case INTERFACE:
+                                        TokenSequence<JavaTokenId> sequence =
+                                                treeUtilities.tokensFor(currentPath.getLeaf());
+                                        sequence.moveStart();
+                                        int leftBraceOffset = Integer.MAX_VALUE;
+                                        while (sequence.moveNext()) {
+                                            if (sequence.token().id() == JavaTokenId.LBRACE) {
+                                                leftBraceOffset = sequence.offset();
+                                                break;
+                                            }
+                                        }
+                                        if (leftBraceOffset < abbreviation.getStartOffset()) {
+                                            keywords.add(keyword);
+                                        }
+                                        break;
+                                    case COMPILATION_UNIT:
+                                        keywords.add(keyword);
+                                }
+                                break;
+                            case "interface": //NOI18N
+                                switch (currentPath.getLeaf().getKind()) {
+                                    case CLASS:
+                                    case ENUM:
+                                    case INTERFACE:
+                                        TokenSequence<JavaTokenId> sequence =
+                                                treeUtilities.tokensFor(currentPath.getLeaf());
+                                        sequence.moveStart();
+                                        int leftBraceOffset = Integer.MAX_VALUE;
+                                        while (sequence.moveNext()) {
+                                            if (sequence.token().id() == JavaTokenId.LBRACE) {
+                                                leftBraceOffset = sequence.offset();
+                                                break;
+                                            }
+                                        }
+                                        if (leftBraceOffset < abbreviation.getStartOffset()) {
+                                            keywords.add(keyword);
+                                        }
+                                        break;
+                                    case COMPILATION_UNIT:
+                                        keywords.add(keyword);
+                                }
+                                break;
+                            case "extends": //NOI18N
+                                switch (currentPath.getLeaf().getKind()) {
+                                    case CLASS:
+                                    case INTERFACE:
+                                        TokenSequence<JavaTokenId> sequence =
+                                                treeUtilities.tokensFor(currentPath.getLeaf());
+                                        sequence.moveStart();
+                                        int leftBraceOffset = -1;
+                                        while (sequence.moveNext()) {
+                                            if (sequence.token().id() == JavaTokenId.LBRACE) {
+                                                leftBraceOffset = sequence.offset();
+                                                break;
+                                            }
+                                        }
+                                        if (leftBraceOffset >= abbreviation.getStartOffset()) {
+                                            keywords.add(keyword);
+                                        }
+                                        break;
+                                    case TYPE_PARAMETER:
+                                        keywords.add(keyword);
+                                        break;
+                                }
+                                break;
+                            case "implements": //NOI18N
+                                switch (currentPath.getLeaf().getKind()) {
+                                    case CLASS:
+                                    case ENUM:
+                                        TokenSequence<JavaTokenId> sequence =
+                                                treeUtilities.tokensFor(currentPath.getLeaf());
+                                        sequence.moveStart();
+                                        int leftBraceOffset = Integer.MAX_VALUE;
+                                        while (sequence.moveNext()) {
+                                            if (sequence.token().id() == JavaTokenId.LBRACE) {
+                                                leftBraceOffset = sequence.offset();
+                                                break;
+                                            }
+                                        }
+                                        if (abbreviation.getStartOffset() <= leftBraceOffset) {
+                                            keywords.add(keyword);
+                                        }
+                                        break;
+                                }
+                                break;
+                            case "import": //NOI18N
+                                if (currentPath.getLeaf().getKind() == Tree.Kind.COMPILATION_UNIT) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "instanceof": //NOI18N
+                                break;
+                            case "return": //NOI18N
+                                parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.METHOD, currentPath);
+                                if (parentPath != null) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                            case "void": //NOI18N
+                            case "throws": //NOI18N
+                                if (currentPath.getLeaf().getKind() == Tree.Kind.METHOD) {
+                                    keywords.add(keyword);
+                                }
+                                break;
+                        }
+                    }
+                }
             }, true);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -1020,18 +1212,33 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(keywords);
     }
 
-    private List<Tree.Kind> getEnclosingContexts(TreePath currentPath) {
-        List<Tree.Kind> contexts = new ArrayList<>();
-        contexts.add(currentPath.getLeaf().getKind());
-        TreePath parentPath = currentPath;
-        while (true) {
-            parentPath = parentPath.getParentPath();
-            if (parentPath == null) {
-                break;
-            }
-            contexts.add(parentPath.getLeaf().getKind());
+    List<com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType> collectPrimitiveTypes() {
+        List<com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType> primitiveTypes =
+                new ArrayList<>();
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runUserActionTask(copy -> {
+                moveStateToResolvedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK
+                        || currentPath.getLeaf().getKind() == Tree.Kind.METHOD
+                        || currentPath.getLeaf().getKind() == Tree.Kind.VARIABLE) {
+                    ConstantDataManager.PRIMITIVE_TYPES.forEach(primitiveType -> {
+                        if (primitiveType.isAbbreviationEqualTo(abbreviation.getName())) {
+                            primitiveTypes.add(primitiveType);
+                        }
+                    });
+                }
+            }, true);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return Collections.unmodifiableList(contexts);
+        Collections.sort(primitiveTypes);
+        return Collections.unmodifiableList(primitiveTypes);
     }
 
     List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> collectModifiers() {
@@ -3664,23 +3871,78 @@ public class JavaSourceHelper {
                 EnumSet.of(Tree.Kind.BLOCK, Tree.Kind.CLASS, Tree.Kind.VARIABLE),
                 treeUtilities.pathFor(sequence.offset()));
         Supplier<Void> insertStatementInBlock = () -> {
-            if (fragment.getKind() != CodeFragment.Kind.METHOD_INVOCATION) {
-                return null;
-            }
             int insertIndex = findInsertIndexInBlock(currentTree);
             if (insertIndex == -1) {
                 return null;
             }
             BlockTree newTree;
-            MethodInvocation invocation = (MethodInvocation) fragment;
-            if (isMethodReturnVoid(invocation.getMethod())) {
-                ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
-                newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
-            } else {
-                VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
-                newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+            switch (fragment.getKind()) {
+                case METHOD_INVOCATION:
+                    MethodInvocation invocation = (MethodInvocation) fragment;
+                    if (isMethodReturnVoid(invocation.getMethod())) {
+                        ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
+                        newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+                    } else {
+                        VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
+                        newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+                    }
+                    copy.rewrite(currentTree, newTree);
+                    break;
+                case KEYWORD:
+                    newTree = make.insertBlockStatement(
+                            currentTree,
+                            insertIndex,
+                            make.ExpressionStatement(make.Identifier(fragment.toString())));
+                    copy.rewrite(currentTree, newTree);
+                    break;
+                case PRIMITIVE_TYPE:
+                    LiteralTree initializer = null;
+                    TypeMirror type = null;
+                    Types types = copy.getTypes();
+                    switch (fragment.toString()) {
+                        case "char": //NOI18N
+                            initializer = make.Literal('\0');
+                            type = types.getPrimitiveType(TypeKind.CHAR);
+                            break;
+                        case "boolean": //NOI18N
+                            initializer = make.Literal(true);
+                            type = types.getPrimitiveType(TypeKind.BOOLEAN);
+                            break;
+                        case "byte": //NOI18N
+                            initializer = make.Literal(0);
+                            type = types.getPrimitiveType(TypeKind.BYTE);
+                            break;
+                        case "int": //NOI18N
+                            initializer = make.Literal(0);
+                            type = types.getPrimitiveType(TypeKind.INT);
+                            break;
+                        case "short": //NOI18N
+                            initializer = make.Literal(0);
+                            type = types.getPrimitiveType(TypeKind.SHORT);
+                            break;
+                        case "long": //NOI18N
+                            initializer = make.Literal(0L);
+                            type = types.getPrimitiveType(TypeKind.LONG);
+                            break;
+                        case "float": //NOI18N
+                            initializer = make.Literal(0.0F);
+                            type = types.getPrimitiveType(TypeKind.FLOAT);
+                            break;
+                        case "double": //NOI18N
+                            initializer = make.Literal(0.0);
+                            type = types.getPrimitiveType(TypeKind.DOUBLE);
+                            break;
+                    }
+                    VariableTree variable =
+                            make.Variable(
+                                    make.Modifiers(Collections.emptySet()),
+                                    getVariableNames(type).iterator().next(),
+                                    make.Identifier(fragment.toString()),
+                                    initializer);
+                    newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
+                    copy.rewrite(currentTree, newTree);
+                    break;
             }
-            copy.rewrite(currentTree, newTree);
             return null;
         };
         if (path != null) {
@@ -4175,11 +4437,57 @@ public class JavaSourceHelper {
         if (currentTree == null) {
             return;
         }
-        ExpressionTree expression = getExpressionToInsert(fragment, make);
-        ModifiersTree modifiers = currentTree.getModifiers();
-        ModifiersTree newModifiers =
-                make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-        copy.rewrite(modifiers, newModifiers);
+        switch (fragment.getKind()) {
+            case MODIFIER:
+                ExpressionTree expression = getExpressionToInsert(fragment, make);
+                ModifiersTree modifiers = currentTree.getModifiers();
+                ModifiersTree newModifiers = make.addModifiersModifier(
+                        modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                copy.rewrite(modifiers, newModifiers);
+                break;
+            case PRIMITIVE_TYPE:
+                int insertIndex = findInsertIndexForMethodParameter(currentTree);
+                if (insertIndex == -1) {
+                    break;
+                }
+                Types types = copy.getTypes();
+                TypeMirror type = null;
+                switch (fragment.toString()) {
+                    case "char": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.CHAR);
+                        break;
+                    case "boolean": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.BOOLEAN);
+                        break;
+                    case "byte": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.BYTE);
+                        break;
+                    case "int": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.INT);
+                        break;
+                    case "short": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.SHORT);
+                        break;
+                    case "long": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.LONG);
+                        break;
+                    case "float": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.FLOAT);
+                        break;
+                    case "double": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.DOUBLE);
+                        break;
+                }
+                VariableTree variable =
+                        make.Variable(
+                                make.Modifiers(Collections.emptySet()),
+                                getVariableNames(type).iterator().next(),
+                                make.Identifier(fragment.toString()),
+                                null);
+                MethodTree newMethodTree = make.insertMethodParameter(currentTree, insertIndex, variable);
+                copy.rewrite(currentTree, newMethodTree);
+                break;
+        }
     }
 
     private void insertMethodInvocationTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
@@ -4196,6 +4504,21 @@ public class JavaSourceHelper {
 
     private int findInsertIndexForInvocationArgument(MethodInvocationTree methodInvocationTree) {
         return findInsertIndexForArgument(methodInvocationTree.getArguments());
+    }
+
+    private int findInsertIndexForMethodParameter(MethodTree methodTree) {
+        List<? extends VariableTree> parameters = methodTree.getParameters();
+        if (parameters.isEmpty()) {
+            return 0;
+        }
+        for (int i = 0; i < parameters.size(); i++) {
+            String argument = parameters.get(i).toString();
+            if (argument.contains(ConstantDataManager.PARENTHESIZED_ERROR)
+                    || argument.contains(ConstantDataManager.ANGLED_ERROR)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private int findInsertIndexForArgument(List<? extends ExpressionTree> arguments) {
@@ -4269,31 +4592,42 @@ public class JavaSourceHelper {
     }
 
     public void insertVariableTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        VariableTree currentTree = (VariableTree) getCurrentTreeOfKind(copy, Tree.Kind.VARIABLE);
-        if (currentTree == null) {
+        VariableTree currentVariable = (VariableTree) getCurrentTreeOfKind(copy, Tree.Kind.VARIABLE);
+        if (currentVariable == null) {
             return;
         }
         ExpressionTree expression = getExpressionToInsert(fragment, make);
-        if (fragment.getKind() == CodeFragment.Kind.MODIFIER) {
-            ModifiersTree modifiers = currentTree.getModifiers();
-            ModifiersTree newModifiers =
-                    make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-            copy.rewrite(modifiers, newModifiers);
-        } else {
-            String initializer = currentTree.getInitializer().toString();
-            int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
-            if (errorIndex >= 0) {
-                initializer = initializer.substring(0, errorIndex)
-                        .concat(expression.toString())
-                        .concat(initializer.substring(errorIndex + 7));
-            }
-            VariableTree newTree =
-                    make.Variable(
-                            currentTree.getModifiers(),
-                            currentTree.getName(),
-                            currentTree.getType(),
-                            make.Identifier(initializer));
-            copy.rewrite(currentTree, newTree);
+        VariableTree newVariable;
+        switch (fragment.getKind()) {
+            case MODIFIER:
+                ModifiersTree modifiers = currentVariable.getModifiers();
+                ModifiersTree newModifiers = make.addModifiersModifier(
+                        modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                copy.rewrite(modifiers, newModifiers);
+                break;
+            case PRIMITIVE_TYPE:
+                newVariable =
+                        make.Variable(currentVariable.getModifiers(),
+                                currentVariable.getName(),
+                                currentVariable.getType(),
+                                make.TypeCast(expression, currentVariable.getInitializer()));
+                copy.rewrite(currentVariable, newVariable);
+                break;
+            default:
+                String initializer = currentVariable.getInitializer().toString();
+                int errorIndex = initializer.indexOf("(ERROR)"); //NOI18N
+                if (errorIndex >= 0) {
+                    initializer = initializer.substring(0, errorIndex)
+                            .concat(expression.toString())
+                            .concat(initializer.substring(errorIndex + 7));
+                }
+                newVariable =
+                        make.Variable(
+                                currentVariable.getModifiers(),
+                                currentVariable.getName(),
+                                currentVariable.getType(),
+                                make.Identifier(initializer));
+                copy.rewrite(currentVariable, newVariable);
         }
     }
 
@@ -4309,7 +4643,8 @@ public class JavaSourceHelper {
             }
             case KEYWORD:
             case LOCAL_ELEMENT:
-            case MODIFIER: {
+            case MODIFIER:
+            case PRIMITIVE_TYPE: {
                 return make.Identifier(fragment.toString());
             }
             case TYPE: {

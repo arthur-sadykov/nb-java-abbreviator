@@ -24,6 +24,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Name;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.editor.typingaid.ui.GenerateCodePanel;
@@ -245,8 +246,12 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         if (Settings.getSettingForModifier()) {
                             modifiers = helper.collectModifiers();
                         }
+                        List<PrimitiveType> primitiveTypes = Collections.emptyList();
+                        if (Settings.getSettingForPrimitiveType()) {
+                            primitiveTypes = helper.collectPrimitiveTypes();
+                        }
                         int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
-                                + keywords.size() + modifiers.size();
+                                + keywords.size() + modifiers.size() + primitiveTypes.size();
                         switch (matchesCount) {
                             case 0: {
                                 return Collections.emptyList();
@@ -260,8 +265,10 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                     return helper.insertCodeFragment(types.get(0));
                                 } else if (!keywords.isEmpty()) {
                                     return helper.insertKeyword(keywords.get(0));
-                                } else {
+                                } else if (!modifiers.isEmpty()) {
                                     return helper.insertCodeFragment(modifiers.get(0));
+                                } else {
+                                    return helper.insertCodeFragment(primitiveTypes.get(0));
                                 }
                             }
                             default: {
@@ -271,6 +278,10 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 codeFragments.addAll(types);
                                 codeFragments.addAll(keywords);
                                 codeFragments.addAll(modifiers);
+                                codeFragments.addAll(primitiveTypes);
+                                Collections.sort(codeFragments, (o1, o2) -> {
+                                    return o1.toString().compareTo(o2.toString());
+                                });
                                 showPopup(codeFragments);
                                 return codeFragments;
                             }

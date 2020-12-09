@@ -30,6 +30,7 @@ public interface CodeFragment {
         METHOD_INVOCATION,
         MODIFIER,
         NAME,
+        PRIMITIVE_TYPE,
         STATEMENT,
         TYPE
     }

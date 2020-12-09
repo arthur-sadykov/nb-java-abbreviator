@@ -209,7 +209,7 @@ public class GeneralCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("String", "short", "super", "switch"));
+                Arrays.asList("short", "super", "switch"));
     }
 
     public void testShouldSuggestCompletionForMultipleMatchesOfLocalElements() throws IOException {

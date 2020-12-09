@@ -58,6 +58,7 @@ public class KeywordCompletionTest extends NbTestCase {
     private Document document;
     private boolean keyword;
     private boolean modifier;
+    private boolean primitiveType;
     private boolean externalType;
     private boolean internalType;
     private boolean resourceVariable;
@@ -121,6 +122,7 @@ public class KeywordCompletionTest extends NbTestCase {
         externalType = Settings.getSettingForExternalType();
         keyword = Settings.getSettingForKeyword();
         modifier = Settings.getSettingForModifier();
+        primitiveType = Settings.getSettingForPrimitiveType();
     }
 
     private void setConfigurationForKeywordCompletion() {
@@ -139,6 +141,7 @@ public class KeywordCompletionTest extends NbTestCase {
         Settings.setSettingForExternalType(false);
         Settings.setSettingForKeyword(true);
         Settings.setSettingForModifier(false);
+        Settings.setSettingForPrimitiveType(false);
     }
 
     public void testAssertKeywordCompletion() throws IOException {
@@ -176,7 +179,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("break;"));
+                Arrays.asList("break;"));
     }
 
     public void testBreakKeywordCompletionInWhileLoop() throws IOException {
@@ -197,7 +200,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("break;"));
+                Arrays.asList("break;"));
     }
 
     public void testBreakKeywordCompletionInDoWhileLoop() throws IOException {
@@ -218,7 +221,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        } while (true);\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("break;"));
+                Arrays.asList("break;"));
     }
 
     public void testBreakKeywordCompletionInSwitchStatement() throws IOException {
@@ -246,22 +249,6 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Collections.singletonList("break;"));
-    }
-
-    public void testBreakKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "b",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Collections.emptyList());
     }
 
     public void testContinueKeywordCompletionInForLoop() throws IOException {
@@ -457,9 +444,9 @@ public class KeywordCompletionTest extends NbTestCase {
                 "i",
                 "class Test |{\n"
                 + "}",
-                "class Test {\n"
+                "class Test implements  {\n"
                 + "}",
-                Arrays.asList("implements", "interface"));
+                Collections.singletonList(""));
     }
 
     public void testImplementsKeywordCompletionForEnum() throws IOException {
@@ -467,9 +454,9 @@ public class KeywordCompletionTest extends NbTestCase {
                 "i",
                 "enum Test |{\n"
                 + "}",
-                "enum Test {\n"
+                "enum Test implements  {\n"
                 + "}",
-                Arrays.asList("implements", "interface"));
+                Collections.singletonList(""));
     }
 
     public void testInterfaceKeywordCompletionInClass() throws IOException {
@@ -479,9 +466,17 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    |\n"
                 + "}",
                 "class Test {\n"
+                + "\n"
+                + "    interface Interface {\n"
+                + "    }\n"
                 + "    \n"
                 + "}",
-                Arrays.asList("implements", "interface"));
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "interface Interface {"
+                        + System.lineSeparator()
+                        + "}"
+                ));
     }
 
     public void testInterfaceKeywordCompletionInInterface() throws IOException {
@@ -507,12 +502,22 @@ public class KeywordCompletionTest extends NbTestCase {
         doAbbreviationInsert(
                 "i",
                 "enum Test {\n"
+                + "    TEST;\n"
                 + "    |\n"
                 + "}",
                 "enum Test {\n"
+                + "    TEST;\n"
+                + "\n"
+                + "    interface Interface {\n"
+                + "    }\n"
                 + "    \n"
                 + "}",
-                Arrays.asList("implements", "interface"));
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "interface Interface {"
+                        + System.lineSeparator()
+                        + "}"
+                ));
     }
 
     public void testInterfaceKeywordCompletionInCompilationUnit() throws IOException {
@@ -522,15 +527,8 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "}\n"
                 + "|",
                 "class Test {\n"
-                + "}\n"
-                + "\n"
-                + "interface Interface {\n"
                 + "}\n",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "interface Interface {"
-                        + System.lineSeparator()
-                        + "}"));
+                Arrays.asList("import", "interface"));
     }
 
     public void testClassKeywordCompletionInClass() throws IOException {
@@ -640,9 +638,18 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    |\n"
                 + "}",
                 "class Test {\n"
+                + "\n"
+                + "    enum Enum {\n"
+                + "    }\n"
                 + "    \n"
                 + "}",
-                Arrays.asList("enum", "extends"));
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "enum Enum {"
+                        + System.lineSeparator()
+                        + ";"
+                        + System.lineSeparator()
+                        + "}"));
     }
 
     public void testEnumKeywordCompletionInInterface() throws IOException {
@@ -652,9 +659,19 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    |\n"
                 + "}",
                 "interface Test {\n"
+                + "\n"
+                + "    enum Enum {\n"
+                + "    }\n"
                 + "    \n"
                 + "}",
-                Arrays.asList("enum", "extends"));
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "enum Enum {"
+                        + System.lineSeparator()
+                        + ";"
+                        + System.lineSeparator()
+                        + "}"
+                ));
     }
 
     public void testEnumKeywordCompletionInEnum() throws IOException {
@@ -695,7 +712,8 @@ public class KeywordCompletionTest extends NbTestCase {
                         + System.lineSeparator()
                         + ";"
                         + System.lineSeparator()
-                        + "}"));
+                        + "}"
+                ));
     }
 
     public void testExtendsKeywordCompletionForClass() throws IOException {
@@ -703,9 +721,9 @@ public class KeywordCompletionTest extends NbTestCase {
                 "e",
                 "class Test |{\n"
                 + "}",
-                "class Test {\n"
+                "class Test extends  {\n"
                 + "}",
-                Arrays.asList("enum", "extends"));
+                Collections.singletonList(""));
     }
 
     public void testExtendsKeywordCompletionForInterface() throws IOException {
@@ -713,9 +731,9 @@ public class KeywordCompletionTest extends NbTestCase {
                 "e",
                 "interface Test |{\n"
                 + "}",
-                "interface Test {\n"
+                "interface Test extends  {\n"
                 + "}",
-                Arrays.asList("enum", "extends"));
+                Collections.singletonList(""));
     }
 
     public void testElseKeywordCompletion() throws IOException {
@@ -779,6 +797,7 @@ public class KeywordCompletionTest extends NbTestCase {
         Settings.setSettingForExternalType(externalType);
         Settings.setSettingForKeyword(keyword);
         Settings.setSettingForModifier(modifier);
+        Settings.setSettingForPrimitiveType(primitiveType);
     }
 
     @Override
