@@ -23,6 +23,8 @@ public interface Abbreviation {
 
     String getContent();
 
+    void setContent(String content);
+
     int getStartOffset();
 
     int getEndOffset();

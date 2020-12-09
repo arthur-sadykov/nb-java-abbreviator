@@ -23,7 +23,6 @@ import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
  */
 public class JavaAbbreviation implements Abbreviation {
 
-    private static JavaAbbreviation instance;
     private int startOffset;
     private final StringBuffer buffer;
 
@@ -33,10 +32,7 @@ public class JavaAbbreviation implements Abbreviation {
     }
 
     public static JavaAbbreviation getInstance() {
-        if (instance == null) {
-            instance = new JavaAbbreviation();
-        }
-        return instance;
+        return new JavaAbbreviation();
     }
 
     @Override
@@ -74,6 +70,12 @@ public class JavaAbbreviation implements Abbreviation {
     @Override
     public String getContent() {
         return buffer.toString();
+    }
+
+    @Override
+    public void setContent(String content) {
+        buffer.setLength(0);
+        buffer.append(content);
     }
 
     @Override
