@@ -1269,9 +1269,14 @@ public class JavaSourceHelper {
                         if (path != null) {
                             switch (path.getLeaf().getKind()) {
                                 case CLASS:
-                                    ClassTree clazz = (ClassTree) path.getLeaf();
-                                    modifiersTree = clazz.getModifiers();
-                                    filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
+                                    sequence = treeUtilities.tokensFor(path.getLeaf());
+                                    sequence.moveStart();
+                                    sequence.moveNext();
+                                    if (abbreviation.getStartOffset() < sequence.offset()) {
+                                        ClassTree clazz = (ClassTree) path.getLeaf();
+                                        modifiersTree = clazz.getModifiers();
+                                        filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
+                                    }
                                     break;
                                 case VARIABLE:
                                     VariableTree variable = (VariableTree) path.getLeaf();
@@ -1296,19 +1301,24 @@ public class JavaSourceHelper {
                             switch (path.getLeaf().getKind()) {
                                 case CLASS:
                                     ClassTree clazz = (ClassTree) path.getLeaf();
-                                    modifiersTree = clazz.getModifiers();
-                                    parentPath = path.getParentPath();
-                                    if (parentPath != null) {
-                                        Tree.Kind parentKind = parentPath.getLeaf().getKind();
-                                        switch (parentKind) {
-                                            case BLOCK:
-                                                filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
-                                                break;
-                                            case COMPILATION_UNIT:
-                                                filterTopLevelClassModifiers(modifiersTree, modifiers);
-                                                break;
-                                            default:
-                                                filterInnerClassModifiers(modifiersTree, modifiers);
+                                    sequence = treeUtilities.tokensFor(clazz);
+                                    sequence.moveStart();
+                                    sequence.moveNext();
+                                    if (abbreviation.getStartOffset() < sequence.offset()) {
+                                        modifiersTree = clazz.getModifiers();
+                                        parentPath = path.getParentPath();
+                                        if (parentPath != null) {
+                                            Tree.Kind parentKind = parentPath.getLeaf().getKind();
+                                            switch (parentKind) {
+                                                case BLOCK:
+                                                    filterMethodLocalInnerClassModifiers(modifiersTree, modifiers);
+                                                    break;
+                                                case COMPILATION_UNIT:
+                                                    filterTopLevelClassModifiers(modifiersTree, modifiers);
+                                                    break;
+                                                default:
+                                                    filterInnerClassModifiers(modifiersTree, modifiers);
+                                            }
                                         }
                                     }
                                     break;
