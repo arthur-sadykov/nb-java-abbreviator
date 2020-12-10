@@ -926,10 +926,7 @@ public class JavaSourceHelper {
                     case "do": //NOI18N
                     case "for": //NOI18N
                     case "if": //NOI18N
-                    case "null": //NOI18N
-                    case "super": //NOI18N
                     case "switch": //NOI18N
-                    case "this": //NOI18N
                     case "throw": //NOI18N
                     case "try": //NOI18N
                     case "while": //NOI18N
@@ -1025,6 +1022,23 @@ public class JavaSourceHelper {
                                 break;
                             case COMPILATION_UNIT:
                                 keywords.add(keyword);
+                        }
+                        break;
+                    case "false": //NOI18N
+                    case "null": //NOI18N
+                    case "true": //NOI18N
+                    case "this": //NOI18N
+                        switch (currentPath.getLeaf().getKind()) {
+                            case ASSIGNMENT:
+                            case EQUAL_TO:
+                            case METHOD_INVOCATION:
+                            case NEW_CLASS:
+                            case NOT_EQUAL_TO:
+                            case PARENTHESIZED:
+                            case RETURN:
+                            case VARIABLE:
+                                keywords.add(keyword);
+                                break;
                         }
                         break;
                     case "interface": //NOI18N
