@@ -800,6 +800,18 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList("void"));
     }
 
+    public void testImportKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "|\n"
+                + "class Test {\n"
+                + "}",
+                "\n"
+                + "class Test {\n"
+                + "}",
+                Arrays.asList("import", "interface"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

@@ -45,6 +45,7 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ForLoopTree;
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
+import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -640,6 +641,8 @@ public class JavaSourceHelper {
                 return insertIfStatement();
             case "implements": //NOI18N
                 return insertImplementsTree();
+            case "import": //NOI18N
+                return insertImportStatement();
             case "interface": //NOI18N
                 return insertInterfaceDeclaration();
             case "return": //NOI18N
@@ -2968,6 +2971,99 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertImportStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToParsedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                if (currentTree.getKind() != Tree.Kind.COMPILATION_UNIT) {
+                    return;
+                }
+                TreeMaker make = copy.getTreeMaker();
+                ImportTree importTree = make.Import(make.Identifier(""), false); //NOI18N
+                CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
+                int insertIndex = findInsertIndexInImportTree(copy);
+                if (insertIndex == -1) {
+                    return;
+                }
+                CompilationUnitTree newCompilationUnitTree =
+                        make.insertCompUnitImport(currentCompilationUnitTree, insertIndex, importTree);
+                copy.rewrite(currentCompilationUnitTree, newCompilationUnitTree);
+                statements.add(new Statement(importTree.toString()));
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private int findInsertIndexInImportTree(CompilationController controller) {
+        Trees trees = controller.getTrees();
+        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+        List<? extends ImportTree> imports = compilationUnit.getImports();
+        SourcePositions sourcePositions = trees.getSourcePositions();
+        int size = imports.size();
+        switch (size) {
+            case 0: {
+                return 0;
+            }
+            case 1: {
+                ImportTree currentImport = imports.get(0);
+                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentImport);
+                if (abbreviation.getStartOffset() < currentStartPosition) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+            case 2: {
+                ImportTree previousImport = imports.get(0);
+                long previousStartPosition =
+                        sourcePositions.getStartPosition(compilationUnit, previousImport);
+                ImportTree currentImport = imports.get(1);
+                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentImport);
+                if (abbreviation.getStartOffset() < previousStartPosition) {
+                    return 0;
+                } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                    return size;
+                } else {
+                    return 1;
+                }
+            }
+            default: {
+                for (int i = 1; i < size; i++) {
+                    ImportTree previousImport = imports.get(i - 1);
+                    long previousStartPosition =
+                            sourcePositions.getStartPosition(compilationUnit, previousImport);
+                    ImportTree currentImport = imports.get(i);
+                    long currentStartPosition =
+                            sourcePositions.getStartPosition(compilationUnit, currentImport);
+                    if (i < size - 1) {
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            return i - 1;
+                        } else if (previousStartPosition < abbreviation.getStartOffset()
+                                && abbreviation.getStartOffset() < currentStartPosition) {
+                            return i;
+                        }
+                    } else {
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            return size - 1;
+                        }
+                        return size;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     private List<CodeFragment> insertInterfaceDeclaration() {
