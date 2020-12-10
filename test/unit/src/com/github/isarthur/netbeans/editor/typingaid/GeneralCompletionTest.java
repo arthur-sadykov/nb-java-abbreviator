@@ -212,26 +212,6 @@ public class GeneralCompletionTest extends NbTestCase {
                 Arrays.asList("short", "super", "switch"));
     }
 
-    public void testShouldSuggestCompletionForMultipleMatchesOfLocalElements() throws IOException {
-        doAbbreviationInsert(
-                "nos",
-                "public class Test {\n"
-                + "    private int newObjectState;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String nativeOriginalSystem = \"\";\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    private int newObjectState;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String nativeOriginalSystem = \"\";\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("nativeOriginalSystem", "newObjectState", "numberOfSpaces"));
-    }
-
     public void testShouldSuggestCompletionForMethodInvocation() throws IOException {
         doAbbreviationInsert(
                 "bn.ie",
@@ -395,36 +375,6 @@ public class GeneralCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Arrays.asList("isEmpty()"));
-    }
-
-    public void testShouldSuggestCompletionForParameterNameBasedOnType() throws IOException {
-        doAbbreviationInsert(
-                "sb",
-                "public class Test {\n"
-                + "    public void test(StringBuilder |) {\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(StringBuilder ) {\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("stringBuilder"));
-    }
-
-    public void testShouldSuggestCompletionForFieldNameBasedOnType() throws IOException {
-        doAbbreviationInsert(
-                "sb",
-                "public class Test {\n"
-                + "    private StringBuilder |;\n"
-                + "    public void test() {\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    private StringBuilder ;\n"
-                + "    public void test() {\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("stringBuilder"));
     }
 
     public void shouldNotAddDuplicatesToTheResultingList() throws IOException {

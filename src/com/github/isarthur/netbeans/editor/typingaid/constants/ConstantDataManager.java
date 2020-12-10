@@ -51,6 +51,7 @@ public class ConstantDataManager {
             "The current caret position and local elements should be collected before calling this method!"; //NOI18N
     public static final String SPACE = " "; //NOI18N
     public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
+    public static final String STATE_IS_NOT_IN_PARSED_PHASE = "Could not move state to Phase.PARSED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
     private static final int KEYWORD_COUNT = 32;

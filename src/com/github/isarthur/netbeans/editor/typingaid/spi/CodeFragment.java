@@ -29,7 +29,6 @@ public interface CodeFragment {
         LOCAL_ELEMENT,
         METHOD_INVOCATION,
         MODIFIER,
-        NAME,
         PRIMITIVE_TYPE,
         STATEMENT,
         TYPE
