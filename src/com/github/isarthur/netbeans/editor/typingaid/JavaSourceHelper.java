@@ -1134,6 +1134,17 @@ public class JavaSourceHelper {
                             keywords.add(keyword);
                         }
                         break;
+                    case "String": //NOI18N
+                        switch (currentPath.getLeaf().getKind()) {
+                            case CLASS:
+                            case BLOCK:
+                            case ENUM:
+                            case METHOD:
+                            case VARIABLE:
+                                keywords.add(keyword);
+                                break;
+                        }
+                        break;
                 }
             }
         }
@@ -3751,6 +3762,10 @@ public class JavaSourceHelper {
                             initializer = make.Literal(0.0);
                             type = types.getPrimitiveType(TypeKind.DOUBLE);
                             break;
+                        case "String": //NOI18N
+                            initializer = make.Literal(""); //NOI18N
+                            type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
+                            break;
                     }
                     VariableTree variable =
                             make.Variable(
@@ -4048,6 +4063,9 @@ public class JavaSourceHelper {
                         break;
                     case "double": //NOI18N
                         type = types.getPrimitiveType(TypeKind.DOUBLE);
+                        break;
+                    case "String": //NOI18N
+                        type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
                 VariableTree variable =
@@ -4350,6 +4368,9 @@ public class JavaSourceHelper {
                         break;
                     case "double": //NOI18N
                         type = types.getPrimitiveType(TypeKind.DOUBLE);
+                        break;
+                    case "String": //NOI18N
+                        type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
                 VariableTree variable =

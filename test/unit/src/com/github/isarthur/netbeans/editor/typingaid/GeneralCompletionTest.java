@@ -209,7 +209,7 @@ public class GeneralCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("short", "super", "switch"));
+                Arrays.asList("String", "short", "switch"));
     }
 
     public void testShouldSuggestCompletionForMethodInvocation() throws IOException {

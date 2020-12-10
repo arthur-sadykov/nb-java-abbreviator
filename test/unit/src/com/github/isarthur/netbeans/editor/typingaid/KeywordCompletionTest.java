@@ -378,7 +378,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("this", "throw", "try"));
+                Arrays.asList("throw", "try"));
     }
 
     public void testCatchKeywordCompletion() throws IOException {
@@ -436,7 +436,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("this", "throw", "try"));
+                Arrays.asList("throw", "try"));
     }
 
     public void testImplementsKeywordCompletionForClass() throws IOException {

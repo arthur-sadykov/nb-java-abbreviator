@@ -54,9 +54,9 @@ public class ConstantDataManager {
     public static final String STATE_IS_NOT_IN_PARSED_PHASE = "Could not move state to Phase.PARSED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
-    private static final int KEYWORD_COUNT = 32;
+    private static final int KEYWORD_COUNT = 31;
     private static final int MODIFIER_COUNT = 11;
-    private static final int PRIMITIVE_TYPE_COUNT = 8;
+    private static final int PRIMITIVE_TYPE_COUNT = 9;
 
     private ConstantDataManager() {
     }
@@ -85,7 +85,6 @@ public class ConstantDataManager {
         KEYWORDS.add(new Keyword("null")); //NOI18N
         KEYWORDS.add(new Keyword("Object")); //NOI18N
         KEYWORDS.add(new Keyword("return")); //NOI18N
-        KEYWORDS.add(new Keyword("String")); //NOI18N
         KEYWORDS.add(new Keyword("super")); //NOI18N
         KEYWORDS.add(new Keyword("switch")); //NOI18N
         KEYWORDS.add(new Keyword("this")); //NOI18N
@@ -116,5 +115,6 @@ public class ConstantDataManager {
         PRIMITIVE_TYPES.add(new PrimitiveType("int")); //NOI18N
         PRIMITIVE_TYPES.add(new PrimitiveType("long")); //NOI18N
         PRIMITIVE_TYPES.add(new PrimitiveType("short")); //NOI18N
+        PRIMITIVE_TYPES.add(new PrimitiveType("String")); //NOI18N
     }
 }
