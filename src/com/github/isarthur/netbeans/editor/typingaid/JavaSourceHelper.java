@@ -1234,14 +1234,18 @@ public class JavaSourceHelper {
                 if (currentPath == null) {
                     return;
                 }
-                if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK
-                        || currentPath.getLeaf().getKind() == Tree.Kind.METHOD
-                        || currentPath.getLeaf().getKind() == Tree.Kind.VARIABLE) {
-                    ConstantDataManager.PRIMITIVE_TYPES.forEach(primitiveType -> {
-                        if (primitiveType.isAbbreviationEqualTo(abbreviation.getName())) {
-                            primitiveTypes.add(primitiveType);
-                        }
-                    });
+                switch (currentPath.getLeaf().getKind()) {
+                    case CLASS:
+                    case BLOCK:
+                    case ENUM:
+                    case METHOD:
+                    case VARIABLE:
+                        ConstantDataManager.PRIMITIVE_TYPES.forEach(primitiveType -> {
+                            if (primitiveType.isAbbreviationEqualTo(abbreviation.getName())) {
+                                primitiveTypes.add(primitiveType);
+                            }
+                        });
+                        break;
                 }
             }, true);
         } catch (IOException ex) {
@@ -4208,87 +4212,131 @@ public class JavaSourceHelper {
     }
 
     private void insertClassEnumOrInterfaceTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        if (fragment.getKind() == CodeFragment.Kind.KEYWORD) {
-            if (fragment.toString().equals("void")) { //NOI18N
-                TreePath currentPath = copy.getTreeUtilities().pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
+        TreePath currentPath = copy.getTreeUtilities().pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return;
+        }
+        ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentPath.getLeaf();
+        switch (fragment.getKind()) {
+            case KEYWORD:
+                if (fragment.toString().equals("void")) { //NOI18N
+                    if (currentPath.getLeaf().getKind() != Tree.Kind.CLASS
+                            && currentPath.getLeaf().getKind() != Tree.Kind.ENUM
+                            && currentPath.getLeaf().getKind() != Tree.Kind.INTERFACE) {
+                        return;
+                    }
+                    Tree classEnumOrInterfaceTree = currentPath.getLeaf();
+                    MethodTree method;
+                    int insertIndex;
+                    switch (classEnumOrInterfaceTree.getKind()) {
+                        case CLASS:
+                        case ENUM:
+                            ClassTree classOrEnumTree = (ClassTree) classEnumOrInterfaceTree;
+                            insertIndex = findInsertIndexInClassEnumOrInterface(classOrEnumTree);
+                            method =
+                                    make.Method(
+                                            make.Modifiers(Collections.emptySet()),
+                                            "method", //NOI18N
+                                            make.PrimitiveType(TypeKind.VOID),
+                                            Collections.emptyList(),
+                                            Collections.emptyList(),
+                                            Collections.emptyList(),
+                                            make.Block(Collections.emptyList(), false),
+                                            null);
+                            ClassTree newClassOrEnumTree = make.insertClassMember(classOrEnumTree, insertIndex, method);
+                            copy.rewrite(classEnumOrInterfaceTree, newClassOrEnumTree);
+                            break;
+                        case INTERFACE:
+                            ClassTree interfaceTree = (ClassTree) classEnumOrInterfaceTree;
+                            insertIndex = findInsertIndexInClassEnumOrInterface(interfaceTree);
+                            IdentifierTree methodTree = make.Identifier("void method();"); //NOI18N
+                            ClassTree newInterfaceTree = make.insertClassMember(interfaceTree, insertIndex, methodTree);
+                            copy.rewrite(classEnumOrInterfaceTree, newInterfaceTree);
+                            break;
+                    }
+                    break;
+                }
+                break;
+            case PRIMITIVE_TYPE:
+                int insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree);
+                Types types = copy.getTypes();
+                TypeMirror type = null;
+                switch (fragment.toString()) {
+                    case "char": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.CHAR);
+                        break;
+                    case "boolean": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.BOOLEAN);
+                        break;
+                    case "byte": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.BYTE);
+                        break;
+                    case "int": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.INT);
+                        break;
+                    case "short": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.SHORT);
+                        break;
+                    case "long": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.LONG);
+                        break;
+                    case "float": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.FLOAT);
+                        break;
+                    case "double": //NOI18N
+                        type = types.getPrimitiveType(TypeKind.DOUBLE);
+                        break;
+                }
+                VariableTree variable =
+                        make.Variable(
+                                make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
+                                getVariableNames(type).iterator().next(),
+                                make.Identifier(fragment.toString()),
+                                null);
+                ClassTree newClassEnumOrInterfaceTree =
+                        make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
+                copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
+                break;
+            default:
+                TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
+                sequence.move(abbreviation.getStartOffset());
+                moveToNextNonWhitespaceToken(sequence);
+                moveToNextNonWhitespaceToken(sequence);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath path = treeUtilities.getPathElementOfKind(EnumSet.of(Tree.Kind.METHOD, Tree.Kind.CLASS,
+                        Tree.Kind.INTERFACE, Tree.Kind.ENUM, Tree.Kind.VARIABLE),
+                        treeUtilities.pathFor(sequence.offset()));
+                if (path == null) {
                     return;
                 }
-                if (currentPath.getLeaf().getKind() != Tree.Kind.CLASS
-                        && currentPath.getLeaf().getKind() != Tree.Kind.ENUM
-                        && currentPath.getLeaf().getKind() != Tree.Kind.INTERFACE) {
-                    return;
-                }
-                Tree classEnumOrInterfaceTree = currentPath.getLeaf();
-                MethodTree method;
-                int insertIndex;
-                switch (classEnumOrInterfaceTree.getKind()) {
+                ExpressionTree expression = getExpressionToInsert(fragment, make);
+                ModifiersTree modifiers;
+                ModifiersTree newModifiers;
+                switch (path.getLeaf().getKind()) {
+                    case METHOD:
+                        MethodTree methodTree = (MethodTree) path.getLeaf();
+                        modifiers = methodTree.getModifiers();
+                        newModifiers = make.addModifiersModifier(
+                                modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                        copy.rewrite(modifiers, newModifiers);
+                        break;
                     case CLASS:
                     case ENUM:
-                        ClassTree classOrEnumTree = (ClassTree) classEnumOrInterfaceTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(classOrEnumTree);
-                        method =
-                                make.Method(
-                                        make.Modifiers(Collections.emptySet()),
-                                        "method", //NOI18N
-                                        make.PrimitiveType(TypeKind.VOID),
-                                        Collections.emptyList(),
-                                        Collections.emptyList(),
-                                        Collections.emptyList(),
-                                        make.Block(Collections.emptyList(), false),
-                                        null);
-                        ClassTree newClassOrEnumTree = make.insertClassMember(classOrEnumTree, insertIndex, method);
-                        copy.rewrite(classEnumOrInterfaceTree, newClassOrEnumTree);
-                        break;
                     case INTERFACE:
-                        ClassTree interfaceTree = (ClassTree) classEnumOrInterfaceTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(interfaceTree);
-                        IdentifierTree methodTree = make.Identifier("void method();"); //NOI18N
-                        ClassTree newInterfaceTree = make.insertClassMember(interfaceTree, insertIndex, methodTree);
-                        copy.rewrite(classEnumOrInterfaceTree, newInterfaceTree);
+                        ClassTree classTree = (ClassTree) path.getLeaf();
+                        modifiers = classTree.getModifiers();
+                        newModifiers = make.addModifiersModifier(
+                                modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                        copy.rewrite(modifiers, newModifiers);
+                        break;
+                    case VARIABLE:
+                        VariableTree variableTree = (VariableTree) path.getLeaf();
+                        modifiers = variableTree.getModifiers();
+                        newModifiers = make.addModifiersModifier(
+                                modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                        copy.rewrite(modifiers, newModifiers);
                         break;
                 }
-            }
-            return;
-        }
-        TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
-        sequence.move(abbreviation.getStartOffset());
-        moveToNextNonWhitespaceToken(sequence);
-        moveToNextNonWhitespaceToken(sequence);
-        TreeUtilities treeUtilities = copy.getTreeUtilities();
-        TreePath path = treeUtilities.getPathElementOfKind(
-                EnumSet.of(Tree.Kind.METHOD, Tree.Kind.CLASS, Tree.Kind.INTERFACE, Tree.Kind.ENUM, Tree.Kind.VARIABLE),
-                treeUtilities.pathFor(sequence.offset()));
-        if (path == null) {
-            return;
-        }
-        ExpressionTree expression = getExpressionToInsert(fragment, make);
-        ModifiersTree modifiers;
-        ModifiersTree newModifiers;
-        switch (path.getLeaf().getKind()) {
-            case METHOD:
-                MethodTree methodTree = (MethodTree) path.getLeaf();
-                modifiers = methodTree.getModifiers();
-                newModifiers =
-                        make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-                copy.rewrite(modifiers, newModifiers);
-                break;
-            case CLASS:
-            case ENUM:
-            case INTERFACE:
-                ClassTree classTree = (ClassTree) path.getLeaf();
-                modifiers = classTree.getModifiers();
-                newModifiers =
-                        make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-                copy.rewrite(modifiers, newModifiers);
-                break;
-            case VARIABLE:
-                VariableTree variableTree = (VariableTree) path.getLeaf();
-                modifiers = variableTree.getModifiers();
-                newModifiers =
-                        make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-                copy.rewrite(modifiers, newModifiers);
-                break;
         }
     }
 

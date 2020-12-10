@@ -192,6 +192,18 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 Arrays.asList("boolean", "byte"));
     }
 
+    public void testBooleanByteKeywordsCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "    \n"
+                + "}",
+                Arrays.asList("boolean", "byte"));
+    }
+
     public void testCharKeywordCompletionInBlock() throws IOException {
         doAbbreviationInsert(
                 "c",
@@ -241,6 +253,20 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 Arrays.asList("char"));
     }
 
+    public void testCharKeywordCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private char c;\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList("char"));
+    }
+
     public void testIntKeywordCompletionInBlock() throws IOException {
         doAbbreviationInsert(
                 "i",
@@ -286,6 +312,20 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    void test(int count, int i, ) {\n"
                 + "    }\n"
+                + "}",
+                Collections.singletonList("int"));
+    }
+
+    public void testIntKeywordCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private int i;\n"
+                + "    \n"
                 + "}",
                 Collections.singletonList("int"));
     }
@@ -339,6 +379,20 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 Collections.singletonList("long"));
     }
 
+    public void testLongKeywordCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "l",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private long l;\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList("long"));
+    }
+
     public void testShortKeywordCompletionInBlock() throws IOException {
         doAbbreviationInsert(
                 "s",
@@ -384,6 +438,20 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    void test(int count, short s, ) {\n"
                 + "    }\n"
+                + "}",
+                Collections.singletonList("short"));
+    }
+
+    public void testShortKeywordCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private short s;\n"
+                + "    \n"
                 + "}",
                 Collections.singletonList("short"));
     }
@@ -437,6 +505,20 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 Collections.singletonList("float"));
     }
 
+    public void testFloatKeywordCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private float f;\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList("float"));
+    }
+
     public void testDoubleKeywordCompletionInBlock() throws IOException {
         doAbbreviationInsert(
                 "d",
@@ -482,6 +564,20 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    void test(int count, double d, ) {\n"
                 + "    }\n"
+                + "}",
+                Collections.singletonList("double"));
+    }
+
+    public void testDoubleKeywordCompletionInField() throws IOException {
+        doAbbreviationInsert(
+                "d",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private double d;\n"
+                + "    \n"
                 + "}",
                 Collections.singletonList("double"));
     }
