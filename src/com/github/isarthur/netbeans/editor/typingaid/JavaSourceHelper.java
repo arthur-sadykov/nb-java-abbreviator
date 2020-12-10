@@ -973,6 +973,11 @@ public class JavaSourceHelper {
             javaSource.runUserActionTask(copy -> {
                 moveStateToResolvedPhase(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK
+                        || TreeUtilities.CLASS_TREE_KINDS.contains(currentPath.getLeaf().getKind())) {
+                    return;
+                }
                 ElementUtilities elementUtilities = copy.getElementUtilities();
                 Elements elements = copy.getElements();
                 Scope scope = treeUtilities.scopeFor(abbreviation.getStartOffset());
