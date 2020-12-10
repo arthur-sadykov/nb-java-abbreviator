@@ -1198,6 +1198,14 @@ public class JavaSourceHelper {
                                 }
                                 break;
                             case "void": //NOI18N
+                                switch (currentPath.getLeaf().getKind()) {
+                                    case CLASS:
+                                    case INTERFACE:
+                                    case ENUM:
+                                        keywords.add(keyword);
+                                        break;
+                                }
+                                break;
                             case "throws": //NOI18N
                                 if (currentPath.getLeaf().getKind() == Tree.Kind.METHOD) {
                                     keywords.add(keyword);
@@ -4200,6 +4208,49 @@ public class JavaSourceHelper {
     }
 
     private void insertClassEnumOrInterfaceTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        if (fragment.getKind() == CodeFragment.Kind.KEYWORD) {
+            if (fragment.toString().equals("void")) { //NOI18N
+                TreePath currentPath = copy.getTreeUtilities().pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                if (currentPath.getLeaf().getKind() != Tree.Kind.CLASS
+                        && currentPath.getLeaf().getKind() != Tree.Kind.ENUM
+                        && currentPath.getLeaf().getKind() != Tree.Kind.INTERFACE) {
+                    return;
+                }
+                Tree classEnumOrInterfaceTree = currentPath.getLeaf();
+                MethodTree method;
+                int insertIndex;
+                switch (classEnumOrInterfaceTree.getKind()) {
+                    case CLASS:
+                    case ENUM:
+                        ClassTree classOrEnumTree = (ClassTree) classEnumOrInterfaceTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(classOrEnumTree);
+                        method =
+                                make.Method(
+                                        make.Modifiers(Collections.emptySet()),
+                                        "method", //NOI18N
+                                        make.PrimitiveType(TypeKind.VOID),
+                                        Collections.emptyList(),
+                                        Collections.emptyList(),
+                                        Collections.emptyList(),
+                                        make.Block(Collections.emptyList(), false),
+                                        null);
+                        ClassTree newClassOrEnumTree = make.insertClassMember(classOrEnumTree, insertIndex, method);
+                        copy.rewrite(classEnumOrInterfaceTree, newClassOrEnumTree);
+                        break;
+                    case INTERFACE:
+                        ClassTree interfaceTree = (ClassTree) classEnumOrInterfaceTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(interfaceTree);
+                        IdentifierTree methodTree = make.Identifier("void method();"); //NOI18N
+                        ClassTree newInterfaceTree = make.insertClassMember(interfaceTree, insertIndex, methodTree);
+                        copy.rewrite(classEnumOrInterfaceTree, newInterfaceTree);
+                        break;
+                }
+            }
+            return;
+        }
         TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
         sequence.move(abbreviation.getStartOffset());
         moveToNextNonWhitespaceToken(sequence);

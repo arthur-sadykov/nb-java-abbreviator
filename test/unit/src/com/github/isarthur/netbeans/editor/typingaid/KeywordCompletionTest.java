@@ -755,6 +755,51 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList("{" + System.lineSeparator() + "}"));
     }
 
+    public void testVoidKeywordCompletionInClass() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    void method() {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList("void"));
+    }
+
+    public void testVoidKeywordCompletionInInterface() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "interface Test {\n"
+                + "    |\n"
+                + "}",
+                "interface Test {\n"
+                + "    void method();\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList("void"));
+    }
+
+    public void testVoidKeywordCompletionInEnum() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "\n"
+                + "    void method() {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Collections.singletonList("void"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
