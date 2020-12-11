@@ -61,6 +61,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
     private boolean modifier;
     private boolean externalType;
     private boolean internalType;
+    private boolean importedType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -120,6 +121,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         resourceVariable = Settings.getSettingForResourceVariable();
         internalType = Settings.getSettingForInternalType();
         externalType = Settings.getSettingForExternalType();
+        importedType = Settings.getSettingForImportedType();
         keyword = Settings.getSettingForKeyword();
         modifier = Settings.getSettingForModifier();
         primitiveType = Settings.getSettingForPrimitiveType();
@@ -139,6 +141,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Settings.setSettingForResourceVariable(false);
         Settings.setSettingForInternalType(false);
         Settings.setSettingForExternalType(false);
+        Settings.setSettingForImportedType(false);
         Settings.setSettingForKeyword(false);
         Settings.setSettingForModifier(false);
         Settings.setSettingForPrimitiveType(true);
@@ -619,6 +622,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Settings.setSettingForResourceVariable(resourceVariable);
         Settings.setSettingForInternalType(internalType);
         Settings.setSettingForExternalType(externalType);
+        Settings.setSettingForImportedType(importedType);
         Settings.setSettingForKeyword(keyword);
         Settings.setSettingForModifier(modifier);
         Settings.setSettingForPrimitiveType(primitiveType);

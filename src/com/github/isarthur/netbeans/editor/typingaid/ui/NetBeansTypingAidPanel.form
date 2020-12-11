@@ -42,7 +42,10 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="completionForPanel" max="32767" attributes="0"/>
+          <Group type="102" alignment="0" attributes="0">
+              <Component id="completionForPanel" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -71,12 +74,13 @@
                       <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="internalTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="fieldCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="parameterCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="enumConstantCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="exceptionParameterCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="resourceVariableCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="importedTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -112,6 +116,8 @@
                   <Component id="internalTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="importedTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -282,6 +288,16 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="primitiveTypeCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="importedTypeCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.importedTypeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="importedTypeCheckBoxActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

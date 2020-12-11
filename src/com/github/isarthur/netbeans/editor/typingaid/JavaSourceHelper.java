@@ -3905,6 +3905,10 @@ public class JavaSourceHelper {
                 return null;
             }
             BlockTree newTree;
+            VariableTree variable;
+            TypeMirror type = null;
+            LiteralTree initializer = null;
+            Types types = copy.getTypes();
             switch (fragment.getKind()) {
                 case METHOD_INVOCATION:
                     MethodInvocation invocation = (MethodInvocation) fragment;
@@ -3925,9 +3929,6 @@ public class JavaSourceHelper {
                     copy.rewrite(currentTree, newTree);
                     break;
                 case PRIMITIVE_TYPE:
-                    LiteralTree initializer = null;
-                    TypeMirror type = null;
-                    Types types = copy.getTypes();
                     switch (fragment.toString()) {
                         case "char": //NOI18N
                             initializer = make.Literal('\0');
@@ -3966,11 +3967,23 @@ public class JavaSourceHelper {
                             type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                             break;
                     }
-                    VariableTree variable =
+                    variable =
                             make.Variable(
                                     make.Modifiers(Collections.emptySet()),
                                     getVariableNames(type, copy).iterator().next(),
                                     make.Identifier(fragment.toString()),
+                                    initializer);
+                    newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
+                    copy.rewrite(currentTree, newTree);
+                    break;
+                case TYPE:
+                    type = types.getDeclaredType(((Type) fragment).getType());
+                    initializer = make.Literal(null);
+                    variable =
+                            make.Variable(
+                                    make.Modifiers(Collections.emptySet()),
+                                    getVariableNames(type, copy).iterator().next(),
+                                    make.QualIdent(fragment.toString()),
                                     initializer);
                     newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
                     copy.rewrite(currentTree, newTree);
@@ -4194,6 +4207,14 @@ public class JavaSourceHelper {
             return;
         }
         ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentPath.getLeaf();
+        int insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree, copy);
+        if (insertIndex == -1) {
+            return;
+        }
+        Types types = copy.getTypes();
+        TypeMirror type = null;
+        VariableTree variable;
+        ClassTree newClassEnumOrInterfaceTree;
         switch (fragment.getKind()) {
             case KEYWORD:
                 if (fragment.toString().equals("void")) { //NOI18N
@@ -4204,7 +4225,6 @@ public class JavaSourceHelper {
                     }
                     Tree classEnumOrInterfaceTree = currentPath.getLeaf();
                     MethodTree method;
-                    int insertIndex;
                     switch (classEnumOrInterfaceTree.getKind()) {
                         case CLASS:
                         case ENUM:
@@ -4235,9 +4255,6 @@ public class JavaSourceHelper {
                 }
                 break;
             case PRIMITIVE_TYPE:
-                int insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree, copy);
-                Types types = copy.getTypes();
-                TypeMirror type = null;
                 switch (fragment.toString()) {
                     case "char": //NOI18N
                         type = types.getPrimitiveType(TypeKind.CHAR);
@@ -4267,13 +4284,24 @@ public class JavaSourceHelper {
                         type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
-                VariableTree variable =
+                variable =
                         make.Variable(
                                 make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
                                 getVariableNames(type, copy).iterator().next(),
                                 make.Identifier(fragment.toString()),
                                 null);
-                ClassTree newClassEnumOrInterfaceTree =
+                newClassEnumOrInterfaceTree =
+                        make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
+                copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
+                break;
+            case TYPE:
+                type = types.getDeclaredType(((Type) fragment).getType());
+                variable =
+                        make.Variable(make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
+                                getVariableNames(type, copy).iterator().next(),
+                                make.QualIdent(fragment.toString()),
+                                null);
+                newClassEnumOrInterfaceTree =
                         make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
                 copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
                 break;
@@ -4610,25 +4638,27 @@ public class JavaSourceHelper {
     }
 
     private void insertMethodTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        MethodTree currentTree = (MethodTree) getCurrentTreeOfKind(copy, Tree.Kind.METHOD);
-        if (currentTree == null) {
+        MethodTree currentMethodTree = (MethodTree) getCurrentTreeOfKind(copy, Tree.Kind.METHOD);
+        if (currentMethodTree == null) {
             return;
         }
+        Types types = copy.getTypes();
+        MethodTree newMethodTree;
+        int insertIndex = findInsertIndexForMethodParameter(currentMethodTree);
+        if (insertIndex == -1) {
+            return;
+        }
+        TypeMirror type = null;
+        VariableTree variable;
         switch (fragment.getKind()) {
             case MODIFIER:
                 ExpressionTree expression = getExpressionToInsert(fragment, make);
-                ModifiersTree modifiers = currentTree.getModifiers();
+                ModifiersTree modifiers = currentMethodTree.getModifiers();
                 ModifiersTree newModifiers = make.addModifiersModifier(
                         modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
                 copy.rewrite(modifiers, newModifiers);
                 break;
             case PRIMITIVE_TYPE:
-                int insertIndex = findInsertIndexForMethodParameter(currentTree);
-                if (insertIndex == -1) {
-                    break;
-                }
-                Types types = copy.getTypes();
-                TypeMirror type = null;
                 switch (fragment.toString()) {
                     case "char": //NOI18N
                         type = types.getPrimitiveType(TypeKind.CHAR);
@@ -4658,14 +4688,25 @@ public class JavaSourceHelper {
                         type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
-                VariableTree variable =
+                variable =
                         make.Variable(
                                 make.Modifiers(Collections.emptySet()),
                                 getVariableNames(type, copy).iterator().next(),
                                 make.Identifier(fragment.toString()),
                                 null);
-                MethodTree newMethodTree = make.insertMethodParameter(currentTree, insertIndex, variable);
-                copy.rewrite(currentTree, newMethodTree);
+                newMethodTree = make.insertMethodParameter(currentMethodTree, insertIndex, variable);
+                copy.rewrite(currentMethodTree, newMethodTree);
+                break;
+            case TYPE:
+                type = types.getDeclaredType(((Type) fragment).getType());
+                variable =
+                        make.Variable(
+                                make.Modifiers(Collections.emptySet()),
+                                getVariableNames(type, copy).iterator().next(),
+                                make.QualIdent(fragment.toString()),
+                                null);
+                newMethodTree = make.insertMethodParameter(currentMethodTree, insertIndex, variable);
+                copy.rewrite(currentMethodTree, newMethodTree);
                 break;
         }
     }
@@ -4786,6 +4827,7 @@ public class JavaSourceHelper {
                 copy.rewrite(modifiers, newModifiers);
                 break;
             case PRIMITIVE_TYPE:
+            case TYPE:
                 newVariable =
                         make.Variable(
                                 currentVariable.getModifiers(),
@@ -4836,5 +4878,31 @@ public class JavaSourceHelper {
             default:
                 return null;
         }
+    }
+
+    List<Type> collectImportedTypes(CompilationController controller) {
+        List<Type> types = new ArrayList<>();
+        Elements elements = controller.getElements();
+        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+        List<? extends ImportTree> imports = compilationUnit.getImports();
+        for (ImportTree importTree : imports) {
+            if (importTree.isStatic()) {
+                continue;
+            }
+            String qualifiedIdentifier = importTree.getQualifiedIdentifier().toString();
+            if (qualifiedIdentifier.endsWith("*")) { //NOI18N
+                continue;
+            }
+            int lastDotIndex = qualifiedIdentifier.lastIndexOf('.');
+            if (lastDotIndex < 0) {
+                continue;
+            }
+            String simpleIdentifier = qualifiedIdentifier.substring(lastDotIndex + 1);
+            String typeAbbreviation = StringUtilities.getElementAbbreviation(simpleIdentifier);
+            if (typeAbbreviation.equals(abbreviation.getContent())) {
+                types.add(new Type(elements.getTypeElement(qualifiedIdentifier)));
+            }
+        }
+        return Collections.unmodifiableList(types);
     }
 }

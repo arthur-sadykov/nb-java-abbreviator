@@ -57,8 +57,10 @@ public class GeneralCompletionTest extends NbTestCase {
     private Document document;
     private boolean keyword;
     private boolean modifier;
+    private boolean primitiveType;
     private boolean externalType;
     private boolean internalType;
+    private boolean importedType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -117,8 +119,10 @@ public class GeneralCompletionTest extends NbTestCase {
         resourceVariable = Settings.getSettingForResourceVariable();
         internalType = Settings.getSettingForInternalType();
         externalType = Settings.getSettingForExternalType();
+        importedType = Settings.getSettingForImportedType();
         keyword = Settings.getSettingForKeyword();
         modifier = Settings.getSettingForModifier();
+        primitiveType = Settings.getSettingForPrimitiveType();
     }
 
     public void testShouldSuggestCompletionForParameterName() throws IOException {
@@ -436,8 +440,10 @@ public class GeneralCompletionTest extends NbTestCase {
         Settings.setSettingForResourceVariable(resourceVariable);
         Settings.setSettingForInternalType(internalType);
         Settings.setSettingForExternalType(externalType);
+        Settings.setSettingForImportedType(importedType);
         Settings.setSettingForKeyword(keyword);
         Settings.setSettingForModifier(modifier);
+        Settings.setSettingForPrimitiveType(primitiveType);
     }
 
     @Override

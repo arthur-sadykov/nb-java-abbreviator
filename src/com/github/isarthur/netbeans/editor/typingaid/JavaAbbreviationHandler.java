@@ -208,6 +208,10 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             if (Settings.getSettingForExternalType()) {
                                 types = helper.collectTypes(controller);
                             }
+                            List<Type> importedTypes = Collections.emptyList();
+                            if (Settings.getSettingForImportedType()) {
+                                types = helper.collectImportedTypes(controller);
+                            }
                             List<Keyword> keywords = Collections.emptyList();
                             if (Settings.getSettingForKeyword()) {
                                 keywords = helper.collectKeywords(controller);
@@ -221,7 +225,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                 primitiveTypes = helper.collectPrimitiveTypes(controller);
                             }
                             int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
-                                    + keywords.size() + modifiers.size() + primitiveTypes.size();
+                                    + importedTypes.size() + keywords.size() + modifiers.size() + primitiveTypes.size();
                             switch (matchesCount) {
                                 case 0:
                                     break;
@@ -232,6 +236,8 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                         codeFragments.addAll(helper.insertCodeFragment(localMethodInvocations.get(0)));
                                     } else if (!types.isEmpty()) {
                                         codeFragments.addAll(helper.insertCodeFragment(types.get(0)));
+                                    } else if (!importedTypes.isEmpty()) {
+                                        codeFragments.addAll(helper.insertCodeFragment(importedTypes.get(0)));
                                     } else if (!keywords.isEmpty()) {
                                         codeFragments.addAll(helper.insertKeyword(keywords.get(0)));
                                     } else if (!modifiers.isEmpty()) {
@@ -244,6 +250,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                     codeFragments.addAll(localElements);
                                     codeFragments.addAll(localMethodInvocations);
                                     codeFragments.addAll(types);
+                                    codeFragments.addAll(importedTypes);
                                     codeFragments.addAll(keywords);
                                     codeFragments.addAll(modifiers);
                                     codeFragments.addAll(primitiveTypes);

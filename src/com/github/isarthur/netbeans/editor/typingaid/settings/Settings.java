@@ -36,6 +36,7 @@ public class Settings {
     private static final String RESOURCE_VARIABLE = "resourceVariable"; //NOI18N
     private static final String INTERNAL_TYPE = "internalType"; //NOI18N
     private static final String EXTERNAL_TYPE = "externalType"; //NOI18N
+    private static final String IMPORTED_TYPE = "importedType"; //NOI18N
     private static final String KEYWORD = "keyword"; //NOI18N
     private static final String MODIFIER = "modifier"; //NOI18N
     private static final String PRIMITIVE_TYPE = "primitiveType"; //NOI18N
@@ -145,6 +146,14 @@ public class Settings {
 
     public static void setSettingForExternalType(boolean type) {
         NbPreferences.forModule(Settings.class).putBoolean(EXTERNAL_TYPE, type);
+    }
+
+    public static boolean getSettingForImportedType() {
+        return NbPreferences.forModule(Settings.class).getBoolean(IMPORTED_TYPE, true);
+    }
+
+    public static void setSettingForImportedType(boolean type) {
+        NbPreferences.forModule(Settings.class).putBoolean(IMPORTED_TYPE, type);
     }
 
     public static boolean getSettingForKeyword() {
