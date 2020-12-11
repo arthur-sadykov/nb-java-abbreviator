@@ -757,6 +757,7 @@ public class JavaSourceHelper {
     }
 
     private VariableElement instanceOf(String typeName, String name, CompilationController controller) {
+        VariableElement closest = null;
         List<Element> localElements = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         Types types = controller.getTypes();
@@ -792,11 +793,11 @@ public class JavaSourceHelper {
                 }
                 if (d < distance) {
                     distance = d;
-                    return (VariableElement) element;
+                    closest = (VariableElement) element;
                 }
             }
         }
-        return null;
+        return closest;
     }
 
     private TypeMirror type(String typeName, CompilationController controller) {
@@ -3272,7 +3273,7 @@ public class JavaSourceHelper {
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
-                moveStateToParsedPhase(copy);
+                moveStateToResolvedPhase(copy);
                 String returnVar = returnVar(copy);
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());

@@ -812,6 +812,23 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("import", "interface"));
     }
 
+    public void testReturnKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "r",
+                "class Test {\n"
+                + "    int size() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    int size() {\n"
+                + "        return 0;\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("return 0;"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
