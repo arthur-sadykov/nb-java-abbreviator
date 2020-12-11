@@ -3602,8 +3602,14 @@ public class JavaSourceHelper {
                 if (methodInvocation.getScope() == null) {
                     expressionStatement.set(make.ExpressionStatement(methodInvocationTree));
                 } else {
-                    expressionStatement.set(make.ExpressionStatement(make.MemberSelect(
-                            make.Identifier(methodInvocation.getScope()), methodInvocationTree.toString())));
+                    Element scope = methodInvocation.getScope();
+                    if (TypeElement.class.isInstance(scope)) {
+                        expressionStatement.set(make.ExpressionStatement(make.MemberSelect(
+                                make.QualIdent(scope), methodInvocationTree.toString())));
+                    } else {
+                        expressionStatement.set(make.ExpressionStatement(make.MemberSelect(
+                                make.Identifier(scope), methodInvocationTree.toString())));
+                    }
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3629,13 +3635,12 @@ public class JavaSourceHelper {
                 if (methodInvocation.getScope() == null) {
                     initializer = methodInvocationTree;
                 } else {
-                    if (TypeElement.class
-                            .isInstance(methodInvocation.getScope())) {
-                        initializer =
-                                make.MemberSelect(make.QualIdent(methodInvocation.getScope()), methodInvocationTree.toString());
+                    if (TypeElement.class.isInstance(methodInvocation.getScope())) {
+                        initializer = make.MemberSelect(
+                                make.QualIdent(methodInvocation.getScope()), methodInvocationTree.toString());
                     } else {
-                        initializer =
-                                make.MemberSelect(make.Identifier(methodInvocation.getScope()), methodInvocationTree.toString());
+                        initializer = make.MemberSelect(
+                                make.Identifier(methodInvocation.getScope()), methodInvocationTree.toString());
                     }
                 }
                 Set<String> variableNames = getVariableNames(methodInvocation.getMethod().getReturnType(), copy);
