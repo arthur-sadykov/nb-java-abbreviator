@@ -955,7 +955,22 @@ public class JavaSourceHelper {
                     case "finally": //NOI18N
                         parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.TRY, currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            TokenSequence<?> sequence = controller.getTokenHierarchy().tokenSequence();
+                            sequence.move(abbreviation.getStartOffset());
+                            moveToNextNonWhitespaceToken(sequence);
+                            Token<?> token = sequence.token();
+                            if (token != null) {
+                                if (token.id() == JavaTokenId.CATCH) {
+                                    keywords.add(keyword);
+                                } else if (token.id() == JavaTokenId.LBRACE) {
+                                    sequence.move(abbreviation.getStartOffset());
+                                    moveToPreviousNonWhitespaceToken(sequence);
+                                    token = sequence.token();
+                                    if (token != null && token.id() == JavaTokenId.TRY) {
+                                        keywords.add(keyword);
+                                    }
+                                }
+                            }
                         }
                         break;
                     case "class": //NOI18N
