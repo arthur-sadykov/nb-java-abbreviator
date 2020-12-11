@@ -931,7 +931,8 @@ public class JavaSourceHelper {
                     case "throw": //NOI18N
                     case "try": //NOI18N
                     case "while": //NOI18N
-                        if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK) {
+                        if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK
+                                || currentPath.getLeaf().getKind() == Tree.Kind.CASE) {
                             keywords.add(keyword);
                         }
                         break;
@@ -2461,34 +2462,68 @@ public class JavaSourceHelper {
     }
 
     private List<CodeFragment> insertAssertStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertAssertStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertAssertStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                AssertTree assertTree = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(assertTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertAssertStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        AssertTree assertTree = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, assertTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(assertTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertAssertStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        AssertTree assertTree = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(assertTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
@@ -2676,35 +2711,70 @@ public class JavaSourceHelper {
     }
 
     private List<CodeFragment> insertDoWhileStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertDoWhileStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertDoWhileStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                DoWhileLoopTree doWhileLoopTree =
-                        make.DoWhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, doWhileLoopTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(doWhileLoopTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertDoWhileStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        DoWhileLoopTree doWhileLoopTree =
+                make.DoWhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, doWhileLoopTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(doWhileLoopTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertDoWhileStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        DoWhileLoopTree doWhileLoopTree =
+                make.DoWhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, doWhileLoopTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(doWhileLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
@@ -2788,48 +2858,6 @@ public class JavaSourceHelper {
                         currentClassOrInterfaceTree.getMembers());
                 copy.rewrite(currentClassOrInterfaceTree, newClassOrInterfaceTree);
                 statements.add(new Statement(extendsIdentifier.toString()));
-            }).commit();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        return Collections.unmodifiableList(statements);
-    }
-
-    private List<CodeFragment> insertForStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
-        try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
-            javaSource.runModificationTask(copy -> {
-                moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
-                }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                ForLoopTree forLoopTree = make.ForLoop(
-                        Collections.singletonList(make.Variable(
-                                make.Modifiers(Collections.emptySet()),
-                                "i", //NOI18N
-                                make.PrimitiveType(TypeKind.INT),
-                                make.Literal(0))),
-                        make.Binary(Tree.Kind.LESS_THAN, make.Identifier("i"), make.Literal(10)), //NOI18N
-                        Collections.singletonList(make.ExpressionStatement(
-                                make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
-                        make.Block(Collections.emptyList(), false)
-                );
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, forLoopTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(forLoopTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -3302,146 +3330,296 @@ public class JavaSourceHelper {
     }
 
     private List<CodeFragment> insertSwitchStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertSwitchStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertSwitchStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                SwitchTree switchTree =
-                        make.Switch(
-                                make.Identifier(""), //NOI18N
-                                Collections.singletonList(
-                                        make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, switchTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(switchTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertSwitchStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        SwitchTree switchTree =
+                make.Switch(
+                        make.Identifier(""), //NOI18N
+                        Collections.singletonList(
+                                make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, switchTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(switchTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertSwitchStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        SwitchTree switchTree =
+                make.Switch(
+                        make.Identifier(""), //NOI18N
+                        Collections.singletonList(
+                                make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, switchTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(switchTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
     private List<CodeFragment> insertTryStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertTryStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertTryStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                TryTree tryTree =
-                        make.Try(
-                                make.Block(Collections.emptyList(), false),
-                                Collections.singletonList(
-                                        make.Catch(
-                                                make.Variable(
-                                                        make.Modifiers(Collections.emptySet()),
-                                                        "e", //NOI18N
-                                                        make.Identifier("Exception"), //NOI18N
-                                                        null),
-                                                make.Block(Collections.emptyList(), false))),
-                                null);
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, tryTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(tryTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertTryStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        TryTree tryTree =
+                make.Try(
+                        make.Block(Collections.emptyList(), false),
+                        Collections.singletonList(
+                                make.Catch(
+                                        make.Variable(
+                                                make.Modifiers(Collections.emptySet()),
+                                                "e", //NOI18N
+                                                make.Identifier("Exception"), //NOI18N
+                                                null),
+                                        make.Block(Collections.emptyList(), false))),
+                        null);
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, tryTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(tryTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertTryStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        TryTree tryTree =
+                make.Try(
+                        make.Block(Collections.emptyList(), false),
+                        Collections.singletonList(
+                                make.Catch(
+                                        make.Variable(
+                                                make.Modifiers(Collections.emptySet()),
+                                                "e", //NOI18N
+                                                make.Identifier("Exception"), //NOI18N
+                                                null),
+                                        make.Block(Collections.emptyList(), false))),
+                        null);
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, tryTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(tryTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
     private List<CodeFragment> insertThrowStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertThrowStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertThrowStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                ThrowTree throwTree = make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, throwTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(throwTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertThrowStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        ThrowTree throwTree = make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, throwTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(throwTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertThrowStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        ThrowTree throwTree = make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, throwTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(throwTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
     private List<CodeFragment> insertWhileStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertWhileStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertWhileStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                WhileLoopTree whileLoopTree =
-                        make.WhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, whileLoopTree);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(whileLoopTree.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertWhileStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        WhileLoopTree whileLoopTree = make.WhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, whileLoopTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(whileLoopTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertWhileStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        WhileLoopTree whileLoopTree = make.WhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, whileLoopTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(whileLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
@@ -4259,6 +4437,92 @@ public class JavaSourceHelper {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertForStatement() {
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
+        try {
+            javaSource.runModificationTask(copy -> {
+                moveStateToParsedPhase(copy);
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertForStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertForStatementInBlock(copy));
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertForStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCase = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        ForLoopTree forLoopTree = make.ForLoop(
+                Collections.singletonList(make.Variable(
+                        make.Modifiers(Collections.emptySet()),
+                        "i", //NOI18N
+                        make.PrimitiveType(TypeKind.INT),
+                        make.Literal(0))),
+                make.Binary(Tree.Kind.LESS_THAN, make.Identifier("i"), make.Literal(10)), //NOI18N
+                Collections.singletonList(make.ExpressionStatement(
+                        make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
+                make.Block(Collections.emptyList(), false)
+        );
+        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, forLoopTree);
+        copy.rewrite(currentCase, newCase);
+        statements.add(new Statement(forLoopTree.toString()));
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertForStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlock = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        ForLoopTree forLoopTree = make.ForLoop(
+                Collections.singletonList(make.Variable(
+                        make.Modifiers(Collections.emptySet()),
+                        "i", //NOI18N
+                        make.PrimitiveType(TypeKind.INT),
+                        make.Literal(0))),
+                make.Binary(Tree.Kind.LESS_THAN, make.Identifier("i"), make.Literal(10)), //NOI18N
+                Collections.singletonList(make.ExpressionStatement(
+                        make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
+                make.Block(Collections.emptyList(), false)
+        );
+        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, forLoopTree);
+        copy.rewrite(currentBlock, newBlock);
+        statements.add(new Statement(forLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
