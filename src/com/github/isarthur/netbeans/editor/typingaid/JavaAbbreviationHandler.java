@@ -200,6 +200,10 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             if (Settings.getSettingForLocalVariable()) {
                                 localElements = helper.collectLocalElements(controller);
                             }
+                            List<Type> localTypes = Collections.emptyList();
+                            if (Settings.getSettingForInternalType()) {
+                                localTypes = helper.collectLocalTypes(controller);
+                            }
                             List<MethodInvocation> localMethodInvocations = Collections.emptyList();
                             if (Settings.getSettingForLocalMethodInvocation()) {
                                 localMethodInvocations = helper.collectLocalMethodInvocations(controller);
@@ -224,14 +228,17 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                             if (Settings.getSettingForPrimitiveType()) {
                                 primitiveTypes = helper.collectPrimitiveTypes(controller);
                             }
-                            int matchesCount = localElements.size() + localMethodInvocations.size() + types.size()
-                                    + importedTypes.size() + keywords.size() + modifiers.size() + primitiveTypes.size();
+                            int matchesCount = localElements.size() + localTypes.size() + localMethodInvocations.size()
+                                    + types.size() + importedTypes.size() + keywords.size() + modifiers.size()
+                                    + primitiveTypes.size();
                             switch (matchesCount) {
                                 case 0:
                                     break;
                                 case 1:
                                     if (!localElements.isEmpty()) {
                                         codeFragments.addAll(helper.insertCodeFragment(localElements.get(0)));
+                                    } else if (!localTypes.isEmpty()) {
+                                        codeFragments.addAll(helper.insertCodeFragment(localTypes.get(0)));
                                     } else if (!localMethodInvocations.isEmpty()) {
                                         codeFragments.addAll(helper.insertCodeFragment(localMethodInvocations.get(0)));
                                     } else if (!types.isEmpty()) {
@@ -248,6 +255,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                     break;
                                 default:
                                     codeFragments.addAll(localElements);
+                                    codeFragments.addAll(localTypes);
                                     codeFragments.addAll(localMethodInvocations);
                                     codeFragments.addAll(types);
                                     codeFragments.addAll(importedTypes);
@@ -262,7 +270,8 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         }
                     }
                 }
-            }, true);
+            },
+                    true);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

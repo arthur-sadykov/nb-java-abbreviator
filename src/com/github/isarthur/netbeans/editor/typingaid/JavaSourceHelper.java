@@ -359,11 +359,6 @@ public class JavaSourceHelper {
         if (Settings.getSettingForResourceVariable()) {
             elementKinds.add(ElementKind.RESOURCE_VARIABLE);
         }
-        if (Settings.getSettingForInternalType()) {
-            elementKinds.add(ElementKind.CLASS);
-            elementKinds.add(ElementKind.INTERFACE);
-            elementKinds.add(ElementKind.ENUM);
-        }
         return Collections.unmodifiableSet(elementKinds);
     }
 
@@ -909,6 +904,39 @@ public class JavaSourceHelper {
                 .filter(distinctByKey(Element::getSimpleName))
                 .forEach(element -> result.add(new LocalElement(element)));
         Collections.sort(result);
+        return Collections.unmodifiableList(result);
+    }
+
+    List<Type> collectLocalTypes(CompilationController controller) {
+        List<Element> localElements = new ArrayList<>();
+        List<Type> result = new ArrayList<>();
+        TreeUtilities treeUtilities = controller.getTreeUtilities();
+        ElementUtilities elementUtilities = controller.getElementUtilities();
+        Elements elements = controller.getElements();
+        Scope scope = treeUtilities.scopeFor(abbreviation.getStartOffset());
+        if (Settings.getSettingForInternalType()) {
+            CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+            List<? extends Tree> typeDecls = compilationUnit.getTypeDecls();
+            Tree topLevelClassInterfaceOrEnumTree = typeDecls.get(0);
+            Element topLevelElement = controller.getTrees().getElement(
+                    TreePath.getPath(compilationUnit, topLevelClassInterfaceOrEnumTree));
+            localElements.add(topLevelElement);
+            Iterable<? extends Element> localMembersAndVars =
+                    elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                        return (!elements.isDeprecated(e)
+                                && (e.getKind() == ElementKind.CLASS
+                                || e.getKind() == ElementKind.ENUM
+                                || e.getKind() == ElementKind.INTERFACE));
+                    });
+            localMembersAndVars.forEach(localElements::add);
+            localElements
+                    .stream()
+                    .filter(element -> StringUtilities.getElementAbbreviation(
+                            element.getSimpleName().toString()).equals(abbreviation.getName()))
+                    .filter(distinctByKey(Element::getSimpleName))
+                    .forEach(element -> result.add(new Type(elements.getTypeElement(element.toString()))));
+            Collections.sort(result);
+        }
         return Collections.unmodifiableList(result);
     }
 
