@@ -34,6 +34,15 @@ public class Type implements CodeFragment, Comparable<Type> {
         return type;
     }
 
+    public String getSimpleName() {
+        String qualifiedName = type.getQualifiedName().toString();
+        int lastDotIndex = qualifiedName.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            return qualifiedName.substring(lastDotIndex + 1);
+        }
+        return qualifiedName;
+    }
+
     @Override
     public Kind getKind() {
         return Kind.TYPE;

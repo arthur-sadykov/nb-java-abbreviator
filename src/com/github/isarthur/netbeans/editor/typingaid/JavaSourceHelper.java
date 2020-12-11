@@ -4899,7 +4899,43 @@ public class JavaSourceHelper {
             return;
         }
         ExpressionTree expression = getExpressionToInsert(fragment, make);
-        Tree newTree = make.Return(expression);
+        ReturnTree newTree;
+        Type typeFragment = (Type) fragment;
+        if (fragment.getKind() == CodeFragment.Kind.TYPE) {
+            TypeElement type = typeFragment.getType();
+            List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
+            int minNumberOfParameters = Integer.MAX_VALUE;
+            ExecutableElement targetConstructor = null;
+            for (ExecutableElement constructor : constructors) {
+                int currentNumberOfParameters = constructor.getParameters().size();
+                if (currentNumberOfParameters < minNumberOfParameters) {
+                    minNumberOfParameters = currentNumberOfParameters;
+                    targetConstructor = constructor;
+                }
+            }
+            NewClassTree newClassTree;
+            if (targetConstructor != null) {
+                List<ExpressionTree> constructorArguments = evaluateMethodArguments(targetConstructor);
+                newClassTree =
+                        make.NewClass(
+                                null,
+                                Collections.emptyList(),
+                                make.QualIdent(typeFragment.toString()),
+                                constructorArguments,
+                                null);
+            } else {
+                newClassTree =
+                        make.NewClass(
+                                null,
+                                Collections.emptyList(),
+                                make.QualIdent(typeFragment.toString()),
+                                Collections.emptyList(),
+                                null);
+            }
+            newTree = make.Return(newClassTree);
+        } else {
+            newTree = make.Return(expression);
+        }
         copy.rewrite(currentTree, newTree);
     }
 

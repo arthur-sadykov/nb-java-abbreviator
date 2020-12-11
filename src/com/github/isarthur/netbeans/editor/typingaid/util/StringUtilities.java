@@ -42,7 +42,7 @@ public class StringUtilities {
             }
         } else {
             for (int i = 1; i < elementName.length(); i++) {
-                if (Character.isUpperCase(elementName.charAt(i)) && !Character.isUpperCase(elementName.charAt(i - 1))) {
+                if (Character.isUpperCase(elementName.charAt(i))) {
                     abbreviation.append(Character.toLowerCase(elementName.charAt(i)));
                 }
             }
