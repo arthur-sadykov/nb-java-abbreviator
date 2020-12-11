@@ -4215,6 +4215,8 @@ public class JavaSourceHelper {
         TypeMirror type = null;
         VariableTree variable;
         ClassTree newClassEnumOrInterfaceTree;
+        ExpressionTree returnValue = null;
+        MethodTree method;
         switch (fragment.getKind()) {
             case KEYWORD:
                 if (fragment.toString().equals("void")) { //NOI18N
@@ -4224,7 +4226,6 @@ public class JavaSourceHelper {
                         return;
                     }
                     Tree classEnumOrInterfaceTree = currentPath.getLeaf();
-                    MethodTree method;
                     switch (classEnumOrInterfaceTree.getKind()) {
                         case CLASS:
                         case ENUM:
@@ -4257,52 +4258,92 @@ public class JavaSourceHelper {
             case PRIMITIVE_TYPE:
                 switch (fragment.toString()) {
                     case "char": //NOI18N
+                        returnValue = make.Literal('\0');
                         type = types.getPrimitiveType(TypeKind.CHAR);
                         break;
                     case "boolean": //NOI18N
+                        returnValue = make.Literal(true);
                         type = types.getPrimitiveType(TypeKind.BOOLEAN);
                         break;
                     case "byte": //NOI18N
+                        returnValue = make.Literal(0);
                         type = types.getPrimitiveType(TypeKind.BYTE);
                         break;
                     case "int": //NOI18N
+                        returnValue = make.Literal(0);
                         type = types.getPrimitiveType(TypeKind.INT);
                         break;
                     case "short": //NOI18N
+                        returnValue = make.Literal(0);
                         type = types.getPrimitiveType(TypeKind.SHORT);
                         break;
                     case "long": //NOI18N
+                        returnValue = make.Literal(0L);
                         type = types.getPrimitiveType(TypeKind.LONG);
                         break;
                     case "float": //NOI18N
+                        returnValue = make.Literal(0.0F);
                         type = types.getPrimitiveType(TypeKind.FLOAT);
                         break;
                     case "double": //NOI18N
+                        returnValue = make.Literal(0.0);
                         type = types.getPrimitiveType(TypeKind.DOUBLE);
                         break;
                     case "String": //NOI18N
+                        returnValue = make.Literal(""); //NOI18N
                         type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
-                variable =
-                        make.Variable(
-                                make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
-                                getVariableNames(type, copy).iterator().next(),
-                                make.Identifier(fragment.toString()),
-                                null);
-                newClassEnumOrInterfaceTree =
-                        make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
+                if (!inMethodSection(currentClassEnumOrInterfaceTree, copy)) {
+                    variable =
+                            make.Variable(
+                                    make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
+                                    getVariableNames(type, copy).iterator().next(),
+                                    make.Identifier(fragment.toString()),
+                                    null);
+                    newClassEnumOrInterfaceTree =
+                            make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
+                } else {
+                    method =
+                            make.Method(
+                                    make.Modifiers(Collections.emptySet()),
+                                    "method", //NOI18N
+                                    make.Identifier(fragment.toString()),
+                                    Collections.emptyList(),
+                                    Collections.emptyList(),
+                                    Collections.emptyList(),
+                                    make.Block(Collections.singletonList(make.Return(returnValue)), false),
+                                    null);
+                    newClassEnumOrInterfaceTree =
+                            make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, method);
+                }
                 copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
                 break;
             case TYPE:
-                type = types.getDeclaredType(((Type) fragment).getType());
-                variable =
-                        make.Variable(make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
-                                getVariableNames(type, copy).iterator().next(),
-                                make.QualIdent(fragment.toString()),
-                                null);
-                newClassEnumOrInterfaceTree =
-                        make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
+                if (!inMethodSection(currentClassEnumOrInterfaceTree, copy)) {
+                    type = types.getDeclaredType(((Type) fragment).getType());
+                    variable =
+                            make.Variable(
+                                    make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
+                                    getVariableNames(type, copy).iterator().next(),
+                                    make.QualIdent(fragment.toString()),
+                                    null);
+                    newClassEnumOrInterfaceTree =
+                            make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, variable);
+                } else {
+                    method =
+                            make.Method(
+                                    make.Modifiers(Collections.emptySet()),
+                                    "method", //NOI18N
+                                    make.QualIdent(fragment.toString()),
+                                    Collections.emptyList(),
+                                    Collections.emptyList(),
+                                    Collections.emptyList(),
+                                    make.Block(Collections.singletonList(make.Return(make.Literal(null))), false),
+                                    null);
+                    newClassEnumOrInterfaceTree =
+                            make.insertClassMember(currentClassEnumOrInterfaceTree, insertIndex, method);
+                }
                 copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
                 break;
             default:
@@ -4346,6 +4387,38 @@ public class JavaSourceHelper {
                         break;
                 }
         }
+    }
+
+    private boolean inMethodSection(ClassTree classInterfaceOrEnumTree, CompilationController controller) {
+        Trees trees = controller.getTrees();
+        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+        List<? extends Tree> members = classInterfaceOrEnumTree.getMembers();
+        SourcePositions sourcePositions = trees.getSourcePositions();
+        if (members.isEmpty()) {
+            return false;
+        }
+        int size = members.size();
+        for (int i = 1; i < size; i++) {
+            Tree previousMember = members.get(i - 1);
+            long previousStartOffset = sourcePositions.getStartPosition(compilationUnit, previousMember);
+            Tree currentMember = members.get(i);
+            long currentStartOffset = sourcePositions.getStartPosition(compilationUnit, currentMember);
+            if (i < size - 1) {
+                if (abbreviation.getStartOffset() < previousStartOffset) {
+                    return false;
+                } else if (previousStartOffset < abbreviation.getStartOffset()
+                        && abbreviation.getStartOffset() < currentStartOffset
+                        && previousMember.getKind() == Tree.Kind.METHOD
+                        && currentMember.getKind() == Tree.Kind.METHOD) {
+                    return true;
+                }
+            } else {
+                if (currentStartOffset < abbreviation.getStartOffset()) {
+                    return currentMember.getKind() == Tree.Kind.METHOD;
+                }
+            }
+        }
+        return false;
     }
 
     private void insertCompilationUnitTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
