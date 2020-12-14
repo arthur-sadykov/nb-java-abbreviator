@@ -785,8 +785,7 @@ public class JavaSourceHelper {
                 if (name.isEmpty()) {
                     return (VariableElement) element;
                 }
-                int d = ElementHeaders.getDistance(element.getSimpleName().toString()
-                        .toLowerCase(), name.toLowerCase());
+                int d = ElementHeaders.getDistance(element.getSimpleName().toString().toLowerCase(), name.toLowerCase());
                 if (isSameType(element.asType(), type, types)) {
                     d -= 1000;
                 }
@@ -3732,7 +3731,7 @@ public class JavaSourceHelper {
 
     private String returnVar(CompilationController controller) {
         String methodType = owningMethodType(controller);
-        if (methodType == null) {
+        if (methodType == null || methodType.equals(VOID)) {
             return null;
         }
         VariableElement variable = instanceOf(methodType, "", controller); //NOI18N
@@ -3754,8 +3753,6 @@ public class JavaSourceHelper {
                     return EMPTY_CHAR;
                 case BOOLEAN:
                     return TRUE;
-                case VOID:
-                    return null;
                 case STRING:
                     return EMPTY_STRING;
                 default:
