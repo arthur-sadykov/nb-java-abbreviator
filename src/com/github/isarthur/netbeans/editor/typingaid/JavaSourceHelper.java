@@ -52,6 +52,7 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.ParameterizedTypeTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Scope;
@@ -550,6 +551,9 @@ public class JavaSourceHelper {
                         break;
                     case OR_ASSIGNMENT:
                         insertCompoundAssignmentTree(fragment, copy, make, Tree.Kind.OR_ASSIGNMENT);
+                        break;
+                    case PARAMETERIZED_TYPE:
+                        insertParameterizedTypeTree(fragment, copy, make);
                         break;
                     case PARENTHESIZED:
                         insertParenthesizedTree(fragment, copy, make);
@@ -2558,7 +2562,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -2591,7 +2595,7 @@ public class JavaSourceHelper {
                 switch (currentTree.getKind()) {
                     case BLOCK:
                         BlockTree currentBlock = (BlockTree) currentTree;
-                        insertIndex = findInsertIndexInBlock(currentBlock, copy);
+                        insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
                         if (insertIndex == -1) {
                             return;
                         }
@@ -2679,7 +2683,7 @@ public class JavaSourceHelper {
                 switch (currentTree.getKind()) {
                     case BLOCK:
                         BlockTree currentBlockTree = (BlockTree) currentTree;
-                        insertIndex = findInsertIndexInBlock(currentBlockTree, copy);
+                        insertIndex = findInsertIndexInBlockTree(currentBlockTree, copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -2737,7 +2741,7 @@ public class JavaSourceHelper {
                 }
                 int insertIndex;
                 BlockTree currentBlock = (BlockTree) currentTree;
-                insertIndex = findInsertIndexInBlock(currentBlock, copy);
+                insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
                 if (insertIndex == -1) {
                     return;
                 }
@@ -2808,7 +2812,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3006,7 +3010,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3356,7 +3360,7 @@ public class JavaSourceHelper {
                     return;
                 }
                 BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+                int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
                 if (insertIndex == -1) {
                     return;
                 }
@@ -3430,7 +3434,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3511,7 +3515,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3588,7 +3592,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3654,7 +3658,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3666,7 +3670,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private int findInsertIndexInBlock(BlockTree blockTree, CompilationController controller) {
+    private int findInsertIndexInBlockTree(BlockTree blockTree, CompilationController controller) {
         Trees trees = controller.getTrees();
         CompilationUnitTree compilationUnit = controller.getCompilationUnit();
         List<? extends StatementTree> statements = blockTree.getStatements();
@@ -3928,7 +3932,7 @@ public class JavaSourceHelper {
                 EnumSet.of(Tree.Kind.BLOCK, Tree.Kind.CLASS, Tree.Kind.VARIABLE),
                 treeUtilities.pathFor(sequence.offset()));
         Supplier<Void> insertStatementInBlock = () -> {
-            int insertIndex = findInsertIndexInBlock(currentTree, copy);
+            int insertIndex = findInsertIndexInBlockTree(currentTree, copy);
             if (insertIndex == -1) {
                 return null;
             }
@@ -4648,7 +4652,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlock(currentBlock, copy);
+        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -4881,6 +4885,83 @@ public class JavaSourceHelper {
 
     private int findInsertIndexForInvocationArgument(NewClassTree newClassTree) {
         return findInsertIndexForArgument(newClassTree.getArguments());
+    }
+
+    private void insertParameterizedTypeTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        ParameterizedTypeTree currentTree =
+                (ParameterizedTypeTree) getCurrentTreeOfKind(copy, Tree.Kind.PARAMETERIZED_TYPE);
+        if (currentTree == null) {
+            return;
+        }
+        ExpressionTree expression = getExpressionToInsert(fragment, make);
+        int insertIndex = findInsertIndexInParameterizedTypeTree(currentTree, copy);
+        if (insertIndex == -1) {
+            return;
+        }
+        ParameterizedTypeTree newTree =
+                make.insertParameterizedTypeTypeArgument(currentTree, insertIndex, expression);
+        copy.rewrite(currentTree, newTree);
+    }
+
+    private int findInsertIndexInParameterizedTypeTree(
+            ParameterizedTypeTree parameterizedTypeTree, CompilationController controller) {
+        Trees trees = controller.getTrees();
+        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+        List<? extends Tree> typeArguments = parameterizedTypeTree.getTypeArguments();
+        SourcePositions sourcePositions = trees.getSourcePositions();
+        int size = typeArguments.size();
+        switch (size) {
+            case 0: {
+                return 0;
+            }
+            case 1: {
+                Tree currentTypeArgument = typeArguments.get(0);
+                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeArgument);
+                if (abbreviation.getStartOffset() < currentStartPosition) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+            case 2: {
+                Tree previousTypeArgument = typeArguments.get(0);
+                long previousStartPosition =
+                        sourcePositions.getStartPosition(compilationUnit, previousTypeArgument);
+                Tree currentTypeArgument = typeArguments.get(1);
+                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeArgument);
+                if (abbreviation.getStartOffset() < previousStartPosition) {
+                    return 0;
+                } else if (currentStartPosition < abbreviation.getStartOffset()) {
+                    return size;
+                } else {
+                    return 1;
+                }
+            }
+            default: {
+                for (int i = 1; i < size; i++) {
+                    Tree previousTypeArgument = typeArguments.get(i - 1);
+                    long previousStartPosition =
+                            sourcePositions.getStartPosition(compilationUnit, previousTypeArgument);
+                    Tree currentTypeArgument = typeArguments.get(i);
+                    long currentStartPosition =
+                            sourcePositions.getStartPosition(compilationUnit, currentTypeArgument);
+                    if (i < size - 1) {
+                        if (abbreviation.getStartOffset() < previousStartPosition) {
+                            return i - 1;
+                        } else if (previousStartPosition < abbreviation.getStartOffset()
+                                && abbreviation.getStartOffset() < currentStartPosition) {
+                            return i;
+                        }
+                    } else {
+                        if (abbreviation.getStartOffset() < currentStartPosition) {
+                            return size - 1;
+                        }
+                        return size;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     private void insertParenthesizedTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
