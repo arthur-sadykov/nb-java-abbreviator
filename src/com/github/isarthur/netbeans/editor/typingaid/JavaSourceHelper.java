@@ -4978,8 +4978,8 @@ public class JavaSourceHelper {
         }
         ExpressionTree expression = getExpressionToInsert(fragment, make);
         ReturnTree newTree;
-        Type typeFragment = (Type) fragment;
         if (fragment.getKind() == CodeFragment.Kind.TYPE) {
+            Type typeFragment = (Type) fragment;
             TypeElement type = typeFragment.getType();
             List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
             int minNumberOfParameters = Integer.MAX_VALUE;
