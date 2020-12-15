@@ -30,6 +30,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import junit.framework.Test;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertArrayEquals;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.JavaSource;
@@ -771,7 +773,11 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList("void"));
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "void method() {"
+                        + System.lineSeparator()
+                        + "}"));
     }
 
     public void testVoidKeywordCompletionInInterface() throws IOException {
@@ -784,7 +790,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    void method();\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList("void"));
+                Collections.singletonList("void method();"));
     }
 
     public void testVoidKeywordCompletionInEnum() throws IOException {
@@ -801,7 +807,11 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList("void"));
+                Collections.singletonList(
+                        System.lineSeparator()
+                        + "void method() {"
+                        + System.lineSeparator()
+                        + "}"));
     }
 
     public void testImportKeywordCompletion() throws IOException {

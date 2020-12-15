@@ -638,11 +638,68 @@ public class JavaSourceHelper {
                 return insertThrowStatement();
             case "try": //NOI18N
                 return insertTryStatement();
+            case "void": //NOI18N
+                return insertVoidMethod();
             case "while": //NOI18N
                 return insertWhileStatement();
             default:
                 return Collections.emptyList();
         }
+    }
+
+    private List<CodeFragment> insertVoidMethod() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToParsedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree classEnumOrInterfaceTree = currentPath.getLeaf();
+                if (classEnumOrInterfaceTree.getKind() != Tree.Kind.CLASS
+                        && classEnumOrInterfaceTree.getKind() != Tree.Kind.ENUM
+                        && classEnumOrInterfaceTree.getKind() != Tree.Kind.INTERFACE) {
+                    return;
+                }
+                int insertIndex;
+                MethodTree method;
+                TreeMaker make = copy.getTreeMaker();
+                switch (classEnumOrInterfaceTree.getKind()) {
+                    case CLASS:
+                    case ENUM:
+                        ClassTree classOrEnumTree = (ClassTree) classEnumOrInterfaceTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(classOrEnumTree, copy);
+                        method =
+                                make.Method(
+                                        make.Modifiers(Collections.emptySet()),
+                                        "method", //NOI18N
+                                        make.PrimitiveType(TypeKind.VOID),
+                                        Collections.emptyList(),
+                                        Collections.emptyList(),
+                                        Collections.emptyList(),
+                                        make.Block(Collections.emptyList(), false),
+                                        null);
+                        ClassTree newClassOrEnumTree = make.insertClassMember(classOrEnumTree, insertIndex, method);
+                        copy.rewrite(classEnumOrInterfaceTree, newClassOrEnumTree);
+                        statements.add(new Statement(method.toString()));
+                        break;
+                    case INTERFACE:
+                        ClassTree interfaceTree = (ClassTree) classEnumOrInterfaceTree;
+                        insertIndex = findInsertIndexInClassEnumOrInterface(interfaceTree, copy);
+                        IdentifierTree methodTree = make.Identifier("void method();"); //NOI18N
+                        ClassTree newInterfaceTree = make.insertClassMember(interfaceTree, insertIndex, methodTree);
+                        copy.rewrite(classEnumOrInterfaceTree, newInterfaceTree);
+                        statements.add(new Statement(methodTree.toString()));
+                        break;
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
     }
 
     List<MethodInvocation> collectLocalMethodInvocations(CompilationController controller) {
@@ -4329,43 +4386,6 @@ public class JavaSourceHelper {
         ExpressionTree returnValue = null;
         MethodTree method;
         switch (fragment.getKind()) {
-            case KEYWORD:
-                if (fragment.toString().equals("void")) { //NOI18N
-                    if (currentPath.getLeaf().getKind() != Tree.Kind.CLASS
-                            && currentPath.getLeaf().getKind() != Tree.Kind.ENUM
-                            && currentPath.getLeaf().getKind() != Tree.Kind.INTERFACE) {
-                        return;
-                    }
-                    Tree classEnumOrInterfaceTree = currentPath.getLeaf();
-                    switch (classEnumOrInterfaceTree.getKind()) {
-                        case CLASS:
-                        case ENUM:
-                            ClassTree classOrEnumTree = (ClassTree) classEnumOrInterfaceTree;
-                            insertIndex = findInsertIndexInClassEnumOrInterface(classOrEnumTree, copy);
-                            method =
-                                    make.Method(
-                                            make.Modifiers(Collections.emptySet()),
-                                            "method", //NOI18N
-                                            make.PrimitiveType(TypeKind.VOID),
-                                            Collections.emptyList(),
-                                            Collections.emptyList(),
-                                            Collections.emptyList(),
-                                            make.Block(Collections.emptyList(), false),
-                                            null);
-                            ClassTree newClassOrEnumTree = make.insertClassMember(classOrEnumTree, insertIndex, method);
-                            copy.rewrite(classEnumOrInterfaceTree, newClassOrEnumTree);
-                            break;
-                        case INTERFACE:
-                            ClassTree interfaceTree = (ClassTree) classEnumOrInterfaceTree;
-                            insertIndex = findInsertIndexInClassEnumOrInterface(interfaceTree, copy);
-                            IdentifierTree methodTree = make.Identifier("void method();"); //NOI18N
-                            ClassTree newInterfaceTree = make.insertClassMember(interfaceTree, insertIndex, methodTree);
-                            copy.rewrite(classEnumOrInterfaceTree, newInterfaceTree);
-                            break;
-                    }
-                    break;
-                }
-                break;
             case PRIMITIVE_TYPE:
                 switch (fragment.toString()) {
                     case "char": //NOI18N
