@@ -111,6 +111,7 @@ import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
+import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ui.ElementHeaders;
 import org.netbeans.api.lexer.Token;
@@ -434,6 +435,9 @@ public class JavaSourceHelper {
     }
 
     public List<CodeFragment> insertCodeFragment(CodeFragment fragment) {
+        if (fragment.getKind() == CodeFragment.Kind.KEYWORD) {
+            return insertKeyword((Keyword) fragment);
+        }
         try {
             JavaSource javaSource = getJavaSourceForDocument(document);
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
@@ -610,7 +614,7 @@ public class JavaSourceHelper {
         }
     }
 
-    public List<CodeFragment> insertKeyword(Keyword keyword) {
+    private List<CodeFragment> insertKeyword(Keyword keyword) {
         switch (keyword.getName()) {
             case "assert": //NOI18N
                 return insertAssertStatement();
@@ -655,7 +659,7 @@ public class JavaSourceHelper {
             case "while": //NOI18N
                 return insertWhileStatement();
             default:
-                return insertCodeFragment(keyword);
+                return Collections.emptyList();
         }
     }
 
@@ -885,8 +889,10 @@ public class JavaSourceHelper {
         List<LocalElement> result = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-        if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK
-                || TreeUtilities.CLASS_TREE_KINDS.contains(currentPath.getLeaf().getKind())) {
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        if (TreeUtilities.CLASS_TREE_KINDS.contains(currentPath.getLeaf().getKind())) {
             return Collections.emptyList();
         }
         ElementUtilities elementUtilities = controller.getElementUtilities();
@@ -3967,7 +3973,7 @@ public class JavaSourceHelper {
         copy.rewrite(currentTree, newTree);
     }
 
-    public void insertBlockTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+    private void insertBlockTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
         BlockTree currentTree = (BlockTree) getCurrentTreeOfKind(copy, Tree.Kind.BLOCK);
         if (currentTree == null) {
             return;
@@ -3991,6 +3997,55 @@ public class JavaSourceHelper {
             LiteralTree initializer = null;
             Types types = copy.getTypes();
             switch (fragment.getKind()) {
+                case KEYWORD:
+                    newTree = make.insertBlockStatement(
+                            currentTree,
+                            insertIndex,
+                            make.ExpressionStatement(make.Identifier(fragment.toString())));
+                    copy.rewrite(currentTree, newTree);
+                    break;
+                case LOCAL_ELEMENT:
+                    LocalElement localElement = (LocalElement) fragment;
+                    Element element = localElement.getElement();
+                    TypeMirror typeMirror = element.asType();
+                    CharSequence typeName =
+                            copy.getTypeUtilities().getTypeName(typeMirror, TypeUtilities.TypeNameOptions.PRINT_FQN);
+                    String expression;
+                    switch (typeName.toString()) {
+                        case BYTE:
+                        case SHORT:
+                        case INT:
+                            expression = ZERO;
+                            break;
+                        case LONG:
+                            expression = ZERO_L;
+                            break;
+                        case FLOAT:
+                            expression = ZERO_DOT_ZERO_F;
+                            break;
+                        case DOUBLE:
+                            expression = ZERO_DOT_ZERO;
+                            break;
+                        case CHAR:
+                            expression = EMPTY_CHAR;
+                            break;
+                        case BOOLEAN:
+                            expression = TRUE;
+                            break;
+                        case STRING:
+                            expression = EMPTY_STRING;
+                            break;
+                        default:
+                            expression = NULL;
+                    }
+                    AssignmentTree assignmentTree =
+                            make.Assignment(make.Identifier(fragment.toString()), make.Identifier(expression));
+                    newTree = make.insertBlockStatement(
+                            currentTree,
+                            insertIndex,
+                            make.ExpressionStatement(assignmentTree));
+                    copy.rewrite(currentTree, newTree);
+                    break;
                 case METHOD_INVOCATION:
                     MethodInvocation invocation = (MethodInvocation) fragment;
                     if (isMethodReturnVoid(invocation.getMethod())) {
@@ -4000,13 +4055,6 @@ public class JavaSourceHelper {
                         VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
                         newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
                     }
-                    copy.rewrite(currentTree, newTree);
-                    break;
-                case KEYWORD:
-                    newTree = make.insertBlockStatement(
-                            currentTree,
-                            insertIndex,
-                            make.ExpressionStatement(make.Identifier(fragment.toString())));
                     copy.rewrite(currentTree, newTree);
                     break;
                 case PRIMITIVE_TYPE:
@@ -5079,7 +5127,7 @@ public class JavaSourceHelper {
         copy.rewrite(currentTree, newTree);
     }
 
-    public void insertVariableTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+    private void insertVariableTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
         VariableTree currentVariable = (VariableTree) getCurrentTreeOfKind(copy, Tree.Kind.VARIABLE);
         if (currentVariable == null) {
             return;

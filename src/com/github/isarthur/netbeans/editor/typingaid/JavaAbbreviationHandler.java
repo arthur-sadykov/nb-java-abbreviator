@@ -246,7 +246,7 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                                     } else if (!importedTypes.isEmpty()) {
                                         codeFragments.addAll(helper.insertCodeFragment(importedTypes.get(0)));
                                     } else if (!keywords.isEmpty()) {
-                                        codeFragments.addAll(helper.insertKeyword(keywords.get(0)));
+                                        codeFragments.addAll(helper.insertCodeFragment(keywords.get(0)));
                                     } else if (!modifiers.isEmpty()) {
                                         codeFragments.addAll(helper.insertCodeFragment(modifiers.get(0)));
                                     } else {
