@@ -166,6 +166,33 @@ public class LocalElementCompletionTest extends NbTestCase {
                 Arrays.asList("numberOfClasses"));
     }
 
+    public void testLocalElementCompletionInCaseTree() throws IOException {
+        doAbbreviationInsert(
+                "noc",
+                "class Test {\n"
+                + "    int numberOfClasses = 0;\n"
+                + "    void test() {\n"
+                + "        switch (0) {\n"
+                + "            case 0:\n"
+                + "                |\n"
+                + "                break;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    int numberOfClasses = 0;\n"
+                + "    void test() {\n"
+                + "        switch (0) {\n"
+                + "            case 0:\n"
+                + "            numberOfClasses = 0;\n"
+                + "                \n"
+                + "                break;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("numberOfClasses"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

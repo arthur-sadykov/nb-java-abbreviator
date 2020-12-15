@@ -4203,7 +4203,49 @@ public class JavaSourceHelper {
         ExpressionTree expression = getExpressionToInsert(fragment, make);
         if (sequence.token().id() != JavaTokenId.CASE) {
             int insertIndex = findInsertIndexInCaseTree(currentTree, copy);
-            newTree = make.insertCaseStatement(currentTree, insertIndex, make.ExpressionStatement(expression));
+            switch (fragment.getKind()) {
+                case LOCAL_ELEMENT:
+                    LocalElement localElement = (LocalElement) fragment;
+                    Element element = localElement.getElement();
+                    TypeMirror typeMirror = element.asType();
+                    CharSequence typeName =
+                            copy.getTypeUtilities().getTypeName(typeMirror, TypeUtilities.TypeNameOptions.PRINT_FQN);
+                    String initializer;
+                    switch (typeName.toString()) {
+                        case ConstantDataManager.BYTE:
+                        case ConstantDataManager.SHORT:
+                        case ConstantDataManager.INT:
+                            initializer = ConstantDataManager.ZERO;
+                            break;
+                        case ConstantDataManager.LONG:
+                            initializer = ConstantDataManager.ZERO_L;
+                            break;
+                        case ConstantDataManager.FLOAT:
+                            initializer = ConstantDataManager.ZERO_DOT_ZERO_F;
+                            break;
+                        case ConstantDataManager.DOUBLE:
+                            initializer = ConstantDataManager.ZERO_DOT_ZERO;
+                            break;
+                        case ConstantDataManager.CHAR:
+                            initializer = ConstantDataManager.EMPTY_CHAR;
+                            break;
+                        case ConstantDataManager.BOOLEAN:
+                            initializer = ConstantDataManager.TRUE;
+                            break;
+                        case ConstantDataManager.STRING:
+                            initializer = ConstantDataManager.EMPTY_STRING;
+                            break;
+                        default:
+                            initializer = ConstantDataManager.NULL;
+                    }
+                    AssignmentTree assignmentTree =
+                            make.Assignment(expression, make.Identifier(initializer));
+                    newTree =
+                            make.insertCaseStatement(currentTree, insertIndex, make.ExpressionStatement(assignmentTree));
+                    break;
+                default:
+                    newTree = make.insertCaseStatement(currentTree, insertIndex, make.ExpressionStatement(expression));
+            }
         } else {
             newTree = make.Case(expression, currentTree.getStatements());
         }
