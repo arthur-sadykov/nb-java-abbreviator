@@ -59,7 +59,7 @@ public class ConstantDataManager {
     public static final String ZERO_DOT_ZERO = "0.0"; //NOI18N
     public static final String ZERO_DOT_ZERO_F = "0.0F"; //NOI18N
     public static final String ZERO_L = "0L"; //NOI18N
-    private static final int KEYWORD_COUNT = 31;
+    private static final int KEYWORD_COUNT = 32;
     private static final int MODIFIER_COUNT = 11;
     private static final int PRIMITIVE_TYPE_COUNT = 9;
 
@@ -87,6 +87,7 @@ public class ConstantDataManager {
         KEYWORDS.add(new Keyword("interface")); //NOI18N
         KEYWORDS.add(new Keyword("implements")); //NOI18N
         KEYWORDS.add(new Keyword("import")); //NOI18N
+        KEYWORDS.add(new Keyword("new")); //NOI18N
         KEYWORDS.add(new Keyword("null")); //NOI18N
         KEYWORDS.add(new Keyword("Object")); //NOI18N
         KEYWORDS.add(new Keyword("return")); //NOI18N

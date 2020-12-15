@@ -194,6 +194,7 @@ public class JavaSourceHelper {
             return null;
         }
         TreeUtilities treeUtilities = controller.getTreeUtilities();
+        TypeUtilities typeUtilities = controller.getTypeUtilities();
         Trees trees = controller.getTrees();
         Types types = controller.getTypes();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -201,27 +202,28 @@ public class JavaSourceHelper {
             return null;
         }
         Tree currentTree = currentPath.getLeaf();
+        TreePath path;
+        ExpressionTree expression;
+        Element currentElement;
+        int insertIndex;
         switch (currentTree.getKind()) {
-            case ASSIGNMENT: {
+            case ASSIGNMENT:
                 AssignmentTree assignmentTree = (AssignmentTree) currentTree;
                 ExpressionTree variable = assignmentTree.getVariable();
-                TreePath path = TreePath.getPath(currentPath, variable);
+                path = TreePath.getPath(currentPath, variable);
                 return trees.getElement(path).asType();
-            }
             case BLOCK:
-            case PARENTHESIZED: {
+            case PARENTHESIZED:
                 return null;
-            }
-            case CASE: {
+            case CASE:
                 TreePath switchPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
                 if (switchPath == null) {
                     break;
                 }
                 SwitchTree switchTree = (SwitchTree) switchPath.getLeaf();
-                ExpressionTree expression = switchTree.getExpression();
+                expression = switchTree.getExpression();
                 TreePath expressionPath = TreePath.getPath(switchPath, expression);
                 return trees.getTypeMirror(expressionPath);
-            }
             case DIVIDE:
             case EQUAL_TO:
             case GREATER_THAN:
@@ -232,9 +234,8 @@ public class JavaSourceHelper {
             case MULTIPLY:
             case NOT_EQUAL_TO:
             case PLUS:
-            case REMAINDER: {
+            case REMAINDER:
                 return types.getPrimitiveType(TypeKind.DOUBLE);
-            }
             case AND:
             case AND_ASSIGNMENT:
             case ARRAY_ACCESS:
@@ -252,50 +253,49 @@ public class JavaSourceHelper {
             case UNSIGNED_RIGHT_SHIFT:
             case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
             case XOR:
-            case XOR_ASSIGNMENT: {
+            case XOR_ASSIGNMENT:
                 return types.getPrimitiveType(TypeKind.LONG);
-            }
             case CONDITIONAL_AND:
             case CONDITIONAL_OR:
-            case LOGICAL_COMPLEMENT: {
+            case LOGICAL_COMPLEMENT:
                 return types.getPrimitiveType(TypeKind.BOOLEAN);
-            }
-            case MEMBER_SELECT: {
-                ExpressionTree expression = ((MemberSelectTree) currentTree).getExpression();
-                TreePath path = TreePath.getPath(currentPath, expression);
+            case MEMBER_SELECT:
+                expression = ((MemberSelectTree) currentTree).getExpression();
+                path = TreePath.getPath(currentPath, expression);
                 return trees.getTypeMirror(path);
-            }
-            case METHOD_INVOCATION: {
-                int insertIndex = findIndexOfCurrentArgumentInMethod((MethodInvocationTree) currentTree);
-                Element element = trees.getElement(currentPath);
-                if (element.getKind() == ElementKind.METHOD) {
-                    List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
-                    if (insertIndex != -1) {
-                        VariableElement parameter = parameters.get(insertIndex);
-                        return parameter.asType();
-                    }
+            case METHOD_INVOCATION:
+                insertIndex = findInsertIndexForInvocationArgument((MethodInvocationTree) currentTree);
+                if (insertIndex == -1) {
+                    return null;
+                }
+                currentElement = trees.getElement(currentPath);
+                if (currentElement.getKind() == ElementKind.METHOD) {
+                    List<? extends VariableElement> parameters = ((ExecutableElement) currentElement).getParameters();
+                    VariableElement parameter = parameters.get(insertIndex);
+                    return typeUtilities.getDenotableType(parameter.asType());
                 }
                 return null;
-            }
-            case VARIABLE: {
+            case NEW_CLASS:
+                insertIndex = findInsertIndexForInvocationArgument((NewClassTree) currentTree);
+                if (insertIndex == -1) {
+                    return null;
+                }
+                currentElement = trees.getElement(currentPath);
+                if (currentElement.getKind() == ElementKind.CONSTRUCTOR) {
+                    List<? extends VariableElement> parameters = ((ExecutableElement) currentElement).getParameters();
+                    VariableElement parameter = parameters.get(insertIndex);
+                    return typeUtilities.getDenotableType(parameter.asType());
+                }
+                return null;
+            case VARIABLE:
                 VariableTree variableTree = (VariableTree) currentTree;
                 Tree type = variableTree.getType();
-                TreePath path = TreePath.getPath(currentPath, type);
+                path = TreePath.getPath(currentPath, type);
                 return trees.getElement(path).asType();
-            }
+            case RETURN:
+                return type(owningMethodType(controller), controller);
         }
         return null;
-    }
-
-    private int findIndexOfCurrentArgumentInMethod(MethodInvocationTree methodInvocationTree) {
-        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
-        for (int i = 0; i < arguments.size(); i++) {
-            ExpressionTree argument = arguments.get(i);
-            if (argument.toString().equals(abbreviation.getContent())) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private String getVariableName(TypeMirror typeMirror, CompilationController controller) {
@@ -625,6 +625,8 @@ public class JavaSourceHelper {
                 return insertImportStatement();
             case "interface": //NOI18N
                 return insertInterfaceDeclaration();
+            case "new": //NOI18N
+                return insertNewStatement();
             case "return": //NOI18N
                 return insertReturnStatement();
             case "switch": //NOI18N
@@ -1248,6 +1250,16 @@ public class JavaSourceHelper {
                                 break;
                         }
                         break;
+                    case "new": //NOI18N
+                        switch (currentPath.getLeaf().getKind()) {
+                            case ASSIGNMENT:
+                            case METHOD_INVOCATION:
+                            case NEW_CLASS:
+                            case RETURN:
+                            case VARIABLE:
+                                keywords.add(keyword);
+                                break;
+                        }
                 }
             }
         }
@@ -5058,6 +5070,87 @@ public class JavaSourceHelper {
         copy.rewrite(currentTree, newTree);
     }
 
+    private List<CodeFragment> insertNewStatement() {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        try {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            javaSource.runModificationTask(copy -> {
+                moveStateToParsedPhase(copy);
+                TreeUtilities treeUtilities = copy.getTreeUtilities();
+                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+                if (currentPath == null) {
+                    return;
+                }
+                Tree currentTree = currentPath.getLeaf();
+                TreeMaker make = copy.getTreeMaker();
+                TypeMirror typeInContext = getTypeInContext(copy);
+                if (typeInContext == null) {
+                    return;
+                }
+                Element type = copy.getTypes().asElement(typeInContext);
+                if (type == null) {
+                    return;
+                }
+                NewClassTree newClassTree = createNewClassTree(make, type, copy);
+                if (newClassTree == null) {
+                    return;
+                }
+                int insertIndex;
+                switch (currentTree.getKind()) {
+                    case ASSIGNMENT:
+                        AssignmentTree currentAssignmentTree = (AssignmentTree) currentTree;
+                        AssignmentTree newAssignmentTree =
+                                make.Assignment(currentAssignmentTree.getVariable(), newClassTree);
+                        copy.rewrite(currentAssignmentTree, newAssignmentTree);
+                        statements.add(new Statement(newClassTree.toString()));
+                        break;
+                    case METHOD_INVOCATION:
+                        MethodInvocationTree currentMethodInvocationTree = (MethodInvocationTree) currentTree;
+                        insertIndex = findInsertIndexForInvocationArgument(currentMethodInvocationTree);
+                        MethodInvocationTree newMethodInvocationTree =
+                                make.insertMethodInvocationArgument(currentMethodInvocationTree, insertIndex, newClassTree);
+                        copy.rewrite(currentMethodInvocationTree, newMethodInvocationTree);
+                        statements.add(new Statement(newClassTree.toString()));
+                        break;
+                    case NEW_CLASS:
+                        NewClassTree currentNewClassTree = (NewClassTree) currentTree;
+                        insertIndex = findInsertIndexForInvocationArgument(currentNewClassTree);
+                        NewClassTree newNewClassTree =
+                                make.insertNewClassArgument(currentNewClassTree, insertIndex, newClassTree);
+                        copy.rewrite(currentNewClassTree, newNewClassTree);
+                        statements.add(new Statement(newClassTree.toString()));
+                        break;
+                    case PARENTHESIZED:
+                        ParenthesizedTree currentParenthesizedTree = (ParenthesizedTree) currentTree;
+                        ParenthesizedTree newParenthesizedTree = make.Parenthesized(newClassTree);
+                        copy.rewrite(currentParenthesizedTree, newParenthesizedTree);
+                        statements.add(new Statement(newClassTree.toString()));
+                        break;
+                    case VARIABLE:
+                        VariableTree currentVariableTree = (VariableTree) currentTree;
+                        VariableTree newVariableTree =
+                                make.Variable(
+                                        currentVariableTree.getModifiers(),
+                                        currentVariableTree.getName(),
+                                        currentVariableTree.getType(),
+                                        newClassTree);
+                        copy.rewrite(currentVariableTree, newVariableTree);
+                        statements.add(new Statement(newClassTree.toString()));
+                        break;
+                    case RETURN:
+                        ReturnTree currentReturnTree = (ReturnTree) currentTree;
+                        ReturnTree newReturnTree = make.Return(newClassTree);
+                        copy.rewrite(currentReturnTree, newReturnTree);
+                        statements.add(new Statement(newClassTree.toString()));
+                        break;
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
     private int findInsertIndexForInvocationArgument(NewClassTree newClassTree) {
         return findInsertIndexForArgument(newClassTree.getArguments());
     }
@@ -5159,40 +5252,47 @@ public class JavaSourceHelper {
         if (fragment.getKind() == CodeFragment.Kind.TYPE) {
             Type typeFragment = (Type) fragment;
             TypeElement type = typeFragment.getType();
-            List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
-            int minNumberOfParameters = Integer.MAX_VALUE;
-            ExecutableElement targetConstructor = null;
-            for (ExecutableElement constructor : constructors) {
-                int currentNumberOfParameters = constructor.getParameters().size();
-                if (currentNumberOfParameters < minNumberOfParameters) {
-                    minNumberOfParameters = currentNumberOfParameters;
-                    targetConstructor = constructor;
-                }
-            }
-            NewClassTree newClassTree;
-            if (targetConstructor != null) {
-                List<ExpressionTree> constructorArguments = evaluateMethodArguments(targetConstructor);
-                newClassTree =
-                        make.NewClass(
-                                null,
-                                Collections.emptyList(),
-                                make.QualIdent(typeFragment.toString()),
-                                constructorArguments,
-                                null);
-            } else {
-                newClassTree =
-                        make.NewClass(
-                                null,
-                                Collections.emptyList(),
-                                make.QualIdent(typeFragment.toString()),
-                                Collections.emptyList(),
-                                null);
+            NewClassTree newClassTree = createNewClassTree(make, type, copy);
+            if (newClassTree == null) {
+                return;
             }
             newTree = make.Return(newClassTree);
         } else {
             newTree = make.Return(expression);
         }
         copy.rewrite(currentTree, newTree);
+    }
+
+    private NewClassTree createNewClassTree(TreeMaker make, Element type, CompilationController controller) {
+        List<ExecutableElement> constructors = getConstructorsIn(type, controller);
+        int minNumberOfParameters = Integer.MAX_VALUE;
+        ExecutableElement targetConstructor = null;
+        for (ExecutableElement constructor : constructors) {
+            int currentNumberOfParameters = constructor.getParameters().size();
+            if (currentNumberOfParameters < minNumberOfParameters) {
+                minNumberOfParameters = currentNumberOfParameters;
+                targetConstructor = constructor;
+            }
+        }
+        if (targetConstructor != null) {
+            List<ExpressionTree> constructorArguments = evaluateMethodArguments(targetConstructor);
+            return make.NewClass(
+                    null,
+                    Collections.emptyList(),
+                    make.QualIdent(type.toString()),
+                    constructorArguments,
+                    null);
+        }
+        return null;
+    }
+
+    private List<ExecutableElement> getConstructorsIn(Element type, CompilationController controller) {
+        Elements elements = controller.getElements();
+        List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements()).stream()
+                .filter(constructor -> !elements.isDeprecated(constructor)
+                        && constructor.getModifiers().contains(Modifier.PUBLIC))
+                .collect(Collectors.toList());
+        return Collections.unmodifiableList(constructors);
     }
 
     private void insertUnaryTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make, Tree.Kind kind) {
