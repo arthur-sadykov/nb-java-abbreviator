@@ -76,11 +76,20 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                         }
                         List<MethodInvocation> staticMethodInvocations = Collections.emptyList();
                         if (Settings.getSettingForStaticMethodInvocation()) {
-                            staticMethodInvocations = helper.collectStaticMethodInvocations(controller);
+                            if (Settings.getSettingForStaticMethodInvocationImportedTypes()) {
+                                staticMethodInvocations =
+                                        helper.collectStaticMethodInvocationsForImportedTypes(controller);
+                            } else {
+                                staticMethodInvocations = helper.collectStaticMethodInvocations(controller);
+                            }
                         }
                         List<FieldAccess> fieldAccesses = Collections.emptyList();
                         if (Settings.getSettingForStaticFieldAccess()) {
-                            fieldAccesses = helper.collectFieldAccesses(controller);
+                            if (Settings.getSettingForStaticFieldAccessImportedTypes()) {
+                                fieldAccesses = helper.collectStaticFieldAccessesForImportedTypes(controller);
+                            } else {
+                                fieldAccesses = helper.collectStaticFieldAccesses(controller);
+                            }
                         }
                         int matchesCount = methodInvocations.size() + staticMethodInvocations.size()
                                 + fieldAccesses.size();
@@ -106,11 +115,20 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
                     } else {
                         List<MethodInvocation> staticMethodInvocations = Collections.emptyList();
                         if (Settings.getSettingForStaticMethodInvocation()) {
-                            staticMethodInvocations = helper.collectStaticMethodInvocations(controller);
+                            if (Settings.getSettingForStaticMethodInvocationImportedTypes()) {
+                                staticMethodInvocations =
+                                        helper.collectStaticMethodInvocationsForImportedTypes(controller);
+                            } else {
+                                staticMethodInvocations = helper.collectStaticMethodInvocations(controller);
+                            }
                         }
                         List<FieldAccess> fieldAccesses = Collections.emptyList();
                         if (Settings.getSettingForStaticFieldAccess()) {
-                            fieldAccesses = helper.collectFieldAccesses(controller);
+                            if (Settings.getSettingForStaticFieldAccessImportedTypes()) {
+                                fieldAccesses = helper.collectStaticFieldAccessesForImportedTypes(controller);
+                            } else {
+                                fieldAccesses = helper.collectStaticFieldAccesses(controller);
+                            }
                         }
                         int matchesCount = staticMethodInvocations.size() + fieldAccesses.size();
                         switch (matchesCount) {

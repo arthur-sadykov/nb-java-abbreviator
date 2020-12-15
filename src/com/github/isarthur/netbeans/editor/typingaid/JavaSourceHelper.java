@@ -341,7 +341,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableSet(elementKinds);
     }
 
-    List<TypeElement> collectTypesByAbbreviation(CompilationController controller) {
+    private List<TypeElement> collectTypesByAbbreviation(CompilationController controller) {
         JavaSource javaSource = getJavaSourceForDocument(document);
         ClasspathInfo classpathInfo = javaSource.getClasspathInfo();
         ClassIndex classIndex = classpathInfo.getClassIndex();
@@ -885,6 +885,21 @@ public class JavaSourceHelper {
     List<MethodInvocation> collectStaticMethodInvocations(CompilationController controller) {
         List<MethodInvocation> methodInvocations = new ArrayList<>();
         List<TypeElement> typeElements = collectTypesByAbbreviation(controller);
+        typeElements.forEach(element -> {
+            List<ExecutableElement> methods = getStaticMethodsInClass(element);
+            methods = getMethodsByAbbreviation(methods);
+            methods.forEach(method -> {
+                List<ExpressionTree> arguments = evaluateMethodArguments(method);
+                methodInvocations.add(new MethodInvocation(element, method, arguments, this));
+            });
+        });
+        Collections.sort(methodInvocations);
+        return Collections.unmodifiableList(methodInvocations);
+    }
+
+    List<MethodInvocation> collectStaticMethodInvocationsForImportedTypes(CompilationController controller) {
+        List<MethodInvocation> methodInvocations = new ArrayList<>();
+        List<TypeElement> typeElements = collectImportedTypeElements(controller);
         typeElements.forEach(element -> {
             List<ExecutableElement> methods = getStaticMethodsInClass(element);
             methods = getMethodsByAbbreviation(methods);
@@ -2380,9 +2395,34 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(methodInvocations);
     }
 
-    List<FieldAccess> collectFieldAccesses(CompilationController controller) {
+    List<FieldAccess> collectStaticFieldAccesses(CompilationController controller) {
         List<FieldAccess> fieldAccesses = new ArrayList<>();
         List<TypeElement> typeElements = collectTypesByAbbreviation(controller);
+        typeElements.forEach(typeElement -> {
+            try {
+                List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
+                enclosedElements.stream().filter(element ->
+                        ((element.getKind() == ElementKind.FIELD
+                        && element.getModifiers().contains(Modifier.PUBLIC)
+                        && element.getModifiers().contains(Modifier.STATIC)
+                        && element.getModifiers().contains(Modifier.FINAL))
+                        || element.getKind() == ElementKind.ENUM_CONSTANT)).forEachOrdered(element -> {
+                    String elementName = element.getSimpleName().toString();
+                    String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
+                    if (abbreviation.getName().equals(elementAbbreviation)) {
+                        fieldAccesses.add(new FieldAccess(typeElement, element));
+                    }
+                });
+            } catch (AssertionError ex) {
+            }
+        });
+        Collections.sort(fieldAccesses);
+        return Collections.unmodifiableList(fieldAccesses);
+    }
+
+    List<FieldAccess> collectStaticFieldAccessesForImportedTypes(CompilationController controller) {
+        List<FieldAccess> fieldAccesses = new ArrayList<>();
+        List<TypeElement> typeElements = collectImportedTypeElements(controller);
         typeElements.forEach(typeElement -> {
             try {
                 List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
@@ -5235,6 +5275,13 @@ public class JavaSourceHelper {
 
     List<Type> collectImportedTypes(CompilationController controller) {
         List<Type> types = new ArrayList<>();
+        List<TypeElement> importedTypeElements = collectImportedTypeElements(controller);
+        importedTypeElements.forEach(importedTypeElement -> types.add(new Type(importedTypeElement)));
+        return Collections.unmodifiableList(types);
+    }
+
+    private List<TypeElement> collectImportedTypeElements(CompilationController controller) {
+        List<TypeElement> importedTypeElements = new ArrayList<>();
         Elements elements = controller.getElements();
         CompilationUnitTree compilationUnit = controller.getCompilationUnit();
         List<? extends ImportTree> imports = compilationUnit.getImports();
@@ -5252,10 +5299,10 @@ public class JavaSourceHelper {
             }
             String simpleIdentifier = qualifiedIdentifier.substring(lastDotIndex + 1);
             String typeAbbreviation = StringUtilities.getElementAbbreviation(simpleIdentifier);
-            if (typeAbbreviation.equals(abbreviation.getContent())) {
-                types.add(new Type(elements.getTypeElement(qualifiedIdentifier)));
+            if (typeAbbreviation.equals(abbreviation.getScope())) {
+                importedTypeElements.add(elements.getTypeElement(qualifiedIdentifier));
             }
         }
-        return Collections.unmodifiableList(types);
+        return Collections.unmodifiableList(importedTypeElements);
     }
 }

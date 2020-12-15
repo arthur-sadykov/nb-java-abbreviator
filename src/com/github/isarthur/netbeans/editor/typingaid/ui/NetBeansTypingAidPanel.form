@@ -42,10 +42,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
-              <Component id="completionForPanel" max="32767" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-          </Group>
+          <Component id="completionForPanel" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -65,10 +62,9 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="staticMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="chainedMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="staticFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
@@ -83,23 +79,39 @@
                       <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="chainedMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="staticMethodInvocationImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="staticFieldAccessImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <Component id="staticMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="13" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+              <Group type="102" alignment="1" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="staticMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="staticMethodInvocationCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="staticMethodInvocationImportedTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="staticFieldAccessCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="staticFieldAccessImportedTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="32767" attributes="0"/>
+                  <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="chainedMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="staticFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -124,7 +136,7 @@
                   <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace min="-2" pref="58" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -298,6 +310,26 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="importedTypeCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="staticFieldAccessImportedTypesCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.staticFieldAccessImportedTypesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticFieldAccessImportedTypesCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="staticMethodInvocationImportedTypesCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.staticMethodInvocationImportedTypesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticMethodInvocationImportedTypesCheckBoxActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

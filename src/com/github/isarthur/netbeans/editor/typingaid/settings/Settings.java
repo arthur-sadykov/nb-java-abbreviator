@@ -40,6 +40,8 @@ public class Settings {
     private static final String KEYWORD = "keyword"; //NOI18N
     private static final String MODIFIER = "modifier"; //NOI18N
     private static final String PRIMITIVE_TYPE = "primitiveType"; //NOI18N
+    private static final String STATIC_METHOD_INVOCATION_IMPORTED_TYPES = "staticMethodInvocationImportedTypes"; //NOI18N
+    private static final String STATIC_FIELD_ACCESS_IMPORTED_TYPES = "staticFieldAccessImportedTypes"; //NOI18N
 
     private Settings() {
     }
@@ -178,5 +180,21 @@ public class Settings {
 
     public static void setSettingForPrimitiveType(boolean primitiveType) {
         NbPreferences.forModule(Settings.class).putBoolean(PRIMITIVE_TYPE, primitiveType);
+    }
+
+    public static boolean getSettingForStaticMethodInvocationImportedTypes() {
+        return NbPreferences.forModule(Settings.class).getBoolean(STATIC_METHOD_INVOCATION_IMPORTED_TYPES, true);
+    }
+
+    public static void setSettingForStaticMethodInvocationImportedTypes(boolean importedTypes) {
+        NbPreferences.forModule(Settings.class).putBoolean(STATIC_METHOD_INVOCATION_IMPORTED_TYPES, importedTypes);
+    }
+
+    public static boolean getSettingForStaticFieldAccessImportedTypes() {
+        return NbPreferences.forModule(Settings.class).getBoolean(STATIC_FIELD_ACCESS_IMPORTED_TYPES, true);
+    }
+
+    public static void setSettingForStaticFieldAccessImportedTypes(boolean importedTypes) {
+        NbPreferences.forModule(Settings.class).putBoolean(STATIC_FIELD_ACCESS_IMPORTED_TYPES, importedTypes);
     }
 }
