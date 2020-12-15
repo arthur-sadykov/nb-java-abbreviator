@@ -331,7 +331,7 @@ public class Utilities {
         } else {
             index = expression.indexOf(ConstantDataManager.ANGLED_ERROR);
             if (index == -1) {
-                return ConstantDataManager.EMPTY_STRING;
+                return ""; //NOI18N
             }
             expression = expression.substring(0, index)
                     + methodInvocation.toString()

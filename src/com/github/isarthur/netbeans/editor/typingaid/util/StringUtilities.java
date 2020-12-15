@@ -15,8 +15,6 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.util;
 
-import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
-
 /**
  *
  * @author Arthur Sadykov
@@ -28,7 +26,7 @@ public class StringUtilities {
 
     public static String getElementAbbreviation(String elementName) {
         if (elementName.isEmpty()) {
-            return ConstantDataManager.EMPTY_STRING;
+            return ""; //NOI18N
         }
         StringBuilder abbreviation = new StringBuilder();
         abbreviation.append(Character.toLowerCase(elementName.charAt(0)));

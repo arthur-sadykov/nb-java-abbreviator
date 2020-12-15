@@ -29,31 +29,36 @@ import java.util.Set;
 public class ConstantDataManager {
 
     public static final String ANGLED_ERROR = "<error>"; //NOI18N
-    public static final String ARGUMENT_MUST_BE_NON_NULL = "The argument %s must be non-null!"; //NOI18N
-    public static final String DOUBLE_ZERO_LITERAL = "0.0"; //NOI18N
-    public static final String EMPTY_STRING = ""; //NOI18N
-    public static final String FALSE = "false"; //NOI18N
-    public static final String FLOAT_ZERO_LITERAL = "0.0F"; //NOI18N
+    public static final String BOOLEAN = "boolean"; //NOI18N
+    public static final String BYTE = "byte"; //NOI18N
+    public static final String CHAR = "char"; //NOI18N
+    public static final String DOUBLE = "double"; //NOI18N
+    public static final String EMPTY_CHAR = "' '"; //NOI18N
+    public static final String EMPTY_STRING = "\"\""; //NOI18N
+    public static final String FLOAT = "float"; //NOI18N
     public static final List<Character> FORBIDDEN_FIRST_CHARS = Arrays.asList('~', '!', '@', '#', '$', '%', '^', '&',
             '*', '(', ')', '-', '+', '_', '=', '/', '{', '}', '[', ']', '|', '\\', ':', ';', '\'', '"', '<', '>', ',',
             '.', '?');
-    public static final String INTEGER_ZERO_LITERAL = "0"; //NOI18N
-    public static final String INVALID_CHARS_COUNT = "Invalid characters count!"; //NOI18N
-    public static final String INVALID_POSITION = "The 'position' argument is out of bounds of document!"; //NOI18N
+    public static final String INT = "int"; //NOI18N
     public static final String JAVA_SOURCE_NOT_ASSOCIATED_TO_DOCUMENT = "The Java source is not associated to document!"; //NOI18N
-    public static final String LONG_ZERO_LITERAL = "0L"; //NOI18N
     public static final Set<Keyword> KEYWORDS;
+    public static final String LONG = "long"; //NOI18N
     public static final Set<String> MODIFIERS;
-    public static final Set<PrimitiveType> PRIMITIVE_TYPES;
     public static final String NULL = "null"; //NOI18N
     public static final String PARENTHESIZED_ERROR = "(ERROR)"; //NOI18N
-    public static final String SHOULD_SET_CARET_POSITION_AND_COLLECT_LOCAL_ELEMENTS =
-            "The current caret position and local elements should be collected before calling this method!"; //NOI18N
-    public static final String SPACE = " "; //NOI18N
-    public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
+    public static final Set<PrimitiveType> PRIMITIVE_TYPES;
+    public static final String SHORT = "short"; //NOI18N
+    public static final String STRING = "java.lang.String"; //NOI18N
     public static final String STATE_IS_NOT_IN_PARSED_PHASE = "Could not move state to Phase.PARSED!"; //NOI18N
+    public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Could not move state to Phase.RESOLVED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
+    public static final String TRUE = "true"; //NOI18N
+    public static final String VOID = "void"; //NOI18N
+    public static final String ZERO = "0"; //NOI18N
+    public static final String ZERO_DOT_ZERO = "0.0"; //NOI18N
+    public static final String ZERO_DOT_ZERO_F = "0.0F"; //NOI18N
+    public static final String ZERO_L = "0L"; //NOI18N
     private static final int KEYWORD_COUNT = 31;
     private static final int MODIFIER_COUNT = 11;
     private static final int PRIMITIVE_TYPE_COUNT = 9;

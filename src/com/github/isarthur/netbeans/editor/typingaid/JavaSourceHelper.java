@@ -127,24 +127,6 @@ import org.openide.util.Parameters;
  */
 public class JavaSourceHelper {
 
-    private static final String TRUE = "true"; //NOI18N
-    private static final String NULL = "null"; //NOI18N
-    private static final String ZERO = "0"; //NOI18N
-    private static final String ZERO_L = "0L"; //NOI18N
-    private static final String ZERO_DOT_ZERO = "0.0"; //NOI18N
-    private static final String ZERO_DOT_ZERO_F = "0.0F"; //NOI18N
-    private static final String EMPTY_STRING = "\"\""; //NOI18N
-    private static final String EMPTY_CHAR = "' '"; //NOI18N
-    private static final String BYTE = "byte"; //NOI18N
-    private static final String SHORT = "short"; //NOI18N
-    private static final String INT = "int"; //NOI18N
-    private static final String LONG = "long"; //NOI18N
-    private static final String FLOAT = "float"; //NOI18N
-    private static final String DOUBLE = "double"; //NOI18N
-    private static final String CHAR = "char"; //NOI18N
-    private static final String BOOLEAN = "boolean"; //NOI18N
-    private static final String VOID = "void"; //NOI18N
-    private static final String STRING = "java.lang.String"; //NOI18N
     private final JTextComponent component;
     private final Document document;
     private Abbreviation abbreviation;
@@ -730,21 +712,21 @@ public class JavaSourceHelper {
                             } else {
                                 switch (elementType.getKind()) {
                                     case BOOLEAN:
-                                        identifierTree.set(make.Identifier(ConstantDataManager.FALSE));
+                                        identifierTree.set(make.Identifier(ConstantDataManager.TRUE));
                                         break;
                                     case BYTE:
                                     case SHORT:
                                     case INT:
-                                        identifierTree.set(make.Identifier(ConstantDataManager.INTEGER_ZERO_LITERAL));
+                                        identifierTree.set(make.Identifier(ConstantDataManager.ZERO));
                                         break;
                                     case LONG:
-                                        identifierTree.set(make.Identifier(ConstantDataManager.LONG_ZERO_LITERAL));
+                                        identifierTree.set(make.Identifier(ConstantDataManager.ZERO_L));
                                         break;
                                     case FLOAT:
-                                        identifierTree.set(make.Identifier(ConstantDataManager.FLOAT_ZERO_LITERAL));
+                                        identifierTree.set(make.Identifier(ConstantDataManager.ZERO_DOT_ZERO_F));
                                         break;
                                     case DOUBLE:
-                                        identifierTree.set(make.Identifier(ConstantDataManager.DOUBLE_ZERO_LITERAL));
+                                        identifierTree.set(make.Identifier(ConstantDataManager.ZERO_DOT_ZERO));
                                         break;
                                     default:
                                         identifierTree.set(make.Identifier(ConstantDataManager.NULL));
@@ -3785,7 +3767,7 @@ public class JavaSourceHelper {
 
     private String returnVar(CompilationController controller) {
         String methodType = owningMethodType(controller);
-        if (methodType == null || methodType.equals(VOID)) {
+        if (methodType == null || methodType.equals(ConstantDataManager.VOID)) {
             return null;
         }
         VariableElement variable = instanceOf(methodType, "", controller); //NOI18N
@@ -3793,24 +3775,24 @@ public class JavaSourceHelper {
             return variable.getSimpleName().toString();
         } else {
             switch (methodType) {
-                case BYTE:
-                case SHORT:
-                case INT:
-                    return ZERO;
-                case LONG:
-                    return ZERO_L;
-                case FLOAT:
-                    return ZERO_DOT_ZERO_F;
-                case DOUBLE:
-                    return ZERO_DOT_ZERO;
-                case CHAR:
-                    return EMPTY_CHAR;
-                case BOOLEAN:
-                    return TRUE;
-                case STRING:
-                    return EMPTY_STRING;
+                case ConstantDataManager.BYTE:
+                case ConstantDataManager.SHORT:
+                case ConstantDataManager.INT:
+                    return ConstantDataManager.ZERO;
+                case ConstantDataManager.LONG:
+                    return ConstantDataManager.ZERO_L;
+                case ConstantDataManager.FLOAT:
+                    return ConstantDataManager.ZERO_DOT_ZERO_F;
+                case ConstantDataManager.DOUBLE:
+                    return ConstantDataManager.ZERO_DOT_ZERO;
+                case ConstantDataManager.CHAR:
+                    return ConstantDataManager.EMPTY_CHAR;
+                case ConstantDataManager.BOOLEAN:
+                    return ConstantDataManager.TRUE;
+                case ConstantDataManager.STRING:
+                    return ConstantDataManager.EMPTY_STRING;
                 default:
-                    return NULL;
+                    return ConstantDataManager.NULL;
             }
         }
     }
@@ -4012,31 +3994,31 @@ public class JavaSourceHelper {
                             copy.getTypeUtilities().getTypeName(typeMirror, TypeUtilities.TypeNameOptions.PRINT_FQN);
                     String expression;
                     switch (typeName.toString()) {
-                        case BYTE:
-                        case SHORT:
-                        case INT:
-                            expression = ZERO;
+                        case ConstantDataManager.BYTE:
+                        case ConstantDataManager.SHORT:
+                        case ConstantDataManager.INT:
+                            expression = ConstantDataManager.ZERO;
                             break;
-                        case LONG:
-                            expression = ZERO_L;
+                        case ConstantDataManager.LONG:
+                            expression = ConstantDataManager.ZERO_L;
                             break;
-                        case FLOAT:
-                            expression = ZERO_DOT_ZERO_F;
+                        case ConstantDataManager.FLOAT:
+                            expression = ConstantDataManager.ZERO_DOT_ZERO_F;
                             break;
-                        case DOUBLE:
-                            expression = ZERO_DOT_ZERO;
+                        case ConstantDataManager.DOUBLE:
+                            expression = ConstantDataManager.ZERO_DOT_ZERO;
                             break;
-                        case CHAR:
-                            expression = EMPTY_CHAR;
+                        case ConstantDataManager.CHAR:
+                            expression = ConstantDataManager.EMPTY_CHAR;
                             break;
-                        case BOOLEAN:
-                            expression = TRUE;
+                        case ConstantDataManager.BOOLEAN:
+                            expression = ConstantDataManager.TRUE;
                             break;
-                        case STRING:
-                            expression = EMPTY_STRING;
+                        case ConstantDataManager.STRING:
+                            expression = ConstantDataManager.EMPTY_STRING;
                             break;
                         default:
-                            expression = NULL;
+                            expression = ConstantDataManager.NULL;
                     }
                     AssignmentTree assignmentTree =
                             make.Assignment(make.Identifier(fragment.toString()), make.Identifier(expression));
