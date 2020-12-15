@@ -72,7 +72,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -299,8 +298,7 @@ public class JavaSourceHelper {
         return -1;
     }
 
-    private Set<String> getVariableNames(TypeMirror typeMirror, CompilationController controller) {
-        Set<String> names = new HashSet<>();
+    private String getVariableName(TypeMirror typeMirror, CompilationController controller) {
         List<Element> localElements = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         ElementUtilities elementUtilities = controller.getElementUtilities();
@@ -314,13 +312,10 @@ public class JavaSourceHelper {
                             && getRequiredLocalElementKinds().contains(e.getKind());
                 });
         localMembersAndVars.forEach(localElements::add);
-        Iterator<String> nameSuggestions = Utilities.varNamesSuggestions(typeMirror, ElementKind.FIELD,
+        List<String> nameSuggestions = Utilities.varNamesSuggestions(typeMirror, ElementKind.FIELD,
                 Collections.emptySet(), null, null, controller.getTypes(), controller.getElements(), localElements,
-                CodeStyle.getDefault(document)).iterator();
-        while (nameSuggestions.hasNext()) {
-            names.add(nameSuggestions.next());
-        }
-        return Collections.unmodifiableSet(names);
+                CodeStyle.getDefault(document));
+        return nameSuggestions.isEmpty() ? "" : nameSuggestions.get(0); //NOI18N
     }
 
     private Set<ElementKind> getRequiredLocalElementKinds() {
@@ -3962,8 +3957,7 @@ public class JavaSourceHelper {
                                 make.Identifier(methodInvocation.getScope()), methodInvocationTree.toString());
                     }
                 }
-                Set<String> variableNames = getVariableNames(methodInvocation.getMethod().getReturnType(), copy);
-                String variableName = variableNames.isEmpty() ? "" : variableNames.iterator().next(); //NOI18N
+                String variableName = getVariableName(methodInvocation.getMethod().getReturnType(), copy);
                 variable.set(make.Variable(modifiers, variableName, type, initializer));
             }).commit();
         } catch (IOException ex) {
@@ -4138,7 +4132,7 @@ public class JavaSourceHelper {
                     variable =
                             make.Variable(
                                     make.Modifiers(Collections.emptySet()),
-                                    getVariableNames(type, copy).iterator().next(),
+                                    getVariableName(type, copy),
                                     make.Identifier(fragment.toString()),
                                     initializer);
                     newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
@@ -4150,7 +4144,7 @@ public class JavaSourceHelper {
                     variable =
                             make.Variable(
                                     make.Modifiers(Collections.emptySet()),
-                                    getVariableNames(type, copy).iterator().next(),
+                                    getVariableName(type, copy),
                                     make.QualIdent(fragment.toString()),
                                     initializer);
                     newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
@@ -4471,7 +4465,7 @@ public class JavaSourceHelper {
                     variable =
                             make.Variable(
                                     make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
-                                    getVariableNames(type, copy).iterator().next(),
+                                    getVariableName(type, copy),
                                     make.Identifier(fragment.toString()),
                                     null);
                     newClassEnumOrInterfaceTree =
@@ -4498,7 +4492,7 @@ public class JavaSourceHelper {
                     variable =
                             make.Variable(
                                     make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
-                                    getVariableNames(type, copy).iterator().next(),
+                                    getVariableName(type, copy),
                                     make.QualIdent(fragment.toString()),
                                     null);
                     newClassEnumOrInterfaceTree =
@@ -4937,7 +4931,7 @@ public class JavaSourceHelper {
                 variable =
                         make.Variable(
                                 make.Modifiers(Collections.emptySet()),
-                                getVariableNames(type, copy).iterator().next(),
+                                getVariableName(type, copy),
                                 make.Identifier(fragment.toString()),
                                 null);
                 newMethodTree = make.insertMethodParameter(currentMethodTree, insertIndex, variable);
@@ -4948,7 +4942,7 @@ public class JavaSourceHelper {
                 variable =
                         make.Variable(
                                 make.Modifiers(Collections.emptySet()),
-                                getVariableNames(type, copy).iterator().next(),
+                                getVariableName(type, copy),
                                 make.QualIdent(fragment.toString()),
                                 null);
                 newMethodTree = make.insertMethodParameter(currentMethodTree, insertIndex, variable);
