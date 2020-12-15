@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JEditorPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import junit.framework.Test;
@@ -94,7 +95,7 @@ public class KeywordCompletionTest extends NbTestCase {
         testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
         EditorKit kit = new NbEditorKit();
         editor = new JEditorPane();
-        editor.setEditorKit(kit);
+        SwingUtilities.invokeAndWait(() -> editor.setEditorKit(kit));
         document = editor.getDocument();
         document.putProperty(Document.StreamDescriptionProperty, testFile);
         document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
@@ -815,7 +816,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("import", "interface"));
     }
 
-    public void testReturnKeywordCompletion() throws IOException {
+    public void testReturnKeywordCompletionInBlockTree() throws IOException {
         doAbbreviationInsert(
                 "r",
                 "class Test {\n"
@@ -827,6 +828,29 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    int size() {\n"
                 + "        return 0;\n"
                 + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("return 0;"));
+    }
+
+    public void testReturnKeywordCompletionInSwitchTree() throws IOException {
+        doAbbreviationInsert(
+                "r",
+                "class Test {\n"
+                + "    int test() {\n"
+                + "        switch (0) {\n"
+                + "            case 0:\n"
+                + "                |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    int test() {\n"
+                + "        switch (0) {\n"
+                + "            case 0:\n"
+                + "            return 0;\n"
+                + "                \n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("return 0;"));
@@ -876,10 +900,5 @@ public class KeywordCompletionTest extends NbTestCase {
         Settings.setSettingForKeyword(keyword);
         Settings.setSettingForModifier(modifier);
         Settings.setSettingForPrimitiveType(primitiveType);
-    }
-
-    @Override
-    protected boolean runInEQ() {
-        return true;
     }
 }

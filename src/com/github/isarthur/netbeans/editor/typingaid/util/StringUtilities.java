@@ -32,7 +32,7 @@ public class StringUtilities {
         }
         StringBuilder abbreviation = new StringBuilder();
         abbreviation.append(Character.toLowerCase(elementName.charAt(0)));
-        if (elementName.matches("^[A-Z][A-Z]*(_([A-Z])[A-Z]*)+$")) { //NOI18N
+        if (elementName.matches("^[A-Z][A-Z]*(_([A-Z])[A-Z]*)*$")) { //NOI18N
             char previous = elementName.charAt(0);
             for (int i = 1; i < elementName.length(); i++) {
                 if (previous == '_') {

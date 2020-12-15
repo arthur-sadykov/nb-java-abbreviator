@@ -2604,7 +2604,7 @@ public class JavaSourceHelper {
                         break;
                     case SWITCH:
                         SwitchTree currentSwitch = (SwitchTree) currentTree;
-                        insertIndex = findInsertIndexInSwitchStatement(currentSwitch, copy);
+                        insertIndex = findInsertIndexInSwitchTree(currentSwitch, copy);
                         if (insertIndex == -1) {
                             return;
                         }
@@ -2641,7 +2641,7 @@ public class JavaSourceHelper {
                     return;
                 }
                 SwitchTree currentSwitch = (SwitchTree) currentTree;
-                int insertIndex = findInsertIndexInSwitchStatement(currentSwitch, copy);
+                int insertIndex = findInsertIndexInSwitchTree(currentSwitch, copy);
                 if (insertIndex == -1) {
                     return;
                 }
@@ -2911,7 +2911,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private int findInsertIndexInSwitchStatement(SwitchTree switchTree, CompilationController controller) {
+    private int findInsertIndexInSwitchTree(SwitchTree switchTree, CompilationController controller) {
         AtomicInteger insertIndex = new AtomicInteger(-1);
         Trees trees = controller.getTrees();
         CompilationUnitTree compilationUnit = controller.getCompilationUnit();
@@ -3343,35 +3343,83 @@ public class JavaSourceHelper {
     }
 
     private List<CodeFragment> insertReturnStatement() {
-        List<CodeFragment> statements = new ArrayList<>(1);
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
         try {
-            JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToResolvedPhase(copy);
-                String returnVar = returnVar(copy);
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
-                TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-                if (currentPath == null) {
-                    return;
+                if (isSwitchStatement(copy)) {
+                    fragments.addAll(insertReturnStatementInSwitch(copy));
+                } else {
+                    fragments.addAll(insertReturnStatementInBlock(copy));
                 }
-                Tree currentTree = currentPath.getLeaf();
-                if (currentTree.getKind() != Tree.Kind.BLOCK) {
-                    return;
-                }
-                BlockTree currentBlock = (BlockTree) currentTree;
-                int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
-                if (insertIndex == -1) {
-                    return;
-                }
-                TreeMaker make = copy.getTreeMaker();
-                ReturnTree returnStatement = make.Return(returnVar != null ? make.Identifier(returnVar) : null);
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, returnStatement);
-                copy.rewrite(currentBlock, newBlock);
-                statements.add(new Statement(returnStatement.toString()));
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private boolean isSwitchStatement(CompilationController controller) {
+        TreeUtilities treeUtilities = controller.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return false;
+        }
+        return currentPath.getLeaf().getKind() == Tree.Kind.SWITCH;
+    }
+
+    private List<CodeFragment> insertReturnStatementInSwitch(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.SWITCH) {
+            return Collections.emptyList();
+        }
+        SwitchTree currentSwitchTree = (SwitchTree) currentTree;
+        int insertIndex = findInsertIndexInSwitchTree(currentSwitchTree, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        List<? extends CaseTree> cases = currentSwitchTree.getCases();
+        if (!cases.isEmpty()) {
+            CaseTree currentCaseTree = cases.get(insertIndex - 1);
+            TreeMaker make = copy.getTreeMaker();
+            String returnVar = returnVar(copy);
+            ReturnTree returnTree = make.Return(returnVar != null ? make.Identifier(returnVar) : null);
+            CaseTree newCaseTree = make.addCaseStatement(currentCaseTree, returnTree);
+            copy.rewrite(currentCaseTree, newCaseTree);
+            statements.add(new Statement(returnTree.toString()));
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertReturnStatementInBlock(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexInBlockTree(currentBlockTree, copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        String returnVar = returnVar(copy);
+        ReturnTree returnTree = make.Return(returnVar != null ? make.Identifier(returnVar) : null);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, returnTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
+        statements.add(new Statement(returnTree.toString()));
         return Collections.unmodifiableList(statements);
     }
 
@@ -3765,18 +3813,20 @@ public class JavaSourceHelper {
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         Trees trees = controller.getTrees();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-        TreePath methodOrLambdaPath = treeUtilities.getPathElementOfKind(
+        TreePath path = treeUtilities.getPathElementOfKind(
                 EnumSet.of(Tree.Kind.LAMBDA_EXPRESSION, Tree.Kind.METHOD), currentPath);
-        if (methodOrLambdaPath == null) {
+        if (path == null) {
             return null;
         }
-        Tree methodOrLambda = methodOrLambdaPath.getLeaf();
-        if (methodOrLambda.getKind() == Tree.Kind.METHOD) {
-            ExecutableElement method = (ExecutableElement) trees.getElement(methodOrLambdaPath);
-            TypeMirror returnType = method.getReturnType();
-            if (returnType != null) {
-                return returnType.toString();
-            }
+        Tree tree = path.getLeaf();
+        switch (tree.getKind()) {
+            case METHOD:
+                ExecutableElement method = (ExecutableElement) trees.getElement(path);
+                TypeMirror returnType = method.getReturnType();
+                if (returnType != null) {
+                    return returnType.toString();
+                }
+                break;
         }
         return null;
     }
@@ -3825,7 +3875,8 @@ public class JavaSourceHelper {
                     expressionStatement.set(make.ExpressionStatement(methodInvocationTree));
                 } else {
                     Element scope = methodInvocation.getScope();
-                    if (TypeElement.class.isInstance(scope)) {
+                    if (TypeElement.class
+                            .isInstance(scope)) {
                         expressionStatement.set(make.ExpressionStatement(make.MemberSelect(
                                 make.QualIdent(scope), methodInvocationTree.toString())));
                     } else {
@@ -3857,7 +3908,8 @@ public class JavaSourceHelper {
                 if (methodInvocation.getScope() == null) {
                     initializer = methodInvocationTree;
                 } else {
-                    if (TypeElement.class.isInstance(methodInvocation.getScope())) {
+                    if (TypeElement.class
+                            .isInstance(methodInvocation.getScope())) {
                         initializer = make.MemberSelect(
                                 make.QualIdent(methodInvocation.getScope()), methodInvocationTree.toString());
                     } else {
