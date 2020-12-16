@@ -77,7 +77,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -668,7 +667,7 @@ public class JavaSourceHelper {
                     case CLASS:
                     case ENUM:
                         ClassTree classOrEnumTree = (ClassTree) classEnumOrInterfaceTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(classOrEnumTree, copy);
+                        insertIndex = findInsertIndexForTree(classOrEnumTree.getMembers(), copy);
                         method =
                                 make.Method(
                                         make.Modifiers(Collections.emptySet()),
@@ -685,7 +684,7 @@ public class JavaSourceHelper {
                         break;
                     case INTERFACE:
                         ClassTree interfaceTree = (ClassTree) classEnumOrInterfaceTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(interfaceTree, copy);
+                        insertIndex = findInsertIndexForTree(interfaceTree.getMembers(), copy);
                         IdentifierTree methodTree = make.Identifier("void method();"); //NOI18N
                         ClassTree newInterfaceTree = make.insertClassMember(interfaceTree, insertIndex, methodTree);
                         copy.rewrite(classEnumOrInterfaceTree, newInterfaceTree);
@@ -2628,15 +2627,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         AssertTree assertTree = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, assertTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, assertTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(assertTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -2652,15 +2651,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         AssertTree assertTree = make.Assert(make.Literal(true), make.Literal("")); //NOI18N
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, assertTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, assertTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(assertTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -2685,22 +2684,22 @@ public class JavaSourceHelper {
                 int insertIndex;
                 switch (currentTree.getKind()) {
                     case BLOCK:
-                        BlockTree currentBlock = (BlockTree) currentTree;
-                        insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+                        BlockTree currentBlockTree = (BlockTree) currentTree;
+                        insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
                         if (insertIndex == -1) {
                             return;
                         }
-                        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, breakTree);
-                        copy.rewrite(currentBlock, newBlock);
+                        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, breakTree);
+                        copy.rewrite(currentBlockTree, newBlockTree);
                         statements.add(new Statement(breakTree.toString()));
                         break;
                     case SWITCH:
-                        SwitchTree currentSwitch = (SwitchTree) currentTree;
-                        insertIndex = findInsertIndexInSwitchTree(currentSwitch, copy);
+                        SwitchTree currentSwitchTree = (SwitchTree) currentTree;
+                        List<? extends CaseTree> cases = currentSwitchTree.getCases();
+                        insertIndex = findInsertIndexForTree(cases, copy);
                         if (insertIndex == -1) {
                             return;
                         }
-                        List<? extends CaseTree> cases = currentSwitch.getCases();
                         CaseTree currentCaseTree = cases.get(insertIndex - 1);
                         CaseTree newCaseTree = make.insertCaseStatement(
                                 currentCaseTree,
@@ -2732,15 +2731,15 @@ public class JavaSourceHelper {
                 if (currentTree.getKind() != Tree.Kind.SWITCH) {
                     return;
                 }
-                SwitchTree currentSwitch = (SwitchTree) currentTree;
-                int insertIndex = findInsertIndexInSwitchTree(currentSwitch, copy);
+                SwitchTree currentSwitchTree = (SwitchTree) currentTree;
+                int insertIndex = findInsertIndexForTree(currentSwitchTree.getCases(), copy);
                 if (insertIndex == -1) {
                     return;
                 }
                 TreeMaker make = copy.getTreeMaker();
                 CaseTree newCase = make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))); //NOI18N
-                SwitchTree newSwitch = make.insertSwitchCase(currentSwitch, insertIndex, newCase);
-                copy.rewrite(currentSwitch, newSwitch);
+                SwitchTree newSwitchTree = make.insertSwitchCase(currentSwitchTree, insertIndex, newCase);
+                copy.rewrite(currentSwitchTree, newSwitchTree);
                 statements.add(new Statement(newCase.toString()));
             }).commit();
         } catch (IOException ex) {
@@ -2774,7 +2773,7 @@ public class JavaSourceHelper {
                 switch (currentTree.getKind()) {
                     case BLOCK:
                         BlockTree currentBlockTree = (BlockTree) currentTree;
-                        insertIndex = findInsertIndexInBlockTree(currentBlockTree, copy);
+                        insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -2787,7 +2786,7 @@ public class JavaSourceHelper {
                     case ENUM:
                     case INTERFACE:
                         ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree, copy);
+                        insertIndex = findInsertIndexForTree(currentClassEnumOrInterfaceTree.getMembers(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -2798,7 +2797,7 @@ public class JavaSourceHelper {
                         break;
                     case COMPILATION_UNIT:
                         CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
-                        insertIndex = findInsertIndexInCompilationUnit(currentCompilationUnitTree, copy);
+                        insertIndex = findInsertIndexForTree(currentCompilationUnitTree.getTypeDecls(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -2831,15 +2830,15 @@ public class JavaSourceHelper {
                     return;
                 }
                 int insertIndex;
-                BlockTree currentBlock = (BlockTree) currentTree;
-                insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+                BlockTree currentBlockTree = (BlockTree) currentTree;
+                insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
                 if (insertIndex == -1) {
                     return;
                 }
                 TreeMaker make = copy.getTreeMaker();
                 ContinueTree continueTree = make.Continue(null);
-                BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, continueTree);
-                copy.rewrite(currentBlock, newBlock);
+                BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, continueTree);
+                copy.rewrite(currentBlockTree, newBlockTree);
                 statements.add(new Statement(continueTree.toString()));
             }).commit();
         } catch (IOException ex) {
@@ -2877,16 +2876,16 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         DoWhileLoopTree doWhileLoopTree =
                 make.DoWhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, doWhileLoopTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, doWhileLoopTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(doWhileLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -2902,16 +2901,16 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         DoWhileLoopTree doWhileLoopTree =
                 make.DoWhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, doWhileLoopTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, doWhileLoopTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(doWhileLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -2941,7 +2940,7 @@ public class JavaSourceHelper {
                     case ENUM:
                     case INTERFACE:
                         ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree, copy);
+                        insertIndex = findInsertIndexForTree(currentClassEnumOrInterfaceTree.getMembers(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -2952,7 +2951,7 @@ public class JavaSourceHelper {
                         break;
                     case COMPILATION_UNIT:
                         CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
-                        insertIndex = findInsertIndexInCompilationUnit(currentCompilationUnitTree, copy);
+                        insertIndex = findInsertIndexForTree(currentCompilationUnitTree.getTypeDecls(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -3003,74 +3002,6 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private int findInsertIndexInSwitchTree(SwitchTree switchTree, CompilationController controller) {
-        AtomicInteger insertIndex = new AtomicInteger(-1);
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends CaseTree> cases = switchTree.getCases();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = cases.size();
-        switch (size) {
-            case 0: {
-                insertIndex.set(0);
-                break;
-            }
-            case 1: {
-                CaseTree currentCase = cases.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCase);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    insertIndex.set(0);
-                } else {
-                    insertIndex.set(1);
-                }
-                break;
-            }
-            case 2: {
-                CaseTree previousCase = cases.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousCase);
-                CaseTree currentCase = cases.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCase);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    insertIndex.set(0);
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    insertIndex.set(size);
-                } else {
-                    insertIndex.set(1);
-                }
-                break;
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    CaseTree previousCase = cases.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousCase);
-                    CaseTree currentCase = cases.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentCase);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            insertIndex.set(i - 1);
-                            break;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            insertIndex.set(i);
-                            break;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            insertIndex.set(size - 1);
-                            break;
-                        }
-                        insertIndex.set(size);
-                        break;
-                    }
-                }
-            }
-        }
-        return insertIndex.get();
-    }
-
     private List<CodeFragment> insertIfStatement() {
         List<CodeFragment> fragments = new ArrayList<>();
         JavaSource javaSource = getJavaSourceForDocument(document);
@@ -3100,15 +3031,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         IfTree ifStatement = make.If(make.Identifier("true"), make.Block(Collections.emptyList(), false), null); //NOI18N
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, ifStatement);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, ifStatement);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(ifStatement.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3124,15 +3055,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         IfTree ifStatement = make.If(make.Identifier("true"), make.Block(Collections.emptyList(), false), null); //NOI18N
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, ifStatement);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, ifStatement);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(ifStatement.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3183,7 +3114,7 @@ public class JavaSourceHelper {
                 TreeMaker make = copy.getTreeMaker();
                 ImportTree importTree = make.Import(make.Identifier(""), false); //NOI18N
                 CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
-                int insertIndex = findInsertIndexInImportTree(copy);
+                int insertIndex = findInsertIndexForTree(copy.getCompilationUnit().getImports(), copy);
                 if (insertIndex == -1) {
                     return;
                 }
@@ -3196,66 +3127,6 @@ public class JavaSourceHelper {
             Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(statements);
-    }
-
-    private int findInsertIndexInImportTree(CompilationController controller) {
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends ImportTree> imports = compilationUnit.getImports();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = imports.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                ImportTree currentImport = imports.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentImport);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                ImportTree previousImport = imports.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousImport);
-                ImportTree currentImport = imports.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentImport);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    ImportTree previousImport = imports.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousImport);
-                    ImportTree currentImport = imports.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentImport);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            return i;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return size - 1;
-                        }
-                        return size;
-                    }
-                }
-            }
-        }
-        return -1;
     }
 
     private List<CodeFragment> insertInterfaceDeclaration() {
@@ -3284,7 +3155,7 @@ public class JavaSourceHelper {
                     case ENUM:
                     case INTERFACE:
                         ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentTree;
-                        insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree, copy);
+                        insertIndex = findInsertIndexForTree(currentClassEnumOrInterfaceTree.getMembers(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -3295,7 +3166,7 @@ public class JavaSourceHelper {
                         break;
                     case COMPILATION_UNIT:
                         CompilationUnitTree currentCompilationUnitTree = (CompilationUnitTree) currentTree;
-                        insertIndex = findInsertIndexInCompilationUnit(currentCompilationUnitTree, copy);
+                        insertIndex = findInsertIndexForTree(currentCompilationUnitTree.getTypeDecls(), copy);
                         if (insertIndex == -1) {
                             break;
                         }
@@ -3312,32 +3183,21 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private int findInsertIndexInClassEnumOrInterface(
-            ClassTree classEnumOrInterfaceTree, CompilationController controller) {
-        Trees trees = controller.getTrees();
+    private int findInsertIndexForTree(List<? extends Tree> trees, CompilationController controller) {
+        SourcePositions sourcePositions = controller.getTrees().getSourcePositions();
         CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends Tree> members = classEnumOrInterfaceTree.getMembers();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = members.size();
+        long previousStartPosition;
+        long currentStartPosition;
+        int size = trees.size();
         switch (size) {
-            case 0: {
+            case 0:
                 return 0;
-            }
-            case 1: {
-                Tree currentMember = members.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentMember);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                Tree previousMember = members.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousMember);
-                Tree currentMember = members.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentMember);
+            case 1:
+                currentStartPosition = sourcePositions.getStartPosition(compilationUnit, trees.get(0));
+                return abbreviation.getStartOffset() < currentStartPosition ? 0 : 1;
+            case 2:
+                previousStartPosition = sourcePositions.getStartPosition(compilationUnit, trees.get(0));
+                currentStartPosition = sourcePositions.getStartPosition(compilationUnit, trees.get(1));
                 if (abbreviation.getStartOffset() < previousStartPosition) {
                     return 0;
                 } else if (currentStartPosition < abbreviation.getStartOffset()) {
@@ -3345,15 +3205,10 @@ public class JavaSourceHelper {
                 } else {
                     return 1;
                 }
-            }
-            default: {
+            default:
                 for (int i = 1; i < size; i++) {
-                    Tree previousMember = members.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousMember);
-                    Tree currentMember = members.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentMember);
+                    previousStartPosition = sourcePositions.getStartPosition(compilationUnit, trees.get(i - 1));
+                    currentStartPosition = sourcePositions.getStartPosition(compilationUnit, trees.get(i));
                     if (i < size - 1) {
                         if (abbreviation.getStartOffset() < previousStartPosition) {
                             return i - 1;
@@ -3362,74 +3217,9 @@ public class JavaSourceHelper {
                             return i;
                         }
                     } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return size - 1;
-                        }
-                        return size;
+                        return abbreviation.getStartOffset() < currentStartPosition ? size - 1 : size;
                     }
                 }
-            }
-        }
-        return -1;
-    }
-
-    private int findInsertIndexInCompilationUnit(
-            CompilationUnitTree compilationUnitTree, CompilationController controller) {
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends Tree> typeDecls = compilationUnitTree.getTypeDecls();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = typeDecls.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                Tree currentTypeDecl = typeDecls.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeDecl);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                Tree previousTypeDecl = typeDecls.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousTypeDecl);
-                Tree currentTypeDecl = typeDecls.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeDecl);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    Tree previousTypeDecl = typeDecls.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousTypeDecl);
-                    Tree currentTypeDecl = typeDecls.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentTypeDecl);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            return i;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return i - 1;
-                        }
-                        return size;
-                    }
-                }
-            }
         }
         return -1;
     }
@@ -3473,11 +3263,11 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         SwitchTree currentSwitchTree = (SwitchTree) currentTree;
-        int insertIndex = findInsertIndexInSwitchTree(currentSwitchTree, copy);
+        List<? extends CaseTree> cases = currentSwitchTree.getCases();
+        int insertIndex = findInsertIndexForTree(cases, copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
-        List<? extends CaseTree> cases = currentSwitchTree.getCases();
         if (!cases.isEmpty()) {
             CaseTree currentCaseTree = cases.get(insertIndex - 1);
             TreeMaker make = copy.getTreeMaker();
@@ -3502,7 +3292,7 @@ public class JavaSourceHelper {
             return Collections.emptyList();
         }
         BlockTree currentBlockTree = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlockTree, copy);
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3544,8 +3334,8 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3555,8 +3345,8 @@ public class JavaSourceHelper {
                         make.Identifier(""), //NOI18N
                         Collections.singletonList(
                                 make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, switchTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, switchTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(switchTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3572,8 +3362,8 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3583,8 +3373,8 @@ public class JavaSourceHelper {
                         make.Identifier(""), //NOI18N
                         Collections.singletonList(
                                 make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, switchTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, switchTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(switchTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3618,8 +3408,8 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3636,8 +3426,8 @@ public class JavaSourceHelper {
                                                 null),
                                         make.Block(Collections.emptyList(), false))),
                         null);
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, tryTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, tryTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(tryTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3653,8 +3443,8 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -3671,8 +3461,8 @@ public class JavaSourceHelper {
                                                 null),
                                         make.Block(Collections.emptyList(), false))),
                         null);
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, tryTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, tryTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(tryTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3706,15 +3496,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         ThrowTree throwTree = make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, throwTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, throwTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(throwTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3730,15 +3520,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         ThrowTree throwTree = make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, throwTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, throwTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(throwTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3772,15 +3562,15 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         WhileLoopTree whileLoopTree = make.WhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, whileLoopTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, whileLoopTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(whileLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -3796,77 +3586,17 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
         TreeMaker make = copy.getTreeMaker();
         WhileLoopTree whileLoopTree = make.WhileLoop(make.Literal(true), make.Block(Collections.emptyList(), false));
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, whileLoopTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, whileLoopTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(whileLoopTree.toString()));
         return Collections.unmodifiableList(statements);
-    }
-
-    private int findInsertIndexInBlockTree(BlockTree blockTree, CompilationController controller) {
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends StatementTree> statements = blockTree.getStatements();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = statements.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                StatementTree currentStatement = statements.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                StatementTree previousStatement = statements.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousStatement);
-                StatementTree currentStatement = statements.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    StatementTree previousStatement = statements.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousStatement);
-                    StatementTree currentStatement = statements.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            return i;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return size - 1;
-                        }
-                        return size;
-                    }
-                }
-            }
-        }
-        return -1;
     }
 
     private String returnVar(CompilationController controller) {
@@ -4059,8 +3789,8 @@ public class JavaSourceHelper {
     }
 
     private void insertBlockTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        BlockTree currentTree = (BlockTree) getCurrentTreeOfKind(copy, Tree.Kind.BLOCK);
-        if (currentTree == null) {
+        BlockTree currentBlockTree = (BlockTree) getCurrentTreeOfKind(copy, Tree.Kind.BLOCK);
+        if (currentBlockTree == null) {
             return;
         }
         TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
@@ -4072,22 +3802,22 @@ public class JavaSourceHelper {
                 EnumSet.of(Tree.Kind.BLOCK, Tree.Kind.CLASS, Tree.Kind.VARIABLE),
                 treeUtilities.pathFor(sequence.offset()));
         Supplier<Void> insertStatementInBlock = () -> {
-            int insertIndex = findInsertIndexInBlockTree(currentTree, copy);
+            int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
             if (insertIndex == -1) {
                 return null;
             }
-            BlockTree newTree;
+            BlockTree newBlockTree;
             VariableTree variable;
             TypeMirror type = null;
             LiteralTree initializer = null;
             Types types = copy.getTypes();
             switch (fragment.getKind()) {
                 case KEYWORD:
-                    newTree = make.insertBlockStatement(
-                            currentTree,
+                    newBlockTree = make.insertBlockStatement(
+                            currentBlockTree,
                             insertIndex,
                             make.ExpressionStatement(make.Identifier(fragment.toString())));
-                    copy.rewrite(currentTree, newTree);
+                    copy.rewrite(currentBlockTree, newBlockTree);
                     break;
                 case LOCAL_ELEMENT:
                     LocalElement localElement = (LocalElement) fragment;
@@ -4125,22 +3855,22 @@ public class JavaSourceHelper {
                     }
                     AssignmentTree assignmentTree =
                             make.Assignment(make.Identifier(fragment.toString()), make.Identifier(expression));
-                    newTree = make.insertBlockStatement(
-                            currentTree,
+                    newBlockTree = make.insertBlockStatement(
+                            currentBlockTree,
                             insertIndex,
                             make.ExpressionStatement(assignmentTree));
-                    copy.rewrite(currentTree, newTree);
+                    copy.rewrite(currentBlockTree, newBlockTree);
                     break;
                 case METHOD_INVOCATION:
                     MethodInvocation invocation = (MethodInvocation) fragment;
                     if (isMethodReturnVoid(invocation.getMethod())) {
                         ExpressionStatementTree methodInvocation = createVoidMethodInvocation(invocation);
-                        newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+                        newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, methodInvocation);
                     } else {
                         VariableTree methodInvocation = createMethodInvocationWithReturnValue(invocation);
-                        newTree = make.insertBlockStatement(currentTree, insertIndex, methodInvocation);
+                        newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, methodInvocation);
                     }
-                    copy.rewrite(currentTree, newTree);
+                    copy.rewrite(currentBlockTree, newBlockTree);
                     break;
                 case PRIMITIVE_TYPE:
                     switch (fragment.toString()) {
@@ -4187,8 +3917,8 @@ public class JavaSourceHelper {
                                     getVariableName(type, copy),
                                     make.Identifier(fragment.toString()),
                                     initializer);
-                    newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
-                    copy.rewrite(currentTree, newTree);
+                    newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, variable);
+                    copy.rewrite(currentBlockTree, newBlockTree);
                     break;
                 case TYPE:
                     type = types.getDeclaredType(((Type) fragment).getType());
@@ -4199,8 +3929,8 @@ public class JavaSourceHelper {
                                     getVariableName(type, copy),
                                     make.QualIdent(fragment.toString()),
                                     initializer);
-                    newTree = make.insertBlockStatement(currentTree, insertIndex, variable);
-                    copy.rewrite(currentTree, newTree);
+                    newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, variable);
+                    copy.rewrite(currentBlockTree, newBlockTree);
                     break;
             }
             return null;
@@ -4211,7 +3941,8 @@ public class JavaSourceHelper {
                     ClassTree classTree = (ClassTree) path.getLeaf();
                     int[] classBodySpan = treeUtilities.findBodySpan(classTree);
                     SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
-                    long blockStartPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), currentTree);
+                    long blockStartPosition =
+                            sourcePositions.getStartPosition(copy.getCompilationUnit(), currentBlockTree);
                     if (blockStartPosition < classBodySpan[0]) {
                         ModifiersTree modifiers = classTree.getModifiers();
                         ExpressionTree expression = getExpressionToInsert(fragment, make);
@@ -4237,18 +3968,18 @@ public class JavaSourceHelper {
     }
 
     private void insertCaseTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        CaseTree currentTree = (CaseTree) getCurrentTreeOfKind(copy, Tree.Kind.CASE);
-        if (currentTree == null) {
+        CaseTree currentCaseTree = (CaseTree) getCurrentTreeOfKind(copy, Tree.Kind.CASE);
+        if (currentCaseTree == null) {
             return;
         }
         TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
         sequence.move(abbreviation.getStartOffset());
         while (sequence.movePrevious() && sequence.token().id() == JavaTokenId.WHITESPACE) {
         }
-        CaseTree newTree;
+        CaseTree newCaseTree;
         ExpressionTree expression = getExpressionToInsert(fragment, make);
         if (sequence.token().id() != JavaTokenId.CASE) {
-            int insertIndex = findInsertIndexInCaseTree(currentTree, copy);
+            int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
             switch (fragment.getKind()) {
                 case LOCAL_ELEMENT:
                     LocalElement localElement = (LocalElement) fragment;
@@ -4286,76 +4017,17 @@ public class JavaSourceHelper {
                     }
                     AssignmentTree assignmentTree =
                             make.Assignment(expression, make.Identifier(initializer));
-                    newTree =
-                            make.insertCaseStatement(currentTree, insertIndex, make.ExpressionStatement(assignmentTree));
+                    newCaseTree =
+                            make.insertCaseStatement(currentCaseTree, insertIndex, make.ExpressionStatement(assignmentTree));
                     break;
                 default:
-                    newTree = make.insertCaseStatement(currentTree, insertIndex, make.ExpressionStatement(expression));
+                    newCaseTree =
+                            make.insertCaseStatement(currentCaseTree, insertIndex, make.ExpressionStatement(expression));
             }
         } else {
-            newTree = make.Case(expression, currentTree.getStatements());
+            newCaseTree = make.Case(expression, currentCaseTree.getStatements());
         }
-        copy.rewrite(currentTree, newTree);
-    }
-
-    private int findInsertIndexInCaseTree(CaseTree caseTree, CompilationController controller) {
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends StatementTree> statements = caseTree.getStatements();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = statements.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                StatementTree currentStatement = statements.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                StatementTree previousStatement = statements.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousStatement);
-                StatementTree currentStatement = statements.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    StatementTree previousStatement = statements.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousStatement);
-                    StatementTree currentStatement = statements.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentStatement);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            return i;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return size - 1;
-                        }
-                        return size;
-                    }
-                }
-            }
-        }
-        return -1;
+        copy.rewrite(currentCaseTree, newCaseTree);
     }
 
     private List<CodeFragment> insertCatchTree() {
@@ -4373,8 +4045,8 @@ public class JavaSourceHelper {
                 if (currentTree.getKind() != Tree.Kind.TRY) {
                     return;
                 }
-                TryTree currentTry = (TryTree) currentTree;
-                int insertIndex = findInsertIndexInTryStatement(currentTry, copy);
+                TryTree currentTryTree = (TryTree) currentTree;
+                int insertIndex = findInsertIndexForTree(currentTryTree.getCatches(), copy);
                 if (insertIndex == -1) {
                     return;
                 }
@@ -4387,8 +4059,8 @@ public class JavaSourceHelper {
                                         make.Identifier("Exception"), //NOI18N
                                         null),
                                 make.Block(Collections.emptyList(), false));
-                TryTree newTry = make.insertTryCatch(currentTry, insertIndex, catchTree);
-                copy.rewrite(currentTry, newTry);
+                TryTree newTryTree = make.insertTryCatch(currentTryTree, insertIndex, catchTree);
+                copy.rewrite(currentTryTree, newTryTree);
                 statements.add(new Statement(catchTree.toString()));
             }).commit();
         } catch (IOException ex) {
@@ -4397,73 +4069,13 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private int findInsertIndexInTryStatement(TryTree tryTree, CompilationController controller) {
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends CatchTree> catches = tryTree.getCatches();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = catches.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                CatchTree currentCatch = catches.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCatch);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                CatchTree previousCatch = catches.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousCatch);
-                CatchTree currentCatch = catches.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentCatch);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    CatchTree previousCatch = catches.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousCatch);
-                    CatchTree currentCatch = catches.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentCatch);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            return i;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return size - 1;
-                        }
-                        return size;
-                    }
-                }
-            }
-        }
-        return -1;
-    }
-
     private void insertClassEnumOrInterfaceTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
         TreePath currentPath = copy.getTreeUtilities().pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
             return;
         }
         ClassTree currentClassEnumOrInterfaceTree = (ClassTree) currentPath.getLeaf();
-        int insertIndex = findInsertIndexInClassEnumOrInterface(currentClassEnumOrInterfaceTree, copy);
+        int insertIndex = findInsertIndexForTree(currentClassEnumOrInterfaceTree.getMembers(), copy);
         if (insertIndex == -1) {
             return;
         }
@@ -4757,16 +4369,16 @@ public class JavaSourceHelper {
                 if (currentTree.getKind() != Tree.Kind.TRY) {
                     return;
                 }
-                TryTree currentTry = (TryTree) currentTree;
-                int insertIndex = findInsertIndexInTryStatement(currentTry, copy);
+                TryTree currentTryTre = (TryTree) currentTree;
+                int insertIndex = findInsertIndexForTree(currentTryTre.getCatches(), copy);
                 if (insertIndex == -1) {
                     return;
                 }
                 TreeMaker make = copy.getTreeMaker();
                 BlockTree finallyBlock = make.Block(Collections.emptyList(), false);
-                TryTree newTry =
-                        make.Try(currentTry.getBlock(), currentTry.getCatches(), finallyBlock);
-                copy.rewrite(currentTry, newTry);
+                TryTree newTryTree =
+                        make.Try(currentTryTre.getBlock(), currentTryTre.getCatches(), finallyBlock);
+                copy.rewrite(currentTryTre, newTryTree);
                 statements.add(new Statement(finallyBlock.toString()));
             }).commit();
         } catch (IOException ex) {
@@ -4804,8 +4416,8 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.CASE) {
             return Collections.emptyList();
         }
-        CaseTree currentCase = (CaseTree) currentTree;
-        int insertIndex = findInsertIndexInCaseTree(currentCase, copy);
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -4821,8 +4433,8 @@ public class JavaSourceHelper {
                         make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
                 make.Block(Collections.emptyList(), false)
         );
-        CaseTree newCase = make.insertCaseStatement(currentCase, insertIndex, forLoopTree);
-        copy.rewrite(currentCase, newCase);
+        CaseTree newCaseTree = make.insertCaseStatement(currentCaseTree, insertIndex, forLoopTree);
+        copy.rewrite(currentCaseTree, newCaseTree);
         statements.add(new Statement(forLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -4838,8 +4450,8 @@ public class JavaSourceHelper {
         if (currentTree.getKind() != Tree.Kind.BLOCK) {
             return Collections.emptyList();
         }
-        BlockTree currentBlock = (BlockTree) currentTree;
-        int insertIndex = findInsertIndexInBlockTree(currentBlock, copy);
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
         if (insertIndex == -1) {
             return Collections.emptyList();
         }
@@ -4855,8 +4467,8 @@ public class JavaSourceHelper {
                         make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
                 make.Block(Collections.emptyList(), false)
         );
-        BlockTree newBlock = make.insertBlockStatement(currentBlock, insertIndex, forLoopTree);
-        copy.rewrite(currentBlock, newBlock);
+        BlockTree newBlockTree = make.insertBlockStatement(currentBlockTree, insertIndex, forLoopTree);
+        copy.rewrite(currentBlockTree, newBlockTree);
         statements.add(new Statement(forLoopTree.toString()));
         return Collections.unmodifiableList(statements);
     }
@@ -5156,80 +4768,19 @@ public class JavaSourceHelper {
     }
 
     private void insertParameterizedTypeTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
-        ParameterizedTypeTree currentTree =
+        ParameterizedTypeTree currentParameterizedTree =
                 (ParameterizedTypeTree) getCurrentTreeOfKind(copy, Tree.Kind.PARAMETERIZED_TYPE);
-        if (currentTree == null) {
+        if (currentParameterizedTree == null) {
             return;
         }
         ExpressionTree expression = getExpressionToInsert(fragment, make);
-        int insertIndex = findInsertIndexInParameterizedTypeTree(currentTree, copy);
+        int insertIndex = findInsertIndexForTree(currentParameterizedTree.getTypeArguments(), copy);
         if (insertIndex == -1) {
             return;
         }
-        ParameterizedTypeTree newTree =
-                make.insertParameterizedTypeTypeArgument(currentTree, insertIndex, expression);
-        copy.rewrite(currentTree, newTree);
-    }
-
-    private int findInsertIndexInParameterizedTypeTree(
-            ParameterizedTypeTree parameterizedTypeTree, CompilationController controller) {
-        Trees trees = controller.getTrees();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends Tree> typeArguments = parameterizedTypeTree.getTypeArguments();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        int size = typeArguments.size();
-        switch (size) {
-            case 0: {
-                return 0;
-            }
-            case 1: {
-                Tree currentTypeArgument = typeArguments.get(0);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeArgument);
-                if (abbreviation.getStartOffset() < currentStartPosition) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            case 2: {
-                Tree previousTypeArgument = typeArguments.get(0);
-                long previousStartPosition =
-                        sourcePositions.getStartPosition(compilationUnit, previousTypeArgument);
-                Tree currentTypeArgument = typeArguments.get(1);
-                long currentStartPosition = sourcePositions.getStartPosition(compilationUnit, currentTypeArgument);
-                if (abbreviation.getStartOffset() < previousStartPosition) {
-                    return 0;
-                } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                    return size;
-                } else {
-                    return 1;
-                }
-            }
-            default: {
-                for (int i = 1; i < size; i++) {
-                    Tree previousTypeArgument = typeArguments.get(i - 1);
-                    long previousStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, previousTypeArgument);
-                    Tree currentTypeArgument = typeArguments.get(i);
-                    long currentStartPosition =
-                            sourcePositions.getStartPosition(compilationUnit, currentTypeArgument);
-                    if (i < size - 1) {
-                        if (abbreviation.getStartOffset() < previousStartPosition) {
-                            return i - 1;
-                        } else if (previousStartPosition < abbreviation.getStartOffset()
-                                && abbreviation.getStartOffset() < currentStartPosition) {
-                            return i;
-                        }
-                    } else {
-                        if (abbreviation.getStartOffset() < currentStartPosition) {
-                            return size - 1;
-                        }
-                        return size;
-                    }
-                }
-            }
-        }
-        return -1;
+        ParameterizedTypeTree newParameterizedTree =
+                make.insertParameterizedTypeTypeArgument(currentParameterizedTree, insertIndex, expression);
+        copy.rewrite(currentParameterizedTree, newParameterizedTree);
     }
 
     private void insertParenthesizedTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
