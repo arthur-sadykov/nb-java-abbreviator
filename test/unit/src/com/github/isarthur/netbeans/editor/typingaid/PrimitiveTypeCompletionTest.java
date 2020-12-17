@@ -588,6 +588,48 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 Collections.singletonList("double"));
     }
 
+    public void testDoNotInvokeCompletionInClassOrEnumDeclarationBeforeLeftBrace() throws IOException {
+        doAbbreviationInsert(
+                "d",
+                "class Test | {\n"
+                + "}",
+                "class Test  {\n"
+                + "}",
+                Collections.emptyList());
+        doAbbreviationInsert(
+                "d",
+                "class Test |{\n"
+                + "}",
+                "class Test {\n"
+                + "}",
+                Collections.emptyList());
+    }
+
+    public void testDoNotInvokeCompletionInMethodDeclarationOutsideOfParentheses() throws IOException {
+        doAbbreviationInsert(
+                "d",
+                "class Test {\n"
+                + "    void test()| {\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+        doAbbreviationInsert(
+                "d",
+                "class Test {\n"
+                + "    void test() |{\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');

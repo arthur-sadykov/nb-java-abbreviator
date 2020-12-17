@@ -1266,17 +1266,100 @@ public class JavaSourceHelper {
         if (currentPath == null) {
             return;
         }
-        switch (currentPath.getLeaf().getKind()) {
+        Tree currentTree = currentPath.getLeaf();
+        Supplier<Void> collectPrimitiveTypes = () -> {
+            ConstantDataManager.PRIMITIVE_TYPES.forEach(primitiveType -> {
+                if (primitiveType.isAbbreviationEqualTo(abbreviation.getName())) {
+                    codeFragments.add(primitiveType);
+                }
+            });
+            return null;
+        };
+        switch (currentTree.getKind()) {
             case CLASS:
-            case BLOCK:
             case ENUM:
-            case METHOD:
-            case VARIABLE:
-                ConstantDataManager.PRIMITIVE_TYPES.forEach(primitiveType -> {
-                    if (primitiveType.isAbbreviationEqualTo(abbreviation.getName())) {
-                        codeFragments.add(primitiveType);
+                Supplier<Boolean> abbreviationInsideBraces = () -> {
+                    TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+                    tokenSequence.moveStart();
+                    TokenId tokenId = null;
+                    while (tokenSequence.moveNext()) {
+                        tokenId = tokenSequence.token().id();
+                        if (tokenId == JavaTokenId.LBRACE) {
+                            break;
+                        }
                     }
-                });
+                    if (tokenId == JavaTokenId.LBRACE) {
+                        if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                if (abbreviationInsideBraces.get()) {
+                    collectPrimitiveTypes.get();
+                }
+                break;
+            case BLOCK:
+                collectPrimitiveTypes.get();
+                break;
+            case METHOD:
+                Supplier<Boolean> abbreviationInsideParetheses = () -> {
+                    TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+                    tokenSequence.moveStart();
+                    TokenId tokenId = null;
+                    while (tokenSequence.moveNext()) {
+                        tokenId = tokenSequence.token().id();
+                        if (tokenId == JavaTokenId.LPAREN) {
+                            int leftParenthesisPosition = tokenSequence.offset();
+                            if (abbreviation.getStartOffset() <= leftParenthesisPosition) {
+                                return false;
+                            }
+                        }
+                        if (tokenId == JavaTokenId.LBRACE) {
+                            if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+                    if (tokenId == JavaTokenId.LBRACE) {
+                        while (tokenSequence.movePrevious()) {
+                            tokenId = tokenSequence.token().id();
+                            if (tokenId == JavaTokenId.RPAREN) {
+                                int rightParenthesisPosition = tokenSequence.offset();
+                                if (abbreviation.getStartOffset() <= rightParenthesisPosition) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                };
+                if (abbreviationInsideParetheses.get()) {
+                    collectPrimitiveTypes.get();
+                }
+                break;
+            case VARIABLE:
+                Supplier<Boolean> abbreviationAfterEQToken = () -> {
+                    TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+                    tokenSequence.moveStart();
+                    TokenId tokenId = null;
+                    while (tokenSequence.moveNext()) {
+                        tokenId = tokenSequence.token().id();
+                        if (tokenId == JavaTokenId.EQ) {
+                            break;
+                        }
+                    }
+                    if (tokenId == JavaTokenId.EQ) {
+                        if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                if (abbreviationAfterEQToken.get()) {
+                    collectPrimitiveTypes.get();
+                }
                 break;
         }
     }
