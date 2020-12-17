@@ -4146,7 +4146,7 @@ public class JavaSourceHelper {
                         type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
-                if (!inMethodSection(currentClassEnumOrInterfaceTree, copy)) {
+                if (!isMethodSection(currentClassEnumOrInterfaceTree, copy)) {
                     variable =
                             make.Variable(
                                     make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
@@ -4172,7 +4172,7 @@ public class JavaSourceHelper {
                 copy.rewrite(currentClassEnumOrInterfaceTree, newClassEnumOrInterfaceTree);
                 break;
             case TYPE:
-                if (!inMethodSection(currentClassEnumOrInterfaceTree, copy)) {
+                if (!isMethodSection(currentClassEnumOrInterfaceTree, copy)) {
                     type = types.getDeclaredType(((Type) fragment).getType());
                     variable =
                             make.Variable(
@@ -4241,7 +4241,7 @@ public class JavaSourceHelper {
         }
     }
 
-    private boolean inMethodSection(ClassTree classInterfaceOrEnumTree, CompilationController controller) {
+    private boolean isMethodSection(ClassTree classInterfaceOrEnumTree, CompilationController controller) {
         Trees trees = controller.getTrees();
         CompilationUnitTree compilationUnit = controller.getCompilationUnit();
         List<? extends Tree> members = classInterfaceOrEnumTree.getMembers();
@@ -4255,19 +4255,13 @@ public class JavaSourceHelper {
             long previousStartOffset = sourcePositions.getStartPosition(compilationUnit, previousMember);
             Tree currentMember = members.get(i);
             long currentStartOffset = sourcePositions.getStartPosition(compilationUnit, currentMember);
-            if (i < size - 1) {
-                if (abbreviation.getStartOffset() < previousStartOffset) {
-                    return false;
-                } else if (previousStartOffset < abbreviation.getStartOffset()
-                        && abbreviation.getStartOffset() < currentStartOffset
-                        && previousMember.getKind() == Tree.Kind.METHOD
-                        && currentMember.getKind() == Tree.Kind.METHOD) {
-                    return true;
-                }
-            } else {
-                if (currentStartOffset < abbreviation.getStartOffset()) {
-                    return currentMember.getKind() == Tree.Kind.METHOD;
-                }
+            if (previousStartOffset < abbreviation.getStartOffset()
+                    && abbreviation.getStartOffset() < currentStartOffset
+                    && previousMember.getKind() == Tree.Kind.METHOD
+                    && currentMember.getKind() == Tree.Kind.METHOD) {
+                return true;
+            } else if (currentStartOffset < abbreviation.getStartOffset() && currentMember.getKind() == Tree.Kind.METHOD) {
+                return true;
             }
         }
         return false;
