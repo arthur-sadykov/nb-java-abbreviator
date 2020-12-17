@@ -3968,12 +3968,16 @@ public class JavaSourceHelper {
                     }
                     break;
                 case VARIABLE:
-                    VariableTree variable = (VariableTree) path.getLeaf();
-                    ModifiersTree modifiers = variable.getModifiers();
-                    ExpressionTree expression = getExpressionToInsert(fragment, make);
-                    ModifiersTree newModifiers =
-                            make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-                    copy.rewrite(modifiers, newModifiers);
+                    if (fragment.getKind() == CodeFragment.Kind.MODIFIER) {
+                        VariableTree variable = (VariableTree) path.getLeaf();
+                        ModifiersTree modifiers = variable.getModifiers();
+                        ExpressionTree expression = getExpressionToInsert(fragment, make);
+                        ModifiersTree newModifiers =
+                                make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                        copy.rewrite(modifiers, newModifiers);
+                    } else {
+                        insertStatementInBlock.get();
+                    }
                     break;
                 default:
                     insertStatementInBlock.get();
