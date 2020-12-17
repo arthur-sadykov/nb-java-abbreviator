@@ -15,7 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
-import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
+import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -67,10 +67,12 @@ public class GeneralCompletionTest extends NbTestCase {
     private boolean parameter;
     private boolean field;
     private boolean localVariable;
-    private boolean staticFieldAccess;
     private boolean localMethodInvocation;
     private boolean chainedMethodInvocation;
+    private boolean chainedFieldAccess;
+    private boolean chainedEnumConstantAccess;
     private boolean staticMethodInvocation;
+    private boolean staticFieldAccess;
     private boolean methodInvocation;
 
     public GeneralCompletionTest(String testName) {
@@ -103,26 +105,51 @@ public class GeneralCompletionTest extends NbTestCase {
         handler = new JavaAbbreviationHandler(helper);
         abbreviation = JavaAbbreviation.getInstance();
         storeSettings();
+        setConfigurationForGeneralCompletion();
     }
 
     private void storeSettings() {
-        methodInvocation = Settings.getSettingForMethodInvocation();
-        staticMethodInvocation = Settings.getSettingForStaticMethodInvocation();
-        chainedMethodInvocation = Settings.getSettingForChainedMethodInvocation();
-        localMethodInvocation = Settings.getSettingForLocalMethodInvocation();
-        staticFieldAccess = Settings.getSettingForStaticFieldAccess();
-        localVariable = Settings.getSettingForLocalVariable();
-        field = Settings.getSettingForField();
-        parameter = Settings.getSettingForParameter();
-        enumConstant = Settings.getSettingForEnumConstant();
-        exceptionParameter = Settings.getSettingForExceptionParameter();
-        resourceVariable = Settings.getSettingForResourceVariable();
-        internalType = Settings.getSettingForInternalType();
-        externalType = Settings.getSettingForExternalType();
-        importedType = Settings.getSettingForImportedType();
-        keyword = Settings.getSettingForKeyword();
-        modifier = Settings.getSettingForModifier();
-        primitiveType = Settings.getSettingForPrimitiveType();
+        staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
+        staticFieldAccess = Preferences.getStaticFieldAccessFlag();
+        methodInvocation = Preferences.getMethodInvocationFlag();
+        chainedMethodInvocation = Preferences.getChainedMethodInvocationFlag();
+        chainedFieldAccess = Preferences.getChainedFieldAccessFlag();
+        chainedEnumConstantAccess = Preferences.getChainedEnumConstantAccessFlag();
+        localMethodInvocation = Preferences.getLocalMethodInvocationFlag();
+        localVariable = Preferences.getLocalVariableFlag();
+        field = Preferences.getFieldFlag();
+        parameter = Preferences.getParameterFlag();
+        enumConstant = Preferences.getEnumConstantFlag();
+        exceptionParameter = Preferences.getExceptionParameterFlag();
+        resourceVariable = Preferences.getResourceVariableFlag();
+        internalType = Preferences.getInternalTypeFlag();
+        externalType = Preferences.getExternalTypeFlag();
+        importedType = Preferences.getImportedTypeFlag();
+        keyword = Preferences.getKeywordFlag();
+        modifier = Preferences.getModifierFlag();
+        primitiveType = Preferences.getPrimitiveTypeFlag();
+    }
+
+    private void setConfigurationForGeneralCompletion() {
+        Preferences.setStaticMethodInvocationFlag(true);
+        Preferences.setStaticFieldAccessFlag(true);
+        Preferences.setMethodInvocationFlag(true);
+        Preferences.setChainedMethodInvocationFlag(true);
+        Preferences.setChainedFieldAccessFlag(true);
+        Preferences.setChainedEnumConstantAccessFlag(true);
+        Preferences.setLocalMethodInvocationFlag(true);
+        Preferences.setLocalVariableFlag(true);
+        Preferences.setFieldFlag(true);
+        Preferences.setParameterFlag(true);
+        Preferences.setEnumConstantFlag(true);
+        Preferences.setExceptionParameterFlag(true);
+        Preferences.setResourceVariableFlag(true);
+        Preferences.setInternalTypeFlag(true);
+        Preferences.setExternalTypeFlag(true);
+        Preferences.setImportedTypeFlag(true);
+        Preferences.setKeywordFlag(true);
+        Preferences.setModifierFlag(true);
+        Preferences.setPrimitiveTypeFlag(true);
     }
 
     public void testShouldSuggestCompletionForParameterName() throws IOException {
@@ -181,39 +208,6 @@ public class GeneralCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Arrays.asList("applicationContext"));
-    }
-
-    public void testShouldSuggestCompletionForKeyword() throws IOException {
-        Settings.setSettingForMethodInvocation(false);
-        Settings.setSettingForStaticMethodInvocation(false);
-        Settings.setSettingForChainedMethodInvocation(false);
-        Settings.setSettingForLocalMethodInvocation(false);
-        Settings.setSettingForStaticFieldAccess(false);
-        Settings.setSettingForLocalVariable(false);
-        Settings.setSettingForField(false);
-        Settings.setSettingForParameter(false);
-        Settings.setSettingForEnumConstant(false);
-        Settings.setSettingForExceptionParameter(false);
-        Settings.setSettingForResourceVariable(false);
-        Settings.setSettingForInternalType(false);
-        Settings.setSettingForExternalType(false);
-        Settings.setSettingForKeyword(true);
-        Settings.setSettingForModifier(false);
-        doAbbreviationInsert(
-                "s",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String applicationContext = \"\";\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String applicationContext = \"\";\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("String", "short", "switch"));
     }
 
     public void testShouldSuggestCompletionForMethodInvocation() throws IOException {
@@ -427,23 +421,25 @@ public class GeneralCompletionTest extends NbTestCase {
     }
 
     private void revertSettings() {
-        Settings.setSettingForMethodInvocation(methodInvocation);
-        Settings.setSettingForStaticMethodInvocation(staticMethodInvocation);
-        Settings.setSettingForChainedMethodInvocation(chainedMethodInvocation);
-        Settings.setSettingForLocalMethodInvocation(localMethodInvocation);
-        Settings.setSettingForStaticFieldAccess(staticFieldAccess);
-        Settings.setSettingForLocalVariable(localVariable);
-        Settings.setSettingForField(field);
-        Settings.setSettingForParameter(parameter);
-        Settings.setSettingForEnumConstant(enumConstant);
-        Settings.setSettingForExceptionParameter(exceptionParameter);
-        Settings.setSettingForResourceVariable(resourceVariable);
-        Settings.setSettingForInternalType(internalType);
-        Settings.setSettingForExternalType(externalType);
-        Settings.setSettingForImportedType(importedType);
-        Settings.setSettingForKeyword(keyword);
-        Settings.setSettingForModifier(modifier);
-        Settings.setSettingForPrimitiveType(primitiveType);
+        Preferences.setMethodInvocationFlag(methodInvocation);
+        Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
+        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
+        Preferences.setChainedFieldAccessFlag(chainedFieldAccess);
+        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantAccess);
+        Preferences.setLocalMethodInvocationFlag(localMethodInvocation);
+        Preferences.setStaticFieldAccessFlag(staticFieldAccess);
+        Preferences.setLocalVariableFlag(localVariable);
+        Preferences.setFieldFlag(field);
+        Preferences.setParameterFlag(parameter);
+        Preferences.setEnumConstantFlag(enumConstant);
+        Preferences.setExceptionParameterFlag(exceptionParameter);
+        Preferences.setResourceVariableFlag(resourceVariable);
+        Preferences.setInternalTypeFlag(internalType);
+        Preferences.setExternalTypeFlag(externalType);
+        Preferences.setImportedTypeFlag(importedType);
+        Preferences.setKeywordFlag(keyword);
+        Preferences.setModifierFlag(modifier);
+        Preferences.setPrimitiveTypeFlag(primitiveType);
     }
 
     @Override

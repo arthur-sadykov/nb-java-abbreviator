@@ -15,7 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.ui;
 
-import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
+import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 
 final class NetBeansTypingAidPanel extends javax.swing.JPanel {
 
@@ -64,6 +64,8 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         importedTypeCheckBox = new javax.swing.JCheckBox();
         staticFieldAccessImportedTypesCheckBox = new javax.swing.JCheckBox();
         staticMethodInvocationImportedTypesCheckBox = new javax.swing.JCheckBox();
+        chainedFieldAccessCheckBox = new javax.swing.JCheckBox();
+        chainedEnumConstantCheckBox = new javax.swing.JCheckBox();
 
         completionForPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.completionForPanel.border.title"))); // NOI18N
 
@@ -200,6 +202,20 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(chainedFieldAccessCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.chainedFieldAccessCheckBox.text")); // NOI18N
+        chainedFieldAccessCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chainedFieldAccessCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(chainedEnumConstantCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.chainedEnumConstantCheckBox.text")); // NOI18N
+        chainedEnumConstantCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chainedEnumConstantCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout completionForPanelLayout = new javax.swing.GroupLayout(completionForPanel);
         completionForPanel.setLayout(completionForPanelLayout);
         completionForPanelLayout.setHorizontalGroup(
@@ -207,7 +223,6 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
             .addGroup(completionForPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(methodInvocationCheckBox)
                     .addComponent(localMethodInvocationCheckBox)
                     .addComponent(staticFieldAccessCheckBox)
                     .addComponent(localVariableCheckBox)
@@ -223,12 +238,15 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                     .addComponent(modifierCheckBox)
                     .addComponent(primitiveTypeCheckBox)
                     .addGroup(completionForPanelLayout.createSequentialGroup()
-                        .addComponent(chainedMethodInvocationCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(177, 177, 177)
                         .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(staticMethodInvocationImportedTypesCheckBox)
                             .addComponent(staticFieldAccessImportedTypesCheckBox)))
-                    .addComponent(staticMethodInvocationCheckBox))
+                    .addComponent(staticMethodInvocationCheckBox)
+                    .addComponent(methodInvocationCheckBox)
+                    .addComponent(chainedMethodInvocationCheckBox)
+                    .addComponent(chainedFieldAccessCheckBox)
+                    .addComponent(chainedEnumConstantCheckBox))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         completionForPanelLayout.setVerticalGroup(
@@ -242,10 +260,14 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                 .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(staticFieldAccessCheckBox)
                     .addComponent(staticFieldAccessImportedTypesCheckBox))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(methodInvocationCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chainedMethodInvocationCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chainedFieldAccessCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chainedEnumConstantCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(localMethodInvocationCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -272,7 +294,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                 .addComponent(modifierCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(primitiveTypeCheckBox)
-                .addGap(58, 58, 58))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -320,6 +342,9 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_localVariableCheckBoxActionPerformed
 
     private void externalTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_externalTypeCheckBoxActionPerformed
+        if (externalTypeCheckBox.isSelected()) {
+            importedTypeCheckBox.setSelected(false);
+        }
         controller.changed();
     }//GEN-LAST:event_externalTypeCheckBoxActionPerformed
 
@@ -360,6 +385,9 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_primitiveTypeCheckBoxActionPerformed
 
     private void importedTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importedTypeCheckBoxActionPerformed
+        if (importedTypeCheckBox.isSelected()) {
+            externalTypeCheckBox.setSelected(false);
+        }
         controller.changed();
     }//GEN-LAST:event_importedTypeCheckBoxActionPerformed
 
@@ -371,54 +399,68 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         controller.changed();
     }//GEN-LAST:event_staticFieldAccessImportedTypesCheckBoxActionPerformed
 
+    private void chainedFieldAccessCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chainedFieldAccessCheckBoxActionPerformed
+        controller.changed();
+    }//GEN-LAST:event_chainedFieldAccessCheckBoxActionPerformed
+
+    private void chainedEnumConstantCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chainedEnumConstantCheckBoxActionPerformed
+        controller.changed();
+    }//GEN-LAST:event_chainedEnumConstantCheckBoxActionPerformed
+
     void load() {
-        methodInvocationCheckBox.setSelected(Settings.getSettingForMethodInvocation());
-        staticMethodInvocationCheckBox.setSelected(Settings.getSettingForStaticMethodInvocation());
-        chainedMethodInvocationCheckBox.setSelected(Settings.getSettingForChainedMethodInvocation());
-        localMethodInvocationCheckBox.setSelected(Settings.getSettingForLocalMethodInvocation());
-        staticFieldAccessCheckBox.setSelected(Settings.getSettingForStaticFieldAccess());
-        localVariableCheckBox.setSelected(Settings.getSettingForLocalVariable());
-        fieldCheckBox.setSelected(Settings.getSettingForField());
-        parameterCheckBox.setSelected(Settings.getSettingForParameter());
-        enumConstantCheckBox.setSelected(Settings.getSettingForEnumConstant());
-        exceptionParameterCheckBox.setSelected(Settings.getSettingForExceptionParameter());
-        resourceVariableCheckBox.setSelected(Settings.getSettingForResourceVariable());
-        internalTypeCheckBox.setSelected(Settings.getSettingForInternalType());
-        externalTypeCheckBox.setSelected(Settings.getSettingForExternalType());
-        importedTypeCheckBox.setSelected(Settings.getSettingForImportedType());
-        keywordCheckBox.setSelected(Settings.getSettingForKeyword());
-        modifierCheckBox.setSelected(Settings.getSettingForModifier());
-        primitiveTypeCheckBox.setSelected(Settings.getSettingForPrimitiveType());
-        staticMethodInvocationImportedTypesCheckBox.setSelected(Settings.getSettingForStaticMethodInvocationImportedTypes());
-        staticFieldAccessImportedTypesCheckBox.setSelected(Settings.getSettingForStaticFieldAccessImportedTypes());
+        methodInvocationCheckBox.setSelected(Preferences.getMethodInvocationFlag());
+        staticMethodInvocationCheckBox.setSelected(Preferences.getStaticMethodInvocationFlag());
+        chainedMethodInvocationCheckBox.setSelected(Preferences.getChainedMethodInvocationFlag());
+        chainedFieldAccessCheckBox.setSelected(Preferences.getChainedFieldAccessFlag());
+        chainedEnumConstantCheckBox.setSelected(Preferences.getChainedEnumConstantAccessFlag());
+        localMethodInvocationCheckBox.setSelected(Preferences.getLocalMethodInvocationFlag());
+        staticFieldAccessCheckBox.setSelected(Preferences.getStaticFieldAccessFlag());
+        localVariableCheckBox.setSelected(Preferences.getLocalVariableFlag());
+        fieldCheckBox.setSelected(Preferences.getFieldFlag());
+        parameterCheckBox.setSelected(Preferences.getParameterFlag());
+        enumConstantCheckBox.setSelected(Preferences.getEnumConstantFlag());
+        exceptionParameterCheckBox.setSelected(Preferences.getExceptionParameterFlag());
+        resourceVariableCheckBox.setSelected(Preferences.getResourceVariableFlag());
+        internalTypeCheckBox.setSelected(Preferences.getInternalTypeFlag());
+        externalTypeCheckBox.setSelected(Preferences.getExternalTypeFlag());
+        importedTypeCheckBox.setSelected(Preferences.getImportedTypeFlag());
+        keywordCheckBox.setSelected(Preferences.getKeywordFlag());
+        modifierCheckBox.setSelected(Preferences.getModifierFlag());
+        primitiveTypeCheckBox.setSelected(Preferences.getPrimitiveTypeFlag());
+        staticMethodInvocationImportedTypesCheckBox.setSelected(Preferences.getStaticMethodInvocationImportedTypesFlag());
+        staticFieldAccessImportedTypesCheckBox.setSelected(Preferences.getStaticFieldAccessImportedTypesFlag());
     }
 
     void store() {
-        Settings.setSettingForMethodInvocation(methodInvocationCheckBox.isSelected());
-        Settings.setSettingForStaticMethodInvocation(staticMethodInvocationCheckBox.isSelected());
-        Settings.setSettingForChainedMethodInvocation(chainedMethodInvocationCheckBox.isSelected());
-        Settings.setSettingForLocalMethodInvocation(localMethodInvocationCheckBox.isSelected());
-        Settings.setSettingForStaticFieldAccess(staticFieldAccessCheckBox.isSelected());
-        Settings.setSettingForLocalVariable(localVariableCheckBox.isSelected());
-        Settings.setSettingForField(fieldCheckBox.isSelected());
-        Settings.setSettingForParameter(parameterCheckBox.isSelected());
-        Settings.setSettingForEnumConstant(enumConstantCheckBox.isSelected());
-        Settings.setSettingForExceptionParameter(exceptionParameterCheckBox.isSelected());
-        Settings.setSettingForResourceVariable(resourceVariableCheckBox.isSelected());
-        Settings.setSettingForInternalType(internalTypeCheckBox.isSelected());
-        Settings.setSettingForExternalType(externalTypeCheckBox.isSelected());
-        Settings.setSettingForImportedType(importedTypeCheckBox.isSelected());
-        Settings.setSettingForKeyword(keywordCheckBox.isSelected());
-        Settings.setSettingForModifier(modifierCheckBox.isSelected());
-        Settings.setSettingForPrimitiveType(primitiveTypeCheckBox.isSelected());
-        Settings.setSettingForStaticMethodInvocationImportedTypes(staticMethodInvocationImportedTypesCheckBox.isSelected());
-        Settings.setSettingForStaticFieldAccessImportedTypes(staticFieldAccessImportedTypesCheckBox.isSelected());
+        Preferences.setMethodInvocationFlag(methodInvocationCheckBox.isSelected());
+        Preferences.setStaticMethodInvocationFlag(staticMethodInvocationCheckBox.isSelected());
+        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocationCheckBox.isSelected());
+        Preferences.setChainedFieldAccessFlag(chainedFieldAccessCheckBox.isSelected());
+        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantCheckBox.isSelected());
+        Preferences.setLocalMethodInvocationFlag(localMethodInvocationCheckBox.isSelected());
+        Preferences.setStaticFieldAccessFlag(staticFieldAccessCheckBox.isSelected());
+        Preferences.setLocalVariableFlag(localVariableCheckBox.isSelected());
+        Preferences.setFieldFlag(fieldCheckBox.isSelected());
+        Preferences.setParameterFlag(parameterCheckBox.isSelected());
+        Preferences.setEnumConstantFlag(enumConstantCheckBox.isSelected());
+        Preferences.setExceptionParameterFlag(exceptionParameterCheckBox.isSelected());
+        Preferences.setResourceVariableFlag(resourceVariableCheckBox.isSelected());
+        Preferences.setInternalTypeFlag(internalTypeCheckBox.isSelected());
+        Preferences.setExternalTypeFlag(externalTypeCheckBox.isSelected());
+        Preferences.setImportedTypeFlag(importedTypeCheckBox.isSelected());
+        Preferences.setKeywordFlag(keywordCheckBox.isSelected());
+        Preferences.setModifierFlag(modifierCheckBox.isSelected());
+        Preferences.setPrimitiveTypeFlag(primitiveTypeCheckBox.isSelected());
+        Preferences.setStaticMethodInvocationImportedTypesFlag(staticMethodInvocationImportedTypesCheckBox.isSelected());
+        Preferences.setStaticFieldAccessImportedTypesFlag(staticFieldAccessImportedTypesCheckBox.isSelected());
     }
 
     boolean valid() {
         return true;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chainedEnumConstantCheckBox;
+    private javax.swing.JCheckBox chainedFieldAccessCheckBox;
     private javax.swing.JCheckBox chainedMethodInvocationCheckBox;
     private javax.swing.JPanel completionForPanel;
     private javax.swing.JCheckBox enumConstantCheckBox;

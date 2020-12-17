@@ -24,7 +24,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Statement;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
-import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
+import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.AssertTree;
@@ -113,7 +113,6 @@ import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.java.source.ui.ElementHeaders;
 import org.netbeans.api.lexer.Token;
-import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenId;
 import org.netbeans.api.lexer.TokenSequence;
 import org.openide.util.Exceptions;
@@ -319,22 +318,22 @@ public class JavaSourceHelper {
 
     private Set<ElementKind> getRequiredLocalElementKinds() {
         Set<ElementKind> elementKinds = new HashSet<>(Byte.SIZE);
-        if (Settings.getSettingForLocalVariable()) {
+        if (Preferences.getLocalVariableFlag()) {
             elementKinds.add(ElementKind.LOCAL_VARIABLE);
         }
-        if (Settings.getSettingForField()) {
+        if (Preferences.getFieldFlag()) {
             elementKinds.add(ElementKind.FIELD);
         }
-        if (Settings.getSettingForParameter()) {
+        if (Preferences.getParameterFlag()) {
             elementKinds.add(ElementKind.PARAMETER);
         }
-        if (Settings.getSettingForEnumConstant()) {
+        if (Preferences.getEnumConstantFlag()) {
             elementKinds.add(ElementKind.ENUM_CONSTANT);
         }
-        if (Settings.getSettingForExceptionParameter()) {
+        if (Preferences.getExceptionParameterFlag()) {
             elementKinds.add(ElementKind.EXCEPTION_PARAMETER);
         }
-        if (Settings.getSettingForResourceVariable()) {
+        if (Preferences.getResourceVariableFlag()) {
             elementKinds.add(ElementKind.RESOURCE_VARIABLE);
         }
         return Collections.unmodifiableSet(elementKinds);
@@ -365,24 +364,25 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(typeElements);
     }
 
-    List<MethodInvocation> collectMethodInvocations(List<Element> elements, CompilationController controller) {
-        List<MethodInvocation> methodInvocations = new ArrayList<>();
-        elements.forEach(element -> {
+    public void collectMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
+        List<Element> localElements = getElementsByAbbreviation(controller);
+        localElements.forEach(element -> {
             List<ExecutableElement> methods = getAllNonStaticMethodsInClassAndSuperclasses(element, controller);
             methods = getMethodsByAbbreviation(methods);
-            methods.forEach(method -> {
-                List<ExpressionTree> arguments = evaluateMethodArguments(method);
-                methodInvocations.add(new MethodInvocation(element, method, arguments, this));
-            });
+            methods.forEach(method ->
+                    codeFragments.add(new MethodInvocation(element, method, evaluateMethodArguments(method), this)));
         });
-        Collections.sort(methodInvocations);
-        return Collections.unmodifiableList(methodInvocations);
     }
 
     private List<ExecutableElement> getAllNonStaticMethodsInClassAndSuperclasses(
             Element element, CompilationController controller) {
         List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(element, controller);
-        methods = filterNonStaticMethods(methods);
+        Function<List<ExecutableElement>, List<ExecutableElement>> filterNonStaticMethods = allMethods -> {
+            return allMethods.stream()
+                    .filter(method -> (!method.getModifiers().contains(Modifier.STATIC)))
+                    .collect(Collectors.toList());
+        };
+        methods = filterNonStaticMethods.apply(methods);
         return Collections.unmodifiableList(methods);
     }
 
@@ -402,12 +402,6 @@ public class JavaSourceHelper {
         }
         members.forEach(member -> methods.add((ExecutableElement) member));
         return Collections.unmodifiableList(methods);
-    }
-
-    private List<ExecutableElement> filterNonStaticMethods(List<ExecutableElement> methods) {
-        return methods.stream()
-                .filter(method -> (!method.getModifiers().contains(Modifier.STATIC)))
-                .collect(Collectors.toList());
     }
 
     public List<CodeFragment> insertCodeFragment(CodeFragment fragment) {
@@ -698,16 +692,11 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    List<MethodInvocation> collectLocalMethodInvocations(CompilationController controller) {
-        List<MethodInvocation> methodInvocations = new ArrayList<>();
+    public void collectLocalMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
         List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses(controller);
         methods = getMethodsByAbbreviation(methods);
-        methods.forEach(method -> {
-            List<ExpressionTree> arguments = evaluateMethodArguments(method);
-            methodInvocations.add(new MethodInvocation(null, method, arguments, this));
-        });
-        Collections.sort(methodInvocations);
-        return Collections.unmodifiableList(methodInvocations);
+        methods.forEach(method ->
+                codeFragments.add(new MethodInvocation(null, method, evaluateMethodArguments(method), this)));
     }
 
     private List<ExecutableElement> getMethodsInCurrentAndSuperclasses(CompilationController controller) {
@@ -883,34 +872,25 @@ public class JavaSourceHelper {
         return document;
     }
 
-    List<MethodInvocation> collectStaticMethodInvocations(CompilationController controller) {
-        List<MethodInvocation> methodInvocations = new ArrayList<>();
+    public void collectStaticMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> typeElements = collectTypesByAbbreviation(controller);
-        typeElements.forEach(element -> {
-            List<ExecutableElement> methods = getStaticMethodsInClass(element);
+        typeElements.forEach(typeElement -> {
+            List<ExecutableElement> methods = getStaticMethodsInClass(typeElement);
             methods = getMethodsByAbbreviation(methods);
-            methods.forEach(method -> {
-                List<ExpressionTree> arguments = evaluateMethodArguments(method);
-                methodInvocations.add(new MethodInvocation(element, method, arguments, this));
-            });
+            methods.forEach(method ->
+                    codeFragments.add(new MethodInvocation(typeElement, method, evaluateMethodArguments(method), this)));
         });
-        Collections.sort(methodInvocations);
-        return Collections.unmodifiableList(methodInvocations);
     }
 
-    List<MethodInvocation> collectStaticMethodInvocationsForImportedTypes(CompilationController controller) {
-        List<MethodInvocation> methodInvocations = new ArrayList<>();
+    public void collectStaticMethodInvocationsForImportedTypes(
+            List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> typeElements = collectImportedTypeElements(controller);
         typeElements.forEach(element -> {
             List<ExecutableElement> methods = getStaticMethodsInClass(element);
             methods = getMethodsByAbbreviation(methods);
-            methods.forEach(method -> {
-                List<ExpressionTree> arguments = evaluateMethodArguments(method);
-                methodInvocations.add(new MethodInvocation(element, method, arguments, this));
-            });
+            methods.forEach(method ->
+                    codeFragments.add(new MethodInvocation(element, method, evaluateMethodArguments(method), this)));
         });
-        Collections.sort(methodInvocations);
-        return Collections.unmodifiableList(methodInvocations);
     }
 
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
@@ -934,16 +914,40 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(staticMethods);
     }
 
-    List<LocalElement> collectLocalElements(CompilationController controller) {
+    public void collectLocalVariables(List<CodeFragment> codeFragments, CompilationController controller) {
+        collectLocalElements(codeFragments, controller, ElementKind.LOCAL_VARIABLE);
+    }
+
+    public void collectFields(List<CodeFragment> codeFragments, CompilationController controller) {
+        collectLocalElements(codeFragments, controller, ElementKind.FIELD);
+    }
+
+    public void collectParameters(List<CodeFragment> codeFragments, CompilationController controller) {
+        collectLocalElements(codeFragments, controller, ElementKind.PARAMETER);
+    }
+
+    public void collectEnumConstants(List<CodeFragment> codeFragments, CompilationController controller) {
+        collectLocalElements(codeFragments, controller, ElementKind.ENUM_CONSTANT);
+    }
+
+    public void collectExceptionParameters(List<CodeFragment> codeFragments, CompilationController controller) {
+        collectLocalElements(codeFragments, controller, ElementKind.EXCEPTION_PARAMETER);
+    }
+
+    public void collectResourceVariables(List<CodeFragment> codeFragments, CompilationController controller) {
+        collectLocalElements(codeFragments, controller, ElementKind.RESOURCE_VARIABLE);
+    }
+
+    private void collectLocalElements(
+            List<CodeFragment> codeFragments, CompilationController controller, ElementKind kind) {
         List<Element> localElements = new ArrayList<>();
-        List<LocalElement> result = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
-            return Collections.emptyList();
+            return;
         }
         if (TreeUtilities.CLASS_TREE_KINDS.contains(currentPath.getLeaf().getKind())) {
-            return Collections.emptyList();
+            return;
         }
         ElementUtilities elementUtilities = controller.getElementUtilities();
         Elements elements = controller.getElements();
@@ -953,7 +957,7 @@ public class JavaSourceHelper {
                     return (!elements.isDeprecated(e))
                             && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
                             && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
-                            && getRequiredLocalElementKinds().contains(e.getKind());
+                            && e.getKind() == kind;
                 });
         localMembersAndVars.forEach(localElements::add);
         localElements
@@ -961,50 +965,42 @@ public class JavaSourceHelper {
                 .filter(element -> StringUtilities.getElementAbbreviation(
                         element.getSimpleName().toString()).equals(abbreviation.getName()))
                 .filter(distinctByKey(Element::getSimpleName))
-                .forEach(element -> result.add(new LocalElement(element)));
-        Collections.sort(result);
-        return Collections.unmodifiableList(result);
+                .forEach(element -> codeFragments.add(new LocalElement(element)));
     }
 
-    List<Type> collectLocalTypes(CompilationController controller) {
+    public void collectInternalTypes(List<CodeFragment> codeFragments, CompilationController controller) {
         List<Element> localElements = new ArrayList<>();
-        List<Type> result = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         ElementUtilities elementUtilities = controller.getElementUtilities();
         Elements elements = controller.getElements();
         Scope scope = treeUtilities.scopeFor(abbreviation.getStartOffset());
-        if (Settings.getSettingForInternalType()) {
-            CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-            List<? extends Tree> typeDecls = compilationUnit.getTypeDecls();
-            Tree topLevelClassInterfaceOrEnumTree = typeDecls.get(0);
-            Element topLevelElement = controller.getTrees().getElement(
-                    TreePath.getPath(compilationUnit, topLevelClassInterfaceOrEnumTree));
-            localElements.add(topLevelElement);
-            Iterable<? extends Element> localMembersAndVars =
-                    elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
-                        return (!elements.isDeprecated(e)
-                                && (e.getKind() == ElementKind.CLASS
-                                || e.getKind() == ElementKind.ENUM
-                                || e.getKind() == ElementKind.INTERFACE));
-                    });
-            localMembersAndVars.forEach(localElements::add);
-            localElements
-                    .stream()
-                    .filter(element -> StringUtilities.getElementAbbreviation(
-                            element.getSimpleName().toString()).equals(abbreviation.getName()))
-                    .filter(distinctByKey(Element::getSimpleName))
-                    .forEach(element -> result.add(new Type(elements.getTypeElement(element.toString()))));
-            Collections.sort(result);
-        }
-        return Collections.unmodifiableList(result);
+        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+        List<? extends Tree> typeDecls = compilationUnit.getTypeDecls();
+        Tree topLevelClassInterfaceOrEnumTree = typeDecls.get(0);
+        Element topLevelElement = controller.getTrees().getElement(
+                TreePath.getPath(compilationUnit, topLevelClassInterfaceOrEnumTree));
+        localElements.add(topLevelElement);
+        Iterable<? extends Element> localMembersAndVars =
+                elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
+                    return (!elements.isDeprecated(e)
+                            && (e.getKind() == ElementKind.CLASS
+                            || e.getKind() == ElementKind.ENUM
+                            || e.getKind() == ElementKind.INTERFACE));
+                });
+        localMembersAndVars.forEach(localElements::add);
+        localElements
+                .stream()
+                .filter(element -> StringUtilities.getElementAbbreviation(
+                        element.getSimpleName().toString()).equals(abbreviation.getName()))
+                .filter(distinctByKey(Element::getSimpleName))
+                .forEach(element -> codeFragments.add(new Type(elements.getTypeElement(element.toString()))));
     }
 
-    List<Keyword> collectKeywords(CompilationController controller) {
-        List<Keyword> keywords = new ArrayList<>();
+    public void collectKeywords(List<CodeFragment> codeFragments, CompilationController controller) {
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
-            return Collections.emptyList();
+            return;
         }
         TreePath parentPath;
         for (Keyword keyword : ConstantDataManager.KEYWORDS) {
@@ -1020,7 +1016,7 @@ public class JavaSourceHelper {
                     case "while": //NOI18N
                         if (currentPath.getLeaf().getKind() == Tree.Kind.BLOCK
                                 || currentPath.getLeaf().getKind() == Tree.Kind.CASE) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "break": //NOI18N
@@ -1029,13 +1025,13 @@ public class JavaSourceHelper {
                                         Tree.Kind.FOR_LOOP, Tree.Kind.SWITCH, Tree.Kind.WHILE_LOOP),
                                 currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "case": //NOI18N
                         parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "catch": //NOI18N
@@ -1048,13 +1044,13 @@ public class JavaSourceHelper {
                             Token<?> token = sequence.token();
                             if (token != null) {
                                 if (token.id() == JavaTokenId.CATCH) {
-                                    keywords.add(keyword);
+                                    codeFragments.add(keyword);
                                 } else if (token.id() == JavaTokenId.LBRACE) {
                                     sequence.move(abbreviation.getStartOffset());
                                     moveToPreviousNonWhitespaceToken(sequence);
                                     token = sequence.token();
                                     if (token != null && token.id() == JavaTokenId.TRY) {
-                                        keywords.add(keyword);
+                                        codeFragments.add(keyword);
                                     }
                                 }
                             }
@@ -1076,12 +1072,12 @@ public class JavaSourceHelper {
                                     }
                                 }
                                 if (leftBraceOffset < abbreviation.getStartOffset()) {
-                                    keywords.add(keyword);
+                                    codeFragments.add(keyword);
                                 }
                                 break;
                             case BLOCK:
                             case COMPILATION_UNIT:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                         }
                         break;
                     case "continue": //NOI18N
@@ -1090,19 +1086,19 @@ public class JavaSourceHelper {
                                         Tree.Kind.FOR_LOOP, Tree.Kind.WHILE_LOOP),
                                 currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "default": //NOI18N
                         parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "else": //NOI18N
                         parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.IF, currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "enum": //NOI18N
@@ -1121,11 +1117,11 @@ public class JavaSourceHelper {
                                     }
                                 }
                                 if (leftBraceOffset < abbreviation.getStartOffset()) {
-                                    keywords.add(keyword);
+                                    codeFragments.add(keyword);
                                 }
                                 break;
                             case COMPILATION_UNIT:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                         }
                         break;
                     case "false": //NOI18N
@@ -1141,7 +1137,7 @@ public class JavaSourceHelper {
                             case PARENTHESIZED:
                             case RETURN:
                             case VARIABLE:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                                 break;
                         }
                         break;
@@ -1161,11 +1157,11 @@ public class JavaSourceHelper {
                                     }
                                 }
                                 if (leftBraceOffset < abbreviation.getStartOffset()) {
-                                    keywords.add(keyword);
+                                    codeFragments.add(keyword);
                                 }
                                 break;
                             case COMPILATION_UNIT:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                         }
                         break;
                     case "extends": //NOI18N
@@ -1183,11 +1179,11 @@ public class JavaSourceHelper {
                                     }
                                 }
                                 if (leftBraceOffset >= abbreviation.getStartOffset()) {
-                                    keywords.add(keyword);
+                                    codeFragments.add(keyword);
                                 }
                                 break;
                             case TYPE_PARAMETER:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                                 break;
                         }
                         break;
@@ -1206,14 +1202,14 @@ public class JavaSourceHelper {
                                     }
                                 }
                                 if (abbreviation.getStartOffset() <= leftBraceOffset) {
-                                    keywords.add(keyword);
+                                    codeFragments.add(keyword);
                                 }
                                 break;
                         }
                         break;
                     case "import": //NOI18N
                         if (currentPath.getLeaf().getKind() == Tree.Kind.COMPILATION_UNIT) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "instanceof": //NOI18N
@@ -1221,7 +1217,7 @@ public class JavaSourceHelper {
                     case "return": //NOI18N
                         parentPath = treeUtilities.getPathElementOfKind(Tree.Kind.METHOD, currentPath);
                         if (parentPath != null) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "void": //NOI18N
@@ -1229,13 +1225,13 @@ public class JavaSourceHelper {
                             case CLASS:
                             case INTERFACE:
                             case ENUM:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                                 break;
                         }
                         break;
                     case "throws": //NOI18N
                         if (currentPath.getLeaf().getKind() == Tree.Kind.METHOD) {
-                            keywords.add(keyword);
+                            codeFragments.add(keyword);
                         }
                         break;
                     case "String": //NOI18N
@@ -1245,7 +1241,7 @@ public class JavaSourceHelper {
                             case ENUM:
                             case METHOD:
                             case VARIABLE:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                                 break;
                         }
                         break;
@@ -1256,24 +1252,19 @@ public class JavaSourceHelper {
                             case NEW_CLASS:
                             case RETURN:
                             case VARIABLE:
-                                keywords.add(keyword);
+                                codeFragments.add(keyword);
                                 break;
                         }
                 }
             }
         }
-        Collections.sort(keywords);
-        return Collections.unmodifiableList(keywords);
     }
 
-    List<com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType> collectPrimitiveTypes(
-            CompilationController controller) {
-        List<com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType> primitiveTypes =
-                new ArrayList<>();
+    public void collectPrimitiveTypes(List<CodeFragment> codeFragments, CompilationController controller) {
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
-            return Collections.emptyList();
+            return;
         }
         switch (currentPath.getLeaf().getKind()) {
             case CLASS:
@@ -1283,22 +1274,19 @@ public class JavaSourceHelper {
             case VARIABLE:
                 ConstantDataManager.PRIMITIVE_TYPES.forEach(primitiveType -> {
                     if (primitiveType.isAbbreviationEqualTo(abbreviation.getName())) {
-                        primitiveTypes.add(primitiveType);
+                        codeFragments.add(primitiveType);
                     }
                 });
                 break;
         }
-        Collections.sort(primitiveTypes);
-        return Collections.unmodifiableList(primitiveTypes);
     }
 
-    List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> collectModifiers(
-            CompilationController controller) {
+    public void collectModifiers(List<CodeFragment> codeFragments, CompilationController controller) {
         List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
-            return Collections.emptyList();
+            return;
         }
         Tree currentTree = currentPath.getLeaf();
         Tree.Kind currentContext = currentTree.getKind();
@@ -1594,8 +1582,7 @@ public class JavaSourceHelper {
                 }
                 break;
         }
-        Collections.sort(modifiers);
-        return Collections.unmodifiableList(modifiers);
+        codeFragments.addAll(modifiers);
     }
 
     private TokenId moveToNextNonWhitespaceToken(TokenSequence<?> sequence) {
@@ -2385,29 +2372,23 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    List<MethodInvocation> collectChainedMethodInvocations(CompilationController controller) {
-        List<MethodInvocation> methodInvocations = new ArrayList<>();
+    public void collectChainedMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
         Types types = controller.getTypes();
         TypeMirror type = getTypeInContext(controller);
         if (type == null) {
-            return Collections.emptyList();
+            return;
         }
         Element typeElement = types.asElement(type);
         if (typeElement == null) {
-            return Collections.emptyList();
+            return;
         }
         List<ExecutableElement> methods = getAllMethodsInClassAndSuperclasses(typeElement, controller);
         methods = getMethodsByAbbreviation(methods);
-        methods.forEach(method -> {
-            List<ExpressionTree> arguments = evaluateMethodArguments(method);
-            methodInvocations.add(new MethodInvocation(null, method, arguments, this));
-        });
-        Collections.sort(methodInvocations);
-        return Collections.unmodifiableList(methodInvocations);
+        methods.forEach(method ->
+                codeFragments.add(new MethodInvocation(null, method, evaluateMethodArguments(method), this)));
     }
 
-    List<FieldAccess> collectStaticFieldAccesses(CompilationController controller) {
-        List<FieldAccess> fieldAccesses = new ArrayList<>();
+    public void collectStaticFieldAccesses(List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> typeElements = collectTypesByAbbreviation(controller);
         typeElements.forEach(typeElement -> {
             try {
@@ -2421,18 +2402,16 @@ public class JavaSourceHelper {
                     String elementName = element.getSimpleName().toString();
                     String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
                     if (abbreviation.getName().equals(elementAbbreviation)) {
-                        fieldAccesses.add(new FieldAccess(typeElement, element));
+                        codeFragments.add(new FieldAccess(typeElement, element));
                     }
                 });
             } catch (AssertionError ex) {
             }
         });
-        Collections.sort(fieldAccesses);
-        return Collections.unmodifiableList(fieldAccesses);
     }
 
-    List<FieldAccess> collectStaticFieldAccessesForImportedTypes(CompilationController controller) {
-        List<FieldAccess> fieldAccesses = new ArrayList<>();
+    public void collectStaticFieldAccessesForImportedTypes(List<CodeFragment> codeFragments,
+            CompilationController controller) {
         List<TypeElement> typeElements = collectImportedTypeElements(controller);
         typeElements.forEach(typeElement -> {
             try {
@@ -2446,32 +2425,27 @@ public class JavaSourceHelper {
                     String elementName = element.getSimpleName().toString();
                     String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
                     if (abbreviation.getName().equals(elementAbbreviation)) {
-                        fieldAccesses.add(new FieldAccess(typeElement, element));
+                        codeFragments.add(new FieldAccess(typeElement, element));
                     }
                 });
             } catch (AssertionError ex) {
             }
         });
-        Collections.sort(fieldAccesses);
-        return Collections.unmodifiableList(fieldAccesses);
     }
 
-    List<FieldAccess> collectChainedFieldAccesses(CompilationController controller) {
-        List<FieldAccess> fieldAccesses = new ArrayList<>();
+    public void collectChainedFieldAccesses(List<CodeFragment> codeFragments, CompilationController controller) {
         Types types = controller.getTypes();
         TypeMirror type = getTypeInContext(controller);
         if (type == null) {
-            return Collections.emptyList();
+            return;
         }
         Element typeElement = types.asElement(type);
         if (typeElement == null) {
-            return Collections.emptyList();
+            return;
         }
         List<VariableElement> fields = getPublicStaticFieldsInClassAndSuperclasses(typeElement, controller);
         fields = getFieldsOrEnumConstantsByAbbreviation(fields);
-        fields.forEach(field -> fieldAccesses.add(new FieldAccess(null, field)));
-        Collections.sort(fieldAccesses);
-        return Collections.unmodifiableList(fieldAccesses);
+        fields.forEach(field -> codeFragments.add(new FieldAccess(null, field)));
     }
 
     private List<VariableElement> getPublicStaticFieldsInClassAndSuperclasses(
@@ -2495,22 +2469,19 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(fields);
     }
 
-    List<FieldAccess> collectChainedEnumConstantAccesses(CompilationController controller) {
-        List<FieldAccess> result = new ArrayList<>();
+    public void collectChainedEnumConstantAccesses(List<CodeFragment> codeFragments, CompilationController controller) {
         Types types = controller.getTypes();
         TypeMirror type = getTypeInContext(controller);
         if (type == null) {
-            return Collections.emptyList();
+            return;
         }
         Element typeElement = types.asElement(type);
         if (typeElement == null) {
-            return Collections.emptyList();
+            return;
         }
         List<VariableElement> enumConstants = getEnumConstants(typeElement, controller);
         enumConstants = getFieldsOrEnumConstantsByAbbreviation(enumConstants);
-        enumConstants.forEach(enumConstant -> result.add(new FieldAccess(null, enumConstant)));
-        Collections.sort(result);
-        return Collections.unmodifiableList(result);
+        enumConstants.forEach(enumConstant -> codeFragments.add(new FieldAccess(null, enumConstant)));
     }
 
     private List<VariableElement> getEnumConstants(Element element, CompilationController controller) {
@@ -2542,60 +2513,20 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(result);
     }
 
-    List<Type> collectTypes(CompilationController controller) {
+    public void collectTypes(List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> types = new ArrayList<>();
         types.addAll(collectTypesByAbbreviation(controller));
-        return types.stream()
-                .filter(distinctByKey(element -> element.getSimpleName().toString()))
-                .map(type -> new Type(type))
-                .sorted()
-                .collect(Collectors.toList());
+        codeFragments.addAll(
+                types.stream()
+                        .filter(distinctByKey(element -> element.getSimpleName().toString()))
+                        .map(Type::new)
+                        .sorted()
+                        .collect(Collectors.toList()));
     }
 
     private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-    }
-
-    boolean afterThis(CompilationController controller) {
-        TokenHierarchy<?> tokenHierarchy = controller.getTokenHierarchy();
-        TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
-        tokenSequence.move(abbreviation.getStartOffset());
-        tokenSequence.movePrevious();
-        tokenSequence.movePrevious();
-        Token<?> token = tokenSequence.token();
-        if (token != null) {
-            TokenId tokenId = token.id();
-            if (tokenId == JavaTokenId.THIS) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    List<LocalElement> collectFields(CompilationController controller) {
-        List<LocalElement> result = new ArrayList<>();
-        List<Element> fields = new ArrayList<>();
-        TreeUtilities treeUtilities = controller.getTreeUtilities();
-        ElementUtilities elementUtilities = controller.getElementUtilities();
-        Elements elements = controller.getElements();
-        Scope scope = treeUtilities.scopeFor(abbreviation.getStartOffset());
-        Iterable<? extends Element> localMembersAndVars =
-                elementUtilities.getLocalMembersAndVars(scope, (e, type) -> {
-                    return (!elements.isDeprecated(e))
-                            && !e.getSimpleName().toString().equals(ConstantDataManager.THIS)
-                            && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
-                            && e.getKind() == ElementKind.FIELD;
-                });
-        localMembersAndVars.forEach(fields::add);
-        fields
-                .stream()
-                .filter(element -> StringUtilities.getElementAbbreviation(
-                        element.getSimpleName().toString()).equals(abbreviation.getName()))
-                .filter(distinctByKey(Element::getSimpleName))
-                .forEach(element -> result.add(new LocalElement(element)));
-        Collections.sort(result);
-        return Collections.unmodifiableList(result);
     }
 
     private List<CodeFragment> insertAssertStatement() {
@@ -4924,11 +4855,9 @@ public class JavaSourceHelper {
         }
     }
 
-    List<Type> collectImportedTypes(CompilationController controller) {
-        List<Type> types = new ArrayList<>();
+    public void collectImportedTypes(List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> importedTypeElements = collectImportedTypeElements(controller);
-        importedTypeElements.forEach(importedTypeElement -> types.add(new Type(importedTypeElement)));
-        return Collections.unmodifiableList(types);
+        importedTypeElements.forEach(importedTypeElement -> codeFragments.add(new Type(importedTypeElement)));
     }
 
     private List<TypeElement> collectImportedTypeElements(CompilationController controller) {

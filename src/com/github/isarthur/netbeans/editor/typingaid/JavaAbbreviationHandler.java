@@ -15,17 +15,17 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
+import com.github.isarthur.netbeans.editor.typingaid.collector.ChainedMethodInvocationCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.Collector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.LocalVariableCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.MethodInvocationCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.ChainedLinker;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.CompoundLinker;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.Linker;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.SimpleLinker;
 import com.github.isarthur.netbeans.editor.typingaid.spi.AbbreviationHandler;
 import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocation;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
-import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
 import com.github.isarthur.netbeans.editor.typingaid.ui.GenerateCodePanel;
 import com.github.isarthur.netbeans.editor.typingaid.ui.PopupUtil;
 import java.awt.Frame;
@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.lang.model.element.Element;
 import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -67,229 +66,44 @@ public class JavaAbbreviationHandler implements AbbreviationHandler {
         try {
             javaSource.runUserActionTask(controller -> {
                 helper.moveStateToParsedPhase(controller);
+                Request request = new Request(codeFragments, helper, controller);
                 if (abbreviation.getContent().contains(".")) { //NOI18N
-                    List<Element> elements = helper.getElementsByAbbreviation(controller);
-                    if (!elements.isEmpty()) {
-                        List<MethodInvocation> methodInvocations = Collections.emptyList();
-                        if (Settings.getSettingForMethodInvocation()) {
-                            methodInvocations = helper.collectMethodInvocations(elements, controller);
-                        }
-                        List<MethodInvocation> staticMethodInvocations = Collections.emptyList();
-                        if (Settings.getSettingForStaticMethodInvocation()) {
-                            if (Settings.getSettingForStaticMethodInvocationImportedTypes()) {
-                                staticMethodInvocations =
-                                        helper.collectStaticMethodInvocationsForImportedTypes(controller);
-                            } else {
-                                staticMethodInvocations = helper.collectStaticMethodInvocations(controller);
-                            }
-                        }
-                        List<FieldAccess> fieldAccesses = Collections.emptyList();
-                        if (Settings.getSettingForStaticFieldAccess()) {
-                            if (Settings.getSettingForStaticFieldAccessImportedTypes()) {
-                                fieldAccesses = helper.collectStaticFieldAccessesForImportedTypes(controller);
-                            } else {
-                                fieldAccesses = helper.collectStaticFieldAccesses(controller);
-                            }
-                        }
-                        int matchesCount = methodInvocations.size() + staticMethodInvocations.size()
-                                + fieldAccesses.size();
-                        switch (matchesCount) {
-                            case 0: {
-                                break;
-                            }
-                            case 1:
-                                if (!methodInvocations.isEmpty()) {
-                                    codeFragments.addAll(helper.insertCodeFragment(methodInvocations.get(0)));
-                                } else if (!staticMethodInvocations.isEmpty()) {
-                                    codeFragments.addAll(helper.insertCodeFragment(staticMethodInvocations.get(0)));
-                                } else {
-                                    codeFragments.addAll(helper.insertCodeFragment(fieldAccesses.get(0)));
-                                }
-                                break;
-                            default:
-                                codeFragments.addAll(methodInvocations);
-                                codeFragments.addAll(staticMethodInvocations);
-                                codeFragments.addAll(fieldAccesses);
-                                showPopup(codeFragments);
-                        }
-                    } else {
-                        List<MethodInvocation> staticMethodInvocations = Collections.emptyList();
-                        if (Settings.getSettingForStaticMethodInvocation()) {
-                            if (Settings.getSettingForStaticMethodInvocationImportedTypes()) {
-                                staticMethodInvocations =
-                                        helper.collectStaticMethodInvocationsForImportedTypes(controller);
-                            } else {
-                                staticMethodInvocations = helper.collectStaticMethodInvocations(controller);
-                            }
-                        }
-                        List<FieldAccess> fieldAccesses = Collections.emptyList();
-                        if (Settings.getSettingForStaticFieldAccess()) {
-                            if (Settings.getSettingForStaticFieldAccessImportedTypes()) {
-                                fieldAccesses = helper.collectStaticFieldAccessesForImportedTypes(controller);
-                            } else {
-                                fieldAccesses = helper.collectStaticFieldAccesses(controller);
-                            }
-                        }
-                        int matchesCount = staticMethodInvocations.size() + fieldAccesses.size();
-                        switch (matchesCount) {
-                            case 0:
-                                break;
-                            case 1:
-                                if (!staticMethodInvocations.isEmpty()) {
-                                    codeFragments.addAll(helper.insertCodeFragment(staticMethodInvocations.get(0)));
-                                } else {
-                                    codeFragments.addAll(helper.insertCodeFragment(fieldAccesses.get(0)));
-                                }
-                                break;
-                            default:
-                                codeFragments.addAll(staticMethodInvocations);
-                                codeFragments.addAll(fieldAccesses);
-                                showPopup(codeFragments);
-                        }
+                    Collector collector = new MethodInvocationCollector();
+                    Linker linker = new CompoundLinker(collector);
+                    collector = linker.link();
+                    if (collector != null) {
+                        collector.collect(request);
                     }
                 } else {
                     if (helper.isMemberSelection(controller)) {
-                        if (helper.afterThis(controller)) {
-                            List<LocalElement> fields = helper.collectFields(controller);
-                            int matchesCount = fields.size();
-                            switch (matchesCount) {
-                                case 0:
-                                    break;
-                                case 1:
-                                    codeFragments.addAll(helper.insertCodeFragment(fields.get(0)));
-                                    break;
-                                default:
-                                    codeFragments.addAll(fields);
-                                    showPopup(codeFragments);
-                            }
-                        } else {
-                            List<MethodInvocation> chainedMethodInvocations = Collections.emptyList();
-                            if (Settings.getSettingForChainedMethodInvocation()) {
-                                chainedMethodInvocations = helper.collectChainedMethodInvocations(controller);
-                            }
-                            List<FieldAccess> fieldAccesses = Collections.emptyList();
-                            if (Settings.getSettingForField()) {
-                                fieldAccesses = helper.collectChainedFieldAccesses(controller);
-                            }
-                            List<FieldAccess> enumConstantAccesses = Collections.emptyList();
-                            if (Settings.getSettingForEnumConstant()) {
-                                enumConstantAccesses = helper.collectChainedEnumConstantAccesses(controller);
-                            }
-                            int matchesCount =
-                                    chainedMethodInvocations.size() + fieldAccesses.size() + enumConstantAccesses.size();
-                            switch (matchesCount) {
-                                case 0:
-                                    break;
-                                case 1:
-                                    if (!chainedMethodInvocations.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(chainedMethodInvocations.get(0)));
-                                    } else if (!fieldAccesses.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(fieldAccesses.get(0)));
-                                    } else {
-                                        codeFragments.addAll(helper.insertCodeFragment(enumConstantAccesses.get(0)));
-                                    }
-                                    break;
-                                default:
-                                    codeFragments.addAll(chainedMethodInvocations);
-                                    codeFragments.addAll(fieldAccesses);
-                                    codeFragments.addAll(enumConstantAccesses);
-                                    showPopup(codeFragments);
-                            }
+                        Collector collector = new ChainedMethodInvocationCollector();
+                        Linker linker = new ChainedLinker(collector);
+                        collector = linker.link();
+                        if (collector != null) {
+                            collector.collect(request);
                         }
                     } else {
-                        if (helper.isCaseLabel(controller)) {
-                            if (Settings.getSettingForEnumConstant()) {
-                                List<LocalElement> enumConstants =
-                                        helper.collectEnumConstantsOfSwitchExpressionType(controller);
-                                int matchesCount = enumConstants.size();
-                                switch (matchesCount) {
-                                    case 0:
-                                        break;
-                                    case 1:
-                                        codeFragments.addAll(helper.insertCodeFragment(enumConstants.get(0)));
-                                        break;
-                                    default:
-                                        codeFragments.addAll(enumConstants);
-                                        showPopup(codeFragments);
-                                }
-                            }
-                        } else {
-                            List<LocalElement> localElements = Collections.emptyList();
-                            if (Settings.getSettingForLocalVariable()) {
-                                localElements = helper.collectLocalElements(controller);
-                            }
-                            List<Type> localTypes = Collections.emptyList();
-                            if (Settings.getSettingForInternalType()) {
-                                localTypes = helper.collectLocalTypes(controller);
-                            }
-                            List<MethodInvocation> localMethodInvocations = Collections.emptyList();
-                            if (Settings.getSettingForLocalMethodInvocation()) {
-                                localMethodInvocations = helper.collectLocalMethodInvocations(controller);
-                            }
-                            List<Type> types = Collections.emptyList();
-                            if (Settings.getSettingForExternalType()) {
-                                types = helper.collectTypes(controller);
-                            }
-                            List<Type> importedTypes = Collections.emptyList();
-                            if (Settings.getSettingForImportedType()) {
-                                types = helper.collectImportedTypes(controller);
-                            }
-                            List<Keyword> keywords = Collections.emptyList();
-                            if (Settings.getSettingForKeyword()) {
-                                keywords = helper.collectKeywords(controller);
-                            }
-                            List<Modifier> modifiers = Collections.emptyList();
-                            if (Settings.getSettingForModifier()) {
-                                modifiers = helper.collectModifiers(controller);
-                            }
-                            List<PrimitiveType> primitiveTypes = Collections.emptyList();
-                            if (Settings.getSettingForPrimitiveType()) {
-                                primitiveTypes = helper.collectPrimitiveTypes(controller);
-                            }
-                            int matchesCount = localElements.size() + localTypes.size() + localMethodInvocations.size()
-                                    + types.size() + importedTypes.size() + keywords.size() + modifiers.size()
-                                    + primitiveTypes.size();
-                            switch (matchesCount) {
-                                case 0:
-                                    break;
-                                case 1:
-                                    if (!localElements.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(localElements.get(0)));
-                                    } else if (!localTypes.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(localTypes.get(0)));
-                                    } else if (!localMethodInvocations.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(localMethodInvocations.get(0)));
-                                    } else if (!types.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(types.get(0)));
-                                    } else if (!importedTypes.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(importedTypes.get(0)));
-                                    } else if (!keywords.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(keywords.get(0)));
-                                    } else if (!modifiers.isEmpty()) {
-                                        codeFragments.addAll(helper.insertCodeFragment(modifiers.get(0)));
-                                    } else {
-                                        codeFragments.addAll(helper.insertCodeFragment(primitiveTypes.get(0)));
-                                    }
-                                    break;
-                                default:
-                                    codeFragments.addAll(localElements);
-                                    codeFragments.addAll(localTypes);
-                                    codeFragments.addAll(localMethodInvocations);
-                                    codeFragments.addAll(types);
-                                    codeFragments.addAll(importedTypes);
-                                    codeFragments.addAll(keywords);
-                                    codeFragments.addAll(modifiers);
-                                    codeFragments.addAll(primitiveTypes);
-                                    Collections.sort(codeFragments, (o1, o2) -> {
-                                        return o1.toString().compareTo(o2.toString());
-                                    });
-                                    showPopup(codeFragments);
-                            }
+                        Collector collector = new LocalVariableCollector();
+                        Linker linker = new SimpleLinker(collector);
+                        collector = linker.link();
+                        if (collector != null) {
+                            collector.collect(request);
                         }
                     }
                 }
-            },
-                    true);
+                int matchesCount = codeFragments.size();
+                switch (matchesCount) {
+                    case 0:
+                        break;
+                    case 1:
+                        helper.insertCodeFragment(codeFragments.get(0));
+                        break;
+                    default:
+                        codeFragments.sort((fragment1, fragment2) ->
+                                fragment1.toString().compareTo(fragment2.toString()));
+                        showPopup(codeFragments);
+                }
+            }, true);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

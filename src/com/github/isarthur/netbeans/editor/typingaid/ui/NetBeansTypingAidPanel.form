@@ -64,7 +64,6 @@
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="staticFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
@@ -80,14 +79,17 @@
                       <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
                       <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="chainedMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="177" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="staticMethodInvocationImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
                               <Component id="staticFieldAccessImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <Component id="staticMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="chainedMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="chainedFieldAccessCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="chainedEnumConstantCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
@@ -106,10 +108,14 @@
                       <Component id="staticFieldAccessCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="staticFieldAccessImportedTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="chainedMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="chainedFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="chainedEnumConstantCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -136,7 +142,7 @@
                   <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="58" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -330,6 +336,26 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticMethodInvocationImportedTypesCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="chainedFieldAccessCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.chainedFieldAccessCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chainedFieldAccessCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="chainedEnumConstantCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.chainedEnumConstantCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chainedEnumConstantCheckBoxActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

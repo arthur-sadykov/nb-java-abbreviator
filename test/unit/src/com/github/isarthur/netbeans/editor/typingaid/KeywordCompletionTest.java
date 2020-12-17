@@ -15,7 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
-import com.github.isarthur.netbeans.editor.typingaid.settings.Settings;
+import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -74,6 +74,8 @@ public class KeywordCompletionTest extends NbTestCase {
     private boolean staticFieldAccess;
     private boolean localMethodInvocation;
     private boolean chainedMethodInvocation;
+    private boolean chainedFieldAccess;
+    private boolean chainedEnumConstantAccess;
     private boolean staticMethodInvocation;
     private boolean methodInvocation;
 
@@ -111,43 +113,47 @@ public class KeywordCompletionTest extends NbTestCase {
     }
 
     private void storeSettings() {
-        methodInvocation = Settings.getSettingForMethodInvocation();
-        staticMethodInvocation = Settings.getSettingForStaticMethodInvocation();
-        chainedMethodInvocation = Settings.getSettingForChainedMethodInvocation();
-        localMethodInvocation = Settings.getSettingForLocalMethodInvocation();
-        staticFieldAccess = Settings.getSettingForStaticFieldAccess();
-        localVariable = Settings.getSettingForLocalVariable();
-        field = Settings.getSettingForField();
-        parameter = Settings.getSettingForParameter();
-        enumConstant = Settings.getSettingForEnumConstant();
-        exceptionParameter = Settings.getSettingForExceptionParameter();
-        resourceVariable = Settings.getSettingForResourceVariable();
-        internalType = Settings.getSettingForInternalType();
-        externalType = Settings.getSettingForExternalType();
-        importedType = Settings.getSettingForImportedType();
-        keyword = Settings.getSettingForKeyword();
-        modifier = Settings.getSettingForModifier();
-        primitiveType = Settings.getSettingForPrimitiveType();
+        staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
+        staticFieldAccess = Preferences.getStaticFieldAccessFlag();
+        methodInvocation = Preferences.getMethodInvocationFlag();
+        chainedMethodInvocation = Preferences.getChainedMethodInvocationFlag();
+        chainedFieldAccess = Preferences.getChainedFieldAccessFlag();
+        chainedEnumConstantAccess = Preferences.getChainedEnumConstantAccessFlag();
+        localMethodInvocation = Preferences.getLocalMethodInvocationFlag();
+        localVariable = Preferences.getLocalVariableFlag();
+        field = Preferences.getFieldFlag();
+        parameter = Preferences.getParameterFlag();
+        enumConstant = Preferences.getEnumConstantFlag();
+        exceptionParameter = Preferences.getExceptionParameterFlag();
+        resourceVariable = Preferences.getResourceVariableFlag();
+        internalType = Preferences.getInternalTypeFlag();
+        externalType = Preferences.getExternalTypeFlag();
+        importedType = Preferences.getImportedTypeFlag();
+        keyword = Preferences.getKeywordFlag();
+        modifier = Preferences.getModifierFlag();
+        primitiveType = Preferences.getPrimitiveTypeFlag();
     }
 
     private void setConfigurationForKeywordCompletion() {
-        Settings.setSettingForMethodInvocation(false);
-        Settings.setSettingForStaticMethodInvocation(false);
-        Settings.setSettingForChainedMethodInvocation(false);
-        Settings.setSettingForLocalMethodInvocation(false);
-        Settings.setSettingForStaticFieldAccess(false);
-        Settings.setSettingForLocalVariable(false);
-        Settings.setSettingForField(false);
-        Settings.setSettingForParameter(false);
-        Settings.setSettingForEnumConstant(false);
-        Settings.setSettingForExceptionParameter(false);
-        Settings.setSettingForResourceVariable(false);
-        Settings.setSettingForInternalType(false);
-        Settings.setSettingForExternalType(false);
-        Settings.setSettingForImportedType(false);
-        Settings.setSettingForKeyword(true);
-        Settings.setSettingForModifier(false);
-        Settings.setSettingForPrimitiveType(false);
+        Preferences.setStaticMethodInvocationFlag(false);
+        Preferences.setStaticFieldAccessFlag(false);
+        Preferences.setMethodInvocationFlag(false);
+        Preferences.setChainedMethodInvocationFlag(false);
+        Preferences.setChainedFieldAccessFlag(false);
+        Preferences.setChainedEnumConstantAccessFlag(false);
+        Preferences.setLocalMethodInvocationFlag(false);
+        Preferences.setLocalVariableFlag(false);
+        Preferences.setFieldFlag(false);
+        Preferences.setParameterFlag(false);
+        Preferences.setEnumConstantFlag(false);
+        Preferences.setExceptionParameterFlag(false);
+        Preferences.setResourceVariableFlag(false);
+        Preferences.setInternalTypeFlag(false);
+        Preferences.setExternalTypeFlag(false);
+        Preferences.setImportedTypeFlag(false);
+        Preferences.setKeywordFlag(true);
+        Preferences.setModifierFlag(false);
+        Preferences.setPrimitiveTypeFlag(false);
     }
 
     public void testAssertKeywordCompletion() throws IOException {
@@ -164,7 +170,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("assert true : \"\";"));
+                Collections.singletonList("assert"));
     }
 
     public void testBreakKeywordCompletionInForLoop() throws IOException {
@@ -185,7 +191,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("break;"));
+                Arrays.asList("break"));
     }
 
     public void testBreakKeywordCompletionInWhileLoop() throws IOException {
@@ -206,7 +212,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("break;"));
+                Arrays.asList("break"));
     }
 
     public void testBreakKeywordCompletionInDoWhileLoop() throws IOException {
@@ -227,7 +233,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        } while (true);\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("break;"));
+                Arrays.asList("break"));
     }
 
     public void testBreakKeywordCompletionInSwitchStatement() throws IOException {
@@ -254,7 +260,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("break;"));
+                Collections.singletonList("break"));
     }
 
     public void testContinueKeywordCompletionInForLoop() throws IOException {
@@ -332,7 +338,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("while (true) {" + System.lineSeparator() + "}"));
+                Collections.singletonList("while"));
     }
 
     public void testDoWhileKeywordCompletion() throws IOException {
@@ -350,7 +356,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("do {" + System.lineSeparator() + "} while (true);"));
+                Collections.singletonList("do"));
     }
 
     public void testForKeywordCompletion() throws IOException {
@@ -368,7 +374,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("for (int i = 0; i < 10; i++) {" + System.lineSeparator() + "}"));
+                Collections.singletonList("for"));
     }
 
     public void testTryKeywordCompletion() throws IOException {
@@ -405,7 +411,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList(" catch (Exception e) {" + System.lineSeparator() + "}"));
+                Collections.singletonList("catch"));
     }
 
     public void testFinallyKeywordCompletion() throws IOException {
@@ -426,7 +432,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("{" + System.lineSeparator() + "}"));
+                Collections.singletonList("finally"));
     }
 
     public void testThrowKeywordCompletion() throws IOException {
@@ -452,7 +458,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "}",
                 "class Test implements  {\n"
                 + "}",
-                Collections.singletonList(""));
+                Collections.singletonList("implements"));
     }
 
     public void testImplementsKeywordCompletionForEnum() throws IOException {
@@ -462,7 +468,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "}",
                 "enum Test implements  {\n"
                 + "}",
-                Collections.singletonList(""));
+                Collections.singletonList("implements"));
     }
 
     public void testInterfaceKeywordCompletionInClass() throws IOException {
@@ -477,12 +483,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "interface Interface {"
-                        + System.lineSeparator()
-                        + "}"
-                ));
+                Collections.singletonList("interface"));
     }
 
     public void testInterfaceKeywordCompletionInInterface() throws IOException {
@@ -497,11 +498,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "interface Interface {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("interface"));
     }
 
     public void testInterfaceKeywordCompletionInEnum() throws IOException {
@@ -518,12 +515,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "interface Interface {"
-                        + System.lineSeparator()
-                        + "}"
-                ));
+                Collections.singletonList("interface"));
     }
 
     public void testInterfaceKeywordCompletionInCompilationUnit() throws IOException {
@@ -549,11 +541,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "class Class {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("class"));
     }
 
     public void testClassKeywordCompletionInInterface() throws IOException {
@@ -568,11 +556,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "class Class {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("class"));
     }
 
     public void testClassKeywordCompletionInEnum() throws IOException {
@@ -589,11 +573,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "class Class {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("class"));
     }
 
     public void testClassKeywordCompletionInCompilationUnit() throws IOException {
@@ -607,11 +587,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "\n"
                 + "class Class {\n"
                 + "}\n",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "class Class {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("class"));
     }
 
     public void testClassKeywordCompletionInBlock() throws IOException {
@@ -630,11 +606,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "class Class {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("class"));
     }
 
     public void testEnumKeywordCompletionInClass() throws IOException {
@@ -649,13 +621,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "enum Enum {"
-                        + System.lineSeparator()
-                        + ";"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("enum"));
     }
 
     public void testEnumKeywordCompletionInInterface() throws IOException {
@@ -670,14 +636,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "enum Enum {"
-                        + System.lineSeparator()
-                        + ";"
-                        + System.lineSeparator()
-                        + "}"
-                ));
+                Collections.singletonList("enum"));
     }
 
     public void testEnumKeywordCompletionInEnum() throws IOException {
@@ -692,13 +651,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "enum Enum {"
-                        + System.lineSeparator()
-                        + ";"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("enum"));
     }
 
     public void testEnumKeywordCompletionInCompilationUnit() throws IOException {
@@ -712,14 +665,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "\n"
                 + "enum Enum {\n"
                 + "}\n",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "enum Enum {"
-                        + System.lineSeparator()
-                        + ";"
-                        + System.lineSeparator()
-                        + "}"
-                ));
+                Collections.singletonList("enum"));
     }
 
     public void testExtendsKeywordCompletionForClass() throws IOException {
@@ -729,7 +675,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "}",
                 "class Test extends  {\n"
                 + "}",
-                Collections.singletonList(""));
+                Collections.singletonList("extends"));
     }
 
     public void testExtendsKeywordCompletionForInterface() throws IOException {
@@ -739,7 +685,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "}",
                 "interface Test extends  {\n"
                 + "}",
-                Collections.singletonList(""));
+                Collections.singletonList("extends"));
     }
 
     public void testElseKeywordCompletion() throws IOException {
@@ -758,7 +704,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("{" + System.lineSeparator() + "}"));
+                Collections.singletonList("else"));
     }
 
     public void testVoidKeywordCompletionInClass() throws IOException {
@@ -773,11 +719,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "void method() {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("void"));
     }
 
     public void testVoidKeywordCompletionInInterface() throws IOException {
@@ -790,7 +732,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    void method();\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList("void method();"));
+                Collections.singletonList("void"));
     }
 
     public void testVoidKeywordCompletionInEnum() throws IOException {
@@ -807,11 +749,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "    \n"
                 + "}",
-                Collections.singletonList(
-                        System.lineSeparator()
-                        + "void method() {"
-                        + System.lineSeparator()
-                        + "}"));
+                Collections.singletonList("void"));
     }
 
     public void testImportKeywordCompletion() throws IOException {
@@ -840,7 +778,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("return 0;"));
+                Collections.singletonList("return"));
     }
 
     public void testReturnKeywordCompletionInSwitchTree() throws IOException {
@@ -863,7 +801,7 @@ public class KeywordCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("return 0;"));
+                Collections.singletonList("return"));
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
@@ -893,22 +831,24 @@ public class KeywordCompletionTest extends NbTestCase {
     }
 
     private void revertSettings() {
-        Settings.setSettingForMethodInvocation(methodInvocation);
-        Settings.setSettingForStaticMethodInvocation(staticMethodInvocation);
-        Settings.setSettingForChainedMethodInvocation(chainedMethodInvocation);
-        Settings.setSettingForLocalMethodInvocation(localMethodInvocation);
-        Settings.setSettingForStaticFieldAccess(staticFieldAccess);
-        Settings.setSettingForLocalVariable(localVariable);
-        Settings.setSettingForField(field);
-        Settings.setSettingForParameter(parameter);
-        Settings.setSettingForEnumConstant(enumConstant);
-        Settings.setSettingForExceptionParameter(exceptionParameter);
-        Settings.setSettingForResourceVariable(resourceVariable);
-        Settings.setSettingForInternalType(internalType);
-        Settings.setSettingForExternalType(externalType);
-        Settings.setSettingForImportedType(importedType);
-        Settings.setSettingForKeyword(keyword);
-        Settings.setSettingForModifier(modifier);
-        Settings.setSettingForPrimitiveType(primitiveType);
+        Preferences.setMethodInvocationFlag(methodInvocation);
+        Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
+        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
+        Preferences.setChainedFieldAccessFlag(chainedFieldAccess);
+        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantAccess);
+        Preferences.setLocalMethodInvocationFlag(localMethodInvocation);
+        Preferences.setStaticFieldAccessFlag(staticFieldAccess);
+        Preferences.setLocalVariableFlag(localVariable);
+        Preferences.setFieldFlag(field);
+        Preferences.setParameterFlag(parameter);
+        Preferences.setEnumConstantFlag(enumConstant);
+        Preferences.setExceptionParameterFlag(exceptionParameter);
+        Preferences.setResourceVariableFlag(resourceVariable);
+        Preferences.setInternalTypeFlag(internalType);
+        Preferences.setExternalTypeFlag(externalType);
+        Preferences.setImportedTypeFlag(importedType);
+        Preferences.setKeywordFlag(keyword);
+        Preferences.setModifierFlag(modifier);
+        Preferences.setPrimitiveTypeFlag(primitiveType);
     }
 }
