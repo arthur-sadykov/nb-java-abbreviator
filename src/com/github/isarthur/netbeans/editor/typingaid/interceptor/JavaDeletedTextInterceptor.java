@@ -21,6 +21,7 @@ import javax.swing.text.BadLocationException;
 import org.netbeans.api.editor.mimelookup.MimePath;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.spi.editor.typinghooks.DeletedTextInterceptor;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -31,7 +32,7 @@ public class JavaDeletedTextInterceptor implements DeletedTextInterceptor {
     private final Abbreviation abbreviation;
 
     private JavaDeletedTextInterceptor() {
-        this.abbreviation = JavaAbbreviation.getInstance();
+        this.abbreviation = Lookup.getDefault().lookup(JavaAbbreviation.class);
     }
 
     @Override
@@ -41,9 +42,7 @@ public class JavaDeletedTextInterceptor implements DeletedTextInterceptor {
 
     @Override
     public void remove(Context context) throws BadLocationException {
-        int offset = context.getOffset() - context.getText().length();
         abbreviation.delete();
-        abbreviation.setStartOffset(offset);
     }
 
     @Override

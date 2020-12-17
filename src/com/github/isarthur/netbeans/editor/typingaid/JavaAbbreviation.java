@@ -16,23 +16,21 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author Arthur Sadykov
  */
+@ServiceProvider(service = Abbreviation.class)
 public class JavaAbbreviation implements Abbreviation {
 
     private int startOffset;
     private final StringBuffer buffer;
 
-    private JavaAbbreviation() {
+    public JavaAbbreviation() {
         this.startOffset = -1;
         this.buffer = new StringBuffer();
-    }
-
-    public static JavaAbbreviation getInstance() {
-        return new JavaAbbreviation();
     }
 
     @Override

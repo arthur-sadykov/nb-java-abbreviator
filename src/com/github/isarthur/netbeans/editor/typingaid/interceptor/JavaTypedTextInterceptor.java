@@ -32,6 +32,7 @@ import org.netbeans.editor.Acceptor;
 import org.netbeans.editor.AcceptorFactory;
 import org.netbeans.spi.editor.typinghooks.TypedTextInterceptor;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -47,7 +48,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
 
     private JavaTypedTextInterceptor() {
         this.resetAcceptor = AcceptorFactory.SPACE_NL;
-        this.abbreviation = JavaAbbreviation.getInstance();
+        this.abbreviation = Lookup.getDefault().lookup(JavaAbbreviation.class);
     }
 
     @Override

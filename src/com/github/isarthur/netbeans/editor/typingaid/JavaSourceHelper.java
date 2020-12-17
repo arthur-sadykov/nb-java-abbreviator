@@ -135,7 +135,7 @@ public class JavaSourceHelper {
     }
 
     void setAbbreviation(Abbreviation abbreviation) {
-        this.abbreviation = JavaAbbreviation.getInstance();
+        this.abbreviation = new JavaAbbreviation();
         this.abbreviation.setContent(abbreviation.getContent());
         this.abbreviation.setStartOffset(abbreviation.getStartOffset());
     }

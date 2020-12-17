@@ -107,7 +107,7 @@ public class KeywordCompletionTest extends NbTestCase {
         document.putProperty(JavaSource.class, new WeakReference<>(JavaSource.forFileObject(testFile)));
         JavaSourceHelper helper = new JavaSourceHelper(editor);
         handler = new JavaAbbreviationHandler(helper);
-        abbreviation = JavaAbbreviation.getInstance();
+        abbreviation = new JavaAbbreviation();
         storeSettings();
         setConfigurationForKeywordCompletion();
     }
