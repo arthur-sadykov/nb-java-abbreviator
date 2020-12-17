@@ -3733,9 +3733,13 @@ public class JavaSourceHelper {
             JavaSource javaSource = getJavaSourceForDocument(document);
             javaSource.runModificationTask(copy -> {
                 moveStateToParsedPhase(copy);
+                TypeUtilities typeUtilities = copy.getTypeUtilities();
                 TreeMaker make = copy.getTreeMaker();
                 ModifiersTree modifiers = make.Modifiers(Collections.emptySet());
-                Tree type = make.Type(methodInvocation.getMethod().getReturnType());
+                TypeMirror returnType = methodInvocation.getMethod().getReturnType();
+                CharSequence returnTypeName =
+                        typeUtilities.getTypeName(returnType, TypeUtilities.TypeNameOptions.PRINT_FQN);
+                Tree type = make.QualIdent(returnTypeName.toString());
                 MethodInvocationTree methodInvocationTree = make.MethodInvocation(
                         Collections.emptyList(),
                         make.Identifier(methodInvocation.getMethod()),
@@ -3744,8 +3748,7 @@ public class JavaSourceHelper {
                 if (methodInvocation.getScope() == null) {
                     initializer = methodInvocationTree;
                 } else {
-                    if (TypeElement.class
-                            .isInstance(methodInvocation.getScope())) {
+                    if (TypeElement.class.isInstance(methodInvocation.getScope())) {
                         initializer = make.MemberSelect(
                                 make.QualIdent(methodInvocation.getScope()), methodInvocationTree.toString());
                     } else {
