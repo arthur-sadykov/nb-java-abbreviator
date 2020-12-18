@@ -61,6 +61,7 @@ public class TypeCompletionTest extends NbTestCase {
     private boolean externalType;
     private boolean internalType;
     private boolean importedType;
+    private boolean samePackageType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -125,6 +126,7 @@ public class TypeCompletionTest extends NbTestCase {
         internalType = Preferences.getInternalTypeFlag();
         externalType = Preferences.getExternalTypeFlag();
         importedType = Preferences.getImportedTypeFlag();
+        samePackageType = Preferences.getSamePackageTypeFlag();
         keyword = Preferences.getKeywordFlag();
         modifier = Preferences.getModifierFlag();
         primitiveType = Preferences.getPrimitiveTypeFlag();
@@ -147,6 +149,7 @@ public class TypeCompletionTest extends NbTestCase {
         Preferences.setInternalTypeFlag(true);
         Preferences.setExternalTypeFlag(false);
         Preferences.setImportedTypeFlag(true);
+        Preferences.setSamePackageTypeFlag(false);
         Preferences.setKeywordFlag(false);
         Preferences.setModifierFlag(false);
         Preferences.setPrimitiveTypeFlag(false);
@@ -213,6 +216,7 @@ public class TypeCompletionTest extends NbTestCase {
         Preferences.setInternalTypeFlag(internalType);
         Preferences.setExternalTypeFlag(externalType);
         Preferences.setImportedTypeFlag(importedType);
+        Preferences.setSamePackageTypeFlag(samePackageType);
         Preferences.setKeywordFlag(keyword);
         Preferences.setModifierFlag(modifier);
         Preferences.setPrimitiveTypeFlag(primitiveType);

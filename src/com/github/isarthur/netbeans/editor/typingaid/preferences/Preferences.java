@@ -42,6 +42,7 @@ public class Preferences {
     private static final String KEYWORD = "keyword"; //NOI18N
     private static final String MODIFIER = "modifier"; //NOI18N
     private static final String PRIMITIVE_TYPE = "primitiveType"; //NOI18N
+    private static final String SAME_PACKAGE_TYPE = "samePackageType"; //NOI18N
     private static final String STATIC_METHOD_INVOCATION_IMPORTED_TYPES = "staticMethodInvocationImportedTypes"; //NOI18N
     private static final String STATIC_FIELD_ACCESS_IMPORTED_TYPES = "staticFieldAccessImportedTypes"; //NOI18N
 
@@ -214,5 +215,13 @@ public class Preferences {
 
     public static void setChainedEnumConstantAccessFlag(boolean chainedEnumConstant) {
         NbPreferences.forModule(Preferences.class).putBoolean(CHAINED_ENUM_CONSTANT_ACCESS, chainedEnumConstant);
+    }
+
+    public static boolean getSamePackageTypeFlag() {
+        return NbPreferences.forModule(Preferences.class).getBoolean(SAME_PACKAGE_TYPE, true);
+    }
+
+    public static void setSamePackageTypeFlag(boolean samePackageType) {
+        NbPreferences.forModule(Preferences.class).putBoolean(SAME_PACKAGE_TYPE, samePackageType);
     }
 }

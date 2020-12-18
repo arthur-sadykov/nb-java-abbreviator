@@ -31,6 +31,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.FieldCollect
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalVariableCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ResourceVariableCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.SamePackageTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 
 /**
@@ -76,6 +77,9 @@ public class SimpleLinker extends Linker {
         }
         if (Preferences.getImportedTypeFlag()) {
             collectors.add(collector.getKind() == Kind.IMPORTED_TYPE ? collector : new ImportedTypeCollector());
+        }
+        if (Preferences.getSamePackageTypeFlag()) {
+            collectors.add(collector.getKind() == Kind.SAME_PACKAGE_TYPE ? collector : new SamePackageTypeCollector());
         }
         if (Preferences.getKeywordFlag()) {
             collectors.add(collector.getKind() == Kind.KEYWORD ? collector : new KeywordCollector());

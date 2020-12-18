@@ -69,7 +69,6 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -120,6 +119,14 @@ import org.netbeans.api.lexer.TokenSequence;
 import org.openide.util.Exceptions;
 import org.openide.util.Parameters;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
+import org.netbeans.api.project.SourceGroup;
+import org.netbeans.api.project.Sources;
+import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataObject;
+import org.openide.windows.TopComponent;
 
 /**
  *
@@ -173,10 +180,25 @@ public class JavaSourceHelper {
         return javaSource;
     }
 
+    JavaSource getJavaSourceForFileObject(FileObject file) {
+        JavaSource javaSource = JavaSource.forFileObject(file);
+        if (javaSource == null) {
+            throw new IllegalStateException(ConstantDataManager.JAVA_SOURCE_NOT_ASSOCIATED_TO_DOCUMENT);
+        }
+        return javaSource;
+    }
+
     private void moveStateToResolvedPhase(CompilationController controller) throws IOException {
         Phase phase = controller.toPhase(Phase.RESOLVED);
         if (phase.compareTo(Phase.RESOLVED) < 0) {
             throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_RESOLVED_PHASE);
+        }
+    }
+
+    private void moveStateToElementsResolvedPhase(CompilationController controller) throws IOException {
+        Phase phase = controller.toPhase(Phase.ELEMENTS_RESOLVED);
+        if (phase.compareTo(Phase.ELEMENTS_RESOLVED) < 0) {
+            throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_ELEMENTS_RESOLVED_PHASE);
         }
     }
 
@@ -5185,5 +5207,50 @@ public class JavaSourceHelper {
             }
         }
         return Collections.unmodifiableList(importedTypeElements);
+    }
+
+    public void collectTypesFromSamePackage(List<CodeFragment> codeFragments, CompilationController controller) {
+        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
+        ExpressionTree packageName = compilationUnit.getPackageName();
+        if (packageName == null) {
+            return;
+        }
+        controller.getElements().getPackageElement(controller.getCompilationUnit().getPackageName().toString());
+        Project project = TopComponent.getRegistry().getActivated().getLookup().lookup(Project.class);
+        if (project == null) {
+            DataObject dataObject = TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class);
+            if (dataObject != null) {
+                FileObject currentFile = dataObject.getPrimaryFile();
+                project = FileOwnerQuery.getOwner(currentFile);
+            }
+        }
+        if (project == null) {
+            return;
+        }
+        Sources sources = project.getLookup().lookup(Sources.class);
+        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        String relativePath = packageName.toString().replaceAll("\\.", "/"); //NOI18N
+        FileObject rootFolder = sourceGroups[0].getRootFolder().getFileObject(relativePath);
+        FileObject[] files = rootFolder.getChildren();
+        for (FileObject file : files) {
+            if (file.getExt().equals("java")) { //NOI18N
+                JavaSource javaSource = getJavaSourceForFileObject(file);
+                try {
+                    javaSource.runUserActionTask(compilationController -> {
+                        moveStateToElementsResolvedPhase(compilationController);
+                        List<? extends TypeElement> topLevelElements = compilationController.getTopLevelElements();
+                        if (!topLevelElements.isEmpty()) {
+                            String topLevelElementName = topLevelElements.get(0).getSimpleName().toString();
+                            String typeAbbreviation = StringUtilities.getElementAbbreviation(topLevelElementName);
+                            if (typeAbbreviation.equals(abbreviation.getScope())) {
+                                codeFragments.add(new Type(topLevelElements.get(0)));
+                            }
+                        }
+                    }, true);
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
     }
 }

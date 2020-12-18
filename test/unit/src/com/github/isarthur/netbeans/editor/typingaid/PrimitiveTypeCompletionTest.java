@@ -62,6 +62,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
     private boolean externalType;
     private boolean internalType;
     private boolean importedType;
+    private boolean samePackageType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -126,6 +127,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         internalType = Preferences.getInternalTypeFlag();
         externalType = Preferences.getExternalTypeFlag();
         importedType = Preferences.getImportedTypeFlag();
+        samePackageType = Preferences.getSamePackageTypeFlag();
         keyword = Preferences.getKeywordFlag();
         modifier = Preferences.getModifierFlag();
         primitiveType = Preferences.getPrimitiveTypeFlag();
@@ -148,6 +150,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Preferences.setInternalTypeFlag(false);
         Preferences.setExternalTypeFlag(false);
         Preferences.setImportedTypeFlag(false);
+        Preferences.setSamePackageTypeFlag(false);
         Preferences.setKeywordFlag(false);
         Preferences.setModifierFlag(false);
         Preferences.setPrimitiveTypeFlag(true);
@@ -673,6 +676,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Preferences.setInternalTypeFlag(internalType);
         Preferences.setExternalTypeFlag(externalType);
         Preferences.setImportedTypeFlag(importedType);
+        Preferences.setSamePackageTypeFlag(samePackageType);
         Preferences.setKeywordFlag(keyword);
         Preferences.setModifierFlag(modifier);
         Preferences.setPrimitiveTypeFlag(primitiveType);
