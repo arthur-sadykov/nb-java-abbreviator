@@ -16,16 +16,16 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.util.Utilities;
-import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.FieldAccess;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.LocalElement;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.MethodInvocation;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Statement;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Type;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.FieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Keyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.LocalElement;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.MethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Statement;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Type;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
-import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.AssertTree;
 import com.sun.source.tree.AssignmentTree;
@@ -1372,7 +1372,7 @@ public class JavaSourceHelper {
     }
 
     public void collectModifiers(List<CodeFragment> codeFragments, CompilationController controller) {
-        List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers = new ArrayList<>();
+        List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers = new ArrayList<>();
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
@@ -1413,7 +1413,7 @@ public class JavaSourceHelper {
                             modifiersTree = variable.getModifiers();
                             if (!modifiersTree.getFlags().contains(Modifier.FINAL)
                                     && StringUtilities.getElementAbbreviation("final").equals(abbreviation.getName())) {
-                                modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier("final")); //NOI18N
+                                modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier("final")); //NOI18N
                             }
                             break;
                     }
@@ -1589,7 +1589,7 @@ public class JavaSourceHelper {
                             modifiersTree = variable.getModifiers();
                             if (StringUtilities.getElementAbbreviation("final").equals(abbreviation.getName()) //NOI18N
                                     && !modifiersTree.getFlags().contains(Modifier.FINAL)) {
-                                modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier("final")); //NOI18N
+                                modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier("final")); //NOI18N
                             }
                         }
                     }
@@ -1702,7 +1702,7 @@ public class JavaSourceHelper {
     }
 
     private void filterTopLevelClassModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)
                 || modifiersTree.getFlags().contains(Modifier.FINAL)) {
             ConstantDataManager.MODIFIERS.stream()
@@ -1713,7 +1713,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1725,7 +1725,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("public") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.PUBLIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1737,7 +1737,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1747,12 +1747,12 @@ public class JavaSourceHelper {
                             || modifier.equals("public") //NOI18N
                             || modifier.equals("strictfp"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterTopLevelInterfaceModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1762,7 +1762,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1772,7 +1772,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("public") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.PUBLIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1782,7 +1782,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1791,12 +1791,12 @@ public class JavaSourceHelper {
                             || modifier.equals("public") //NOI18N
                             || modifier.equals("strictfp"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterTopLevelEnumModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1804,7 +1804,7 @@ public class JavaSourceHelper {
                             && ((modifier.equals("public") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.PUBLIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1812,7 +1812,7 @@ public class JavaSourceHelper {
                             && ((modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1820,12 +1820,12 @@ public class JavaSourceHelper {
                             && (modifier.equals("public") //NOI18N
                             || modifier.equals("strictfp"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterInnerInterfaceModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1847,7 +1847,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1869,7 +1869,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("static") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STATIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1891,7 +1891,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)
                 || modifiersTree.getFlags().contains(Modifier.PROTECTED)
                 || modifiersTree.getFlags().contains(Modifier.PRIVATE)) {
@@ -1905,7 +1905,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("static") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STATIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1917,12 +1917,12 @@ public class JavaSourceHelper {
                             || modifier.equals("strictfp") //NOI18N
                             || modifier.equals("static"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterInnerEnumModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1942,7 +1942,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("static") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STATIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1962,7 +1962,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PUBLIC)
                 || modifiersTree.getFlags().contains(Modifier.PROTECTED)
                 || modifiersTree.getFlags().contains(Modifier.PRIVATE)) {
@@ -1974,7 +1974,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("static") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STATIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -1985,12 +1985,12 @@ public class JavaSourceHelper {
                             || modifier.equals("strictfp") //NOI18N
                             || modifier.equals("static"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterMethodLocalInnerClassModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)
                 || modifiersTree.getFlags().contains(Modifier.FINAL)) {
             ConstantDataManager.MODIFIERS.stream()
@@ -1999,7 +1999,7 @@ public class JavaSourceHelper {
                             && ((modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2009,7 +2009,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("final") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.FINAL))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2018,12 +2018,12 @@ public class JavaSourceHelper {
                             || modifier.equals("final") //NOI18N
                             || modifier.equals("strictfp"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterInnerClassModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)
                 || modifiersTree.getFlags().contains(Modifier.FINAL)) {
             ConstantDataManager.MODIFIERS.stream()
@@ -2046,7 +2046,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PRIVATE)
                 || modifiersTree.getFlags().contains(Modifier.PROTECTED)
                 || modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
@@ -2062,7 +2062,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2086,7 +2086,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("strictfp") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STRICTFP))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2110,7 +2110,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("static") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.STATIC))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2123,12 +2123,12 @@ public class JavaSourceHelper {
                             || modifier.equals("strictfp") //NOI18N
                             || modifier.equals("static"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterMethodModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.ABSTRACT)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2140,7 +2140,7 @@ public class JavaSourceHelper {
                             && !modifiersTree.getFlags().contains(Modifier.PUBLIC)
                             && !modifiersTree.getFlags().contains(Modifier.PROTECTED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.NATIVE)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2164,7 +2164,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STRICTFP)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2188,7 +2188,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.FINAL)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2214,7 +2214,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PRIVATE)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2230,7 +2230,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PROTECTED)
                 || modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
             ConstantDataManager.MODIFIERS.stream()
@@ -2249,7 +2249,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.STATIC)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2277,7 +2277,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2305,7 +2305,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("synchronized") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.SYNCHRONIZED))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2320,12 +2320,12 @@ public class JavaSourceHelper {
                             || modifier.equals("static") //NOI18N
                             || modifier.equals("synchronized"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 
     private void filterFieldModifiers(ModifiersTree modifiersTree,
-            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier> modifiers) {
+            List<com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier> modifiers) {
         if (modifiersTree.getFlags().contains(Modifier.FINAL)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2347,7 +2347,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("transient") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.TRANSIENT))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.VOLATILE)) {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2369,7 +2369,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("transient") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.TRANSIENT))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else if (modifiersTree.getFlags().contains(Modifier.PRIVATE)
                 || modifiersTree.getFlags().contains(Modifier.PROTECTED)
                 || modifiersTree.getFlags().contains(Modifier.PUBLIC)) {
@@ -2385,7 +2385,7 @@ public class JavaSourceHelper {
                             || (modifier.equals("volatile") //NOI18N
                             && !modifiersTree.getFlags().contains(Modifier.VOLATILE))))
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         } else {
             ConstantDataManager.MODIFIERS.stream()
                     .filter(modifier ->
@@ -2398,7 +2398,7 @@ public class JavaSourceHelper {
                             || modifier.equals("transient") //NOI18N
                             || modifier.equals("volatile"))) //NOI18N
                     .forEach(modifier ->
-                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.Modifier(modifier)));
+                            modifiers.add(new com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Modifier(modifier)));
         }
     }
 

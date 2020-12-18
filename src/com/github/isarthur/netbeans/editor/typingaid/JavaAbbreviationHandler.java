@@ -15,17 +15,17 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.ChainedMethodInvocationCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.Collector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.LocalVariableCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.MethodInvocationCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.linker.ChainedLinker;
-import com.github.isarthur.netbeans.editor.typingaid.collector.linker.CompoundLinker;
-import com.github.isarthur.netbeans.editor.typingaid.collector.linker.Linker;
-import com.github.isarthur.netbeans.editor.typingaid.collector.linker.SimpleLinker;
-import com.github.isarthur.netbeans.editor.typingaid.spi.AbbreviationHandler;
-import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
-import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedMethodInvocationCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.Collector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalVariableCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.MethodInvocationCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.ChainedLinker;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CompoundLinker;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.api.Linker;
+import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.SimpleLinker;
+import com.github.isarthur.netbeans.editor.typingaid.api.AbbreviationHandler;
+import com.github.isarthur.netbeans.editor.typingaid.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.ui.GenerateCodePanel;
 import com.github.isarthur.netbeans.editor.typingaid.ui.PopupUtil;
 import java.awt.Frame;

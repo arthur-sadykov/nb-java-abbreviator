@@ -15,8 +15,8 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.constants;
 
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.Keyword;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.PrimitiveType;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Keyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.PrimitiveType;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;

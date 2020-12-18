@@ -15,7 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
-import com.github.isarthur.netbeans.editor.typingaid.spi.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.api.Abbreviation;
 import org.openide.util.lookup.ServiceProvider;
 
 /**

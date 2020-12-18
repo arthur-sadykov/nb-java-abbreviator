@@ -16,7 +16,7 @@
 package com.github.isarthur.netbeans.editor.typingaid.ui;
 
 import com.github.isarthur.netbeans.editor.typingaid.JavaSourceHelper;
-import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.FocusAdapter;

@@ -15,7 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
-import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import org.netbeans.api.java.source.CompilationController;
 import java.util.List;
 

@@ -16,7 +16,7 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
-import com.github.isarthur.netbeans.editor.typingaid.spi.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
