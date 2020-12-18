@@ -51,7 +51,7 @@ public class StringUtilities {
     public static String getMethodAbbreviation(String methodName) {
         StringBuilder abbreviation = new StringBuilder().append(Character.toLowerCase(methodName.charAt(0)));
         for (int i = 1; i < methodName.length(); i++) {
-            if (Character.isUpperCase(methodName.charAt(i)) && Character.isLowerCase(methodName.charAt(i - 1))) {
+            if (Character.isUpperCase(methodName.charAt(i))) {
                 abbreviation.append(Character.toLowerCase(methodName.charAt(i)));
             }
         }

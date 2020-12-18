@@ -117,6 +117,7 @@ import org.netbeans.api.lexer.TokenId;
 import org.netbeans.api.lexer.TokenSequence;
 import org.openide.util.Exceptions;
 import org.openide.util.Parameters;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -701,6 +702,12 @@ public class JavaSourceHelper {
 
     private List<ExecutableElement> getMethodsInCurrentAndSuperclasses(CompilationController controller) {
         List<ExecutableElement> methods = new ArrayList<>();
+        try {
+            moveStateToResolvedPhase(controller);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            return Collections.emptyList();
+        }
         Elements elements = controller.getElements();
         ElementUtilities elementUtilities = controller.getElementUtilities();
         TypeMirror typeMirror = getTypeMirrorOfCurrentClass(controller);
@@ -2395,13 +2402,30 @@ public class JavaSourceHelper {
         }
     }
 
-    boolean isMemberSelection(CompilationController controller) {
-        TreeUtilities treeUtilities = controller.getTreeUtilities();
-        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
-        if (currentPath == null) {
-            return false;
+    public boolean isMemberSelection(CompilationController controller) {
+        AtomicBoolean memberSelection = new AtomicBoolean();
+        Function<CompilationController, Boolean> isMemberSelection = compilationController -> {
+            TreeUtilities treeUtilities = compilationController.getTreeUtilities();
+            TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+            if (currentPath == null) {
+                return false;
+            }
+            return currentPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT;
+        };
+        if (controller == null) {
+            JavaSource javaSource = getJavaSourceForDocument(document);
+            try {
+                javaSource.runUserActionTask(info -> {
+                    moveStateToParsedPhase(info);
+                    memberSelection.set(isMemberSelection.apply(info));
+                }, true);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        } else {
+            return isMemberSelection.apply(controller);
         }
-        return currentPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT;
+        return memberSelection.get();
     }
 
     boolean isCaseLabel(CompilationController controller) {
@@ -3694,8 +3718,7 @@ public class JavaSourceHelper {
     }
 
     public boolean isMethodReturnVoid(ExecutableElement method) {
-        TypeMirror returnType = method.getReturnType();
-        return returnType.getKind() == TypeKind.VOID;
+        return method.getReturnType().getKind() == TypeKind.VOID;
     }
 
     public ExpressionStatementTree createVoidMethodInvocation(MethodInvocation methodInvocation) {

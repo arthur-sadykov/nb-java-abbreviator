@@ -79,8 +79,13 @@ public class MethodInvocation implements CodeFragment, Comparable<MethodInvocati
             return methodInvocation.toString();
         } else {
             if (scope == null) {
-                methodInvocation = helper.createMethodInvocationWithoutReturnValue(this);
-                return methodInvocation.toString();
+                if (helper.isMemberSelection(null)) {
+                    methodInvocation = helper.createMethodInvocationWithoutReturnValue(this);
+                    return methodInvocation.toString();
+                } else {
+                    methodInvocation = helper.createMethodInvocationWithReturnValue(this);
+                    return methodInvocation.toString() + ";"; //NOI18N
+                }
             } else {
                 methodInvocation = helper.createMethodInvocationWithReturnValue(this);
                 return methodInvocation.toString() + ";"; //NOI18N
