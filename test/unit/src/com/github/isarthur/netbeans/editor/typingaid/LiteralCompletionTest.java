@@ -23,7 +23,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.JEditorPane;
 import javax.swing.text.Document;
@@ -43,7 +42,7 @@ import org.openide.filesystems.FileUtil;
  *
  * @author: Arthur Sadykov
  */
-public class PrimitiveTypeCompletionTest extends NbTestCase {
+public class LiteralCompletionTest extends NbTestCase {
 
     private static final String JAVA_MIME_TYPE = "text/x-java";
     private static final String MIME_TYPE = "mimeType";
@@ -78,12 +77,12 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
     private boolean staticMethodInvocation;
     private boolean methodInvocation;
 
-    public PrimitiveTypeCompletionTest(String testName) {
+    public LiteralCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(PrimitiveTypeCompletionTest.class)
+        return NbModuleSuite.createConfiguration(LiteralCompletionTest.class)
                 .clusters(EXTIDE_CLUSTER)
                 .clusters(IDE_CLUSTER)
                 .clusters(JAVA_CLUSTER)
@@ -108,7 +107,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         handler = new JavaAbbreviationHandler(helper);
         abbreviation = new JavaAbbreviation();
         storeSettings();
-        setConfigurationForPrimitiveTypeCompletion();
+        setConfigurationForTypeCompletion();
     }
 
     private void storeSettings() {
@@ -135,7 +134,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         primitiveType = Preferences.getPrimitiveTypeFlag();
     }
 
-    private void setConfigurationForPrimitiveTypeCompletion() {
+    private void setConfigurationForTypeCompletion() {
         Preferences.setStaticMethodInvocationFlag(false);
         Preferences.setStaticFieldAccessFlag(false);
         Preferences.setMethodInvocationFlag(false);
@@ -154,486 +153,429 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Preferences.setImportedTypeFlag(false);
         Preferences.setSamePackageTypeFlag(false);
         Preferences.setKeywordFlag(false);
-        Preferences.setLiteralFlag(false);
+        Preferences.setLiteralFlag(true);
         Preferences.setModifierFlag(false);
-        Preferences.setPrimitiveTypeFlag(true);
+        Preferences.setPrimitiveTypeFlag(false);
     }
 
-    public void testBooleanByteKeywordsCompletionInBlock() throws IOException {
+    public void testTrueLiteralInAssignmentTree() throws IOException {
         doAbbreviationInsert(
-                "b",
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean", "byte"));
-    }
-
-    public void testBooleanByteKeywordsCompletionInTypeCast() throws IOException {
-        doAbbreviationInsert(
-                "b",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        boolean bool = | object;\n"
+                + "        boolean valid;\n"
+                + "        valid = |\n;"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        boolean bool =  object;\n"
-                + "    }\n"
+                + "        boolean valid;\n"
+                + "        valid = \n"
+                + "        true;    }\n"
                 + "}",
-                Arrays.asList("boolean", "byte"));
+                Arrays.asList("true"));
     }
 
-    public void testBooleanByteKeywordsCompletionInMethodParameter() throws IOException {
+    public void testTrueLiteralInEqualToTree() throws IOException {
         doAbbreviationInsert(
-                "b",
-                "class Test {\n"
-                + "    void test(int count, |) {\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test(int count, ) {\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean", "byte"));
-    }
-
-    public void testBooleanByteKeywordsCompletionInField() throws IOException {
-        doAbbreviationInsert(
-                "b",
-                "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "    \n"
-                + "}",
-                Arrays.asList("boolean", "byte"));
-    }
-
-    public void testCharKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "c",
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        |\n"
+                + "        boolean valid;\n"
+                + "        if (valid == |) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        char c = '\\u0000';\n"
-                + "        \n"
+                + "        boolean valid;\n"
+                + "        if (valid == true) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("char"));
+                Arrays.asList("true"));
     }
 
-    public void testCharKeywordCompletionInTypeCast() throws IOException {
+    public void testTrueLiteralInMethodInvocationTree() throws IOException {
         doAbbreviationInsert(
-                "c",
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        char ch = |object;\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        char ch = (char) object;\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("char"));
-    }
-
-    public void testCharKeywordCompletionInMethodParameter() throws IOException {
-        doAbbreviationInsert(
-                "c",
-                "class Test {\n"
-                + "    void test(int count, |) {\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test(int count, char c, ) {\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("char"));
-    }
-
-    public void testCharKeywordCompletionInField() throws IOException {
-        doAbbreviationInsert(
-                "c",
-                "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "\n"
-                + "    private char c;\n"
-                + "    \n"
-                + "}",
-                Collections.singletonList("char"));
-    }
-
-    public void testIntKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "i",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        |\n"
+                + "        isValid(0, |);\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        int i = 0;\n"
-                + "        \n"
+                + "        isValid(0, true, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("int"));
+                Arrays.asList("true"));
     }
 
-    public void testIntKeywordCompletionInTypeCast() throws IOException {
+    public void testTrueLiteralInNewClassTree() throws IOException {
         doAbbreviationInsert(
-                "i",
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        int integer = |object;\n"
+                + "        Clazz clazz = new Clazz(0, |);\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        int integer = (int) object;\n"
+                + "        Clazz clazz = new Clazz(0, true, );\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("int"));
+                Arrays.asList("true"));
     }
 
-    public void testIntKeywordCompletionInMethodParameter() throws IOException {
+    public void testTrueLiteralInNotEqualToTree() throws IOException {
         doAbbreviationInsert(
-                "i",
-                "class Test {\n"
-                + "    void test(int count, |) {\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test(int count, int i, ) {\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("int"));
-    }
-
-    public void testIntKeywordCompletionInField() throws IOException {
-        doAbbreviationInsert(
-                "i",
-                "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "\n"
-                + "    private int i;\n"
-                + "    \n"
-                + "}",
-                Collections.singletonList("int"));
-    }
-
-    public void testLongKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "l",
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        |\n"
+                + "        boolean valid;\n"
+                + "        if (valid != |) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        long l = 0L;\n"
-                + "        \n"
+                + "        boolean valid;\n"
+                + "        if (valid != true) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("long"));
+                Arrays.asList("true"));
     }
 
-    public void testLongKeywordCompletionInTypeCast() throws IOException {
+    public void testTrueLiteralInParenthesizedTree() throws IOException {
         doAbbreviationInsert(
-                "l",
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        long number = |object;\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        long number = (long) object;\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("long"));
-    }
-
-    public void testLongKeywordCompletionInMethodParameter() throws IOException {
-        doAbbreviationInsert(
-                "l",
-                "class Test {\n"
-                + "    void test(int count, |) {\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test(int count, long l, ) {\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("long"));
-    }
-
-    public void testLongKeywordCompletionInField() throws IOException {
-        doAbbreviationInsert(
-                "l",
-                "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "\n"
-                + "    private long l;\n"
-                + "    \n"
-                + "}",
-                Collections.singletonList("long"));
-    }
-
-    public void testShortStringKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "s",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        |\n"
+                + "        if (|) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        \n"
+                + "        if (true) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("String", "short"));
+                Arrays.asList("true"));
     }
 
-    public void testShortStringKeywordCompletionInTypeCast() throws IOException {
+    public void testTrueLiteralInReturnTree() throws IOException {
         doAbbreviationInsert(
-                "s",
+                "t",
+                "class Test {\n"
+                + "    boolean test() {\n"
+                + "        return |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    boolean test() {\n"
+                + "        return true;\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("true"));
+    }
+
+    public void testTrueLiteralInVariableTree() throws IOException {
+        doAbbreviationInsert(
+                "t",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        short number = |object;\n"
+                + "        boolean valid = |;\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        short number = object;\n"
+                + "        boolean valid =true;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("String", "short"));
+                Arrays.asList("true"));
     }
 
-    public void testShortStringKeywordCompletionInMethodParameter() throws IOException {
-        doAbbreviationInsert(
-                "s",
-                "class Test {\n"
-                + "    void test(int count, |) {\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test(int count, ) {\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("String", "short"));
-    }
-
-    public void testShortStringKeywordCompletionInField() throws IOException {
-        doAbbreviationInsert(
-                "s",
-                "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "    \n"
-                + "}",
-                Arrays.asList("String", "short"));
-    }
-
-    public void testFloatKeywordCompletionInBlock() throws IOException {
+    public void testFalseLiteralInAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        |\n"
+                + "        boolean valid;\n"
+                + "        valid = |\n;"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        float f = 0.0F;\n"
-                + "        \n"
-                + "    }\n"
+                + "        boolean valid;\n"
+                + "        valid = \n"
+                + "        false;    }\n"
                 + "}",
-                Arrays.asList("float"));
+                Arrays.asList("false"));
     }
 
-    public void testFloatKeywordCompletionInTypeCast() throws IOException {
+    public void testFalseLiteralInEqualToTree() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        float number = |object;\n"
+                + "        boolean valid;\n"
+                + "        if (valid == |) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        float number = (float) object;\n"
+                + "        boolean valid;\n"
+                + "        if (valid == false) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("float"));
+                Arrays.asList("false"));
     }
 
-    public void testFloatKeywordCompletionInMethodParameter() throws IOException {
+    public void testFalseLiteralInMethodInvocationTree() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
-                + "    void test(int count, |) {\n"
+                + "    void test() {\n"
+                + "        isValid(0, |);\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, float f, ) {\n"
+                + "    void test() {\n"
+                + "        isValid(0, false, );\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("float"));
+                Arrays.asList("false"));
     }
 
-    public void testFloatKeywordCompletionInField() throws IOException {
+    public void testFalseLiteralInNewClassTree() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "\n"
-                + "    private float f;\n"
-                + "    \n"
-                + "}",
-                Collections.singletonList("float"));
-    }
-
-    public void testDoubleKeywordCompletionInBlock() throws IOException {
-        doAbbreviationInsert(
-                "d",
-                "class Test {\n"
                 + "    void test() {\n"
-                + "        |\n"
+                + "        Clazz clazz = new Clazz(0, |);\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        double d = 0.0;\n"
-                + "        \n"
+                + "        Clazz clazz = new Clazz(0, false, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("double"));
+                Arrays.asList("false"));
     }
 
-    public void testDoubleKeywordCompletionInTypeCast() throws IOException {
+    public void testFalseLiteralInNotEqualToTree() throws IOException {
         doAbbreviationInsert(
-                "d",
+                "f",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        double number = |object;\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test() {\n"
-                + "        Object object = null;\n"
-                + "        double number = (double) object;\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("double"));
-    }
-
-    public void testDoubleKeywordCompletionInMethodParameter() throws IOException {
-        doAbbreviationInsert(
-                "d",
-                "class Test {\n"
-                + "    void test(int count, |) {\n"
-                + "    }\n"
-                + "}",
-                "class Test {\n"
-                + "    void test(int count, double d, ) {\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("double"));
-    }
-
-    public void testDoubleKeywordCompletionInField() throws IOException {
-        doAbbreviationInsert(
-                "d",
-                "class Test {\n"
-                + "    |\n"
-                + "}",
-                "class Test {\n"
-                + "\n"
-                + "    private double d;\n"
-                + "    \n"
-                + "}",
-                Collections.singletonList("double"));
-    }
-
-    public void testDoNotInvokeCompletionInClassOrEnumDeclarationBeforeLeftBrace() throws IOException {
-        doAbbreviationInsert(
-                "d",
-                "class Test | {\n"
-                + "}",
-                "class Test  {\n"
-                + "}",
-                Collections.emptyList());
-        doAbbreviationInsert(
-                "d",
-                "class Test |{\n"
-                + "}",
-                "class Test {\n"
-                + "}",
-                Collections.emptyList());
-    }
-
-    public void testDoNotInvokeCompletionInMethodDeclarationOutsideOfParentheses() throws IOException {
-        doAbbreviationInsert(
-                "d",
-                "class Test {\n"
-                + "    void test()| {\n"
+                + "        boolean valid;\n"
+                + "        if (valid != |) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
+                + "        boolean valid;\n"
+                + "        if (valid != false) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.emptyList());
+                Arrays.asList("false"));
+    }
+
+    public void testFalseLiteralInParenthesizedTree() throws IOException {
         doAbbreviationInsert(
-                "d",
+                "f",
                 "class Test {\n"
-                + "    void test() |{\n"
+                + "    void test() {\n"
+                + "        if (|) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
+                + "        if (false) {\n"
+                + "        }\n"
                 + "    }\n"
                 + "}",
-                Collections.emptyList());
+                Arrays.asList("false"));
+    }
+
+    public void testFalseLiteralInReturnTree() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    boolean test() {\n"
+                + "        return |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    boolean test() {\n"
+                + "        return false;\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("false"));
+    }
+
+    public void testFalseLiteralInVariableTree() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid =false;\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("false"));
+    }
+
+    public void testNullLiteralInAssignmentTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid;\n"
+                + "        valid = |\n;"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid;\n"
+                + "        valid = \n"
+                + "        null;    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInEqualToTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid;\n"
+                + "        if (valid == |) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid;\n"
+                + "        if (valid == null) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInMethodInvocationTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        isValid(0, |);\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        isValid(0, null, );\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInNewClassTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        Clazz clazz = new Clazz(0, |);\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        Clazz clazz = new Clazz(0, null, );\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInNotEqualToTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid;\n"
+                + "        if (valid != |) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid;\n"
+                + "        if (valid != null) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInParenthesizedTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        if (|) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        if (null) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInReturnTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    String test() {\n"
+                + "        return |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    String test() {\n"
+                + "        return null;\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
+    }
+
+    public void testNullLiteralInVariableTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid = |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        String valid =null;\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("null"));
     }
 
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)

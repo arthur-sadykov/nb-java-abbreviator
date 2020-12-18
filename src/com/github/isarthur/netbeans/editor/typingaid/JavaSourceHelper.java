@@ -971,6 +971,52 @@ public class JavaSourceHelper {
         collectLocalElements(codeFragments, controller, ElementKind.RESOURCE_VARIABLE);
     }
 
+    public void collectLiterals(List<CodeFragment> codeFragments, CompilationController controller) {
+        TreeUtilities treeUtilities = controller.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return;
+        }
+        Tree currentTree = currentPath.getLeaf();
+        Supplier<Void> collectLiterals = () -> {
+            ConstantDataManager.LITERALS.stream()
+                    .filter(literal -> literal.isAbbreviationEqualTo(abbreviation.getName()))
+                    .forEach(codeFragments::add);
+            return null;
+        };
+        switch (currentTree.getKind()) {
+            case EQUAL_TO:
+            case METHOD_INVOCATION:
+            case NEW_CLASS:
+            case NOT_EQUAL_TO:
+            case PARENTHESIZED:
+            case RETURN:
+                collectLiterals.get();
+                break;
+            case ASSIGNMENT:
+            case VARIABLE:
+                TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+                tokenSequence.moveStart();
+                while (tokenSequence.moveNext()) {
+                    if (tokenSequence.token().id() == JavaTokenId.EQ) {
+                        break;
+                    }
+                }
+                if (tokenSequence.token().id() == JavaTokenId.EQ) {
+                    if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                        while (tokenSequence.moveNext()) {
+                            if (tokenSequence.token().id() != JavaTokenId.SEMICOLON
+                                    && tokenSequence.token().id() != JavaTokenId.WHITESPACE) {
+                                return;
+                            }
+                        }
+                        collectLiterals.get();
+                    }
+                }
+                break;
+        }
+    }
+
     private void collectLocalElements(
             List<CodeFragment> codeFragments, CompilationController controller, ElementKind kind) {
         List<Element> localElements = new ArrayList<>();
@@ -1161,22 +1207,6 @@ public class JavaSourceHelper {
                                 break;
                             case COMPILATION_UNIT:
                                 codeFragments.add(keyword);
-                        }
-                        break;
-                    case "false": //NOI18N
-                    case "null": //NOI18N
-                    case "true": //NOI18N
-                        switch (currentPath.getLeaf().getKind()) {
-                            case ASSIGNMENT:
-                            case EQUAL_TO:
-                            case METHOD_INVOCATION:
-                            case NEW_CLASS:
-                            case NOT_EQUAL_TO:
-                            case PARENTHESIZED:
-                            case RETURN:
-                            case VARIABLE:
-                                codeFragments.add(keyword);
-                                break;
                         }
                         break;
                     case "this": //NOI18N
@@ -4200,11 +4230,13 @@ public class JavaSourceHelper {
                     long blockStartPosition =
                             sourcePositions.getStartPosition(copy.getCompilationUnit(), currentBlockTree);
                     if (blockStartPosition < classBodySpan[0]) {
-                        ModifiersTree modifiers = classTree.getModifiers();
-                        ExpressionTree expression = getExpressionToInsert(fragment, make);
-                        ModifiersTree newModifiers =
-                                make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
-                        copy.rewrite(modifiers, newModifiers);
+                        if (fragment.getKind() == CodeFragment.Kind.MODIFIER) {
+                            ModifiersTree modifiers = classTree.getModifiers();
+                            ExpressionTree expression = getExpressionToInsert(fragment, make);
+                            ModifiersTree newModifiers = make.addModifiersModifier(
+                                    modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
+                            copy.rewrite(modifiers, newModifiers);
+                        }
                     } else {
                         insertStatementInBlockTree.get();
                     }
@@ -4454,6 +4486,9 @@ public class JavaSourceHelper {
                 ModifiersTree newModifiers;
                 switch (path.getLeaf().getKind()) {
                     case METHOD:
+                        if (fragment.getKind() != CodeFragment.Kind.MODIFIER) {
+                            break;
+                        }
                         MethodTree methodTree = (MethodTree) path.getLeaf();
                         modifiers = methodTree.getModifiers();
                         newModifiers = make.addModifiersModifier(
@@ -4463,6 +4498,9 @@ public class JavaSourceHelper {
                     case CLASS:
                     case ENUM:
                     case INTERFACE:
+                        if (fragment.getKind() != CodeFragment.Kind.MODIFIER) {
+                            break;
+                        }
                         ClassTree classTree = (ClassTree) path.getLeaf();
                         modifiers = classTree.getModifiers();
                         newModifiers = make.addModifiersModifier(
@@ -4470,6 +4508,9 @@ public class JavaSourceHelper {
                         copy.rewrite(modifiers, newModifiers);
                         break;
                     case VARIABLE:
+                        if (fragment.getKind() != CodeFragment.Kind.MODIFIER) {
+                            break;
+                        }
                         VariableTree variableTree = (VariableTree) path.getLeaf();
                         modifiers = variableTree.getModifiers();
                         newModifiers = make.addModifiersModifier(
@@ -4507,6 +4548,9 @@ public class JavaSourceHelper {
     }
 
     private void insertCompilationUnitTree(CodeFragment fragment, WorkingCopy copy, TreeMaker make) {
+        if (fragment.getKind() != CodeFragment.Kind.MODIFIER) {
+            return;
+        }
         TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
         sequence.move(abbreviation.getStartOffset());
         moveToNextNonWhitespaceToken(sequence);
@@ -5165,6 +5209,7 @@ public class JavaSourceHelper {
                     return make.MemberSelect(make.QualIdent(fieldAccess.getScope()), fieldAccess.getName());
                 }
             case KEYWORD:
+            case LITERAL:
             case LOCAL_ELEMENT:
             case MODIFIER:
             case PRIMITIVE_TYPE:
@@ -5215,7 +5260,6 @@ public class JavaSourceHelper {
         if (packageName == null) {
             return;
         }
-        controller.getElements().getPackageElement(controller.getCompilationUnit().getPackageName().toString());
         Project project = TopComponent.getRegistry().getActivated().getLookup().lookup(Project.class);
         if (project == null) {
             DataObject dataObject = TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class);

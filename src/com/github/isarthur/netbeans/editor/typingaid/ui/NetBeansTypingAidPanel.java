@@ -67,6 +67,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         chainedFieldAccessCheckBox = new javax.swing.JCheckBox();
         chainedEnumConstantCheckBox = new javax.swing.JCheckBox();
         samePackageTypeCheckBox = new javax.swing.JCheckBox();
+        literalCheckBox = new javax.swing.JCheckBox();
 
         completionForPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.completionForPanel.border.title"))); // NOI18N
 
@@ -224,6 +225,13 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(literalCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.literalCheckBox.text")); // NOI18N
+        literalCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                literalCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout completionForPanelLayout = new javax.swing.GroupLayout(completionForPanel);
         completionForPanel.setLayout(completionForPanelLayout);
         completionForPanelLayout.setHorizontalGroup(
@@ -231,32 +239,37 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
             .addGroup(completionForPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(localMethodInvocationCheckBox)
-                    .addComponent(staticFieldAccessCheckBox)
-                    .addComponent(localVariableCheckBox)
-                    .addComponent(externalTypeCheckBox)
-                    .addComponent(internalTypeCheckBox)
-                    .addComponent(fieldCheckBox)
-                    .addComponent(parameterCheckBox)
-                    .addComponent(enumConstantCheckBox)
-                    .addComponent(exceptionParameterCheckBox)
-                    .addComponent(resourceVariableCheckBox)
-                    .addComponent(importedTypeCheckBox)
-                    .addComponent(keywordCheckBox)
-                    .addComponent(modifierCheckBox)
-                    .addComponent(primitiveTypeCheckBox)
                     .addGroup(completionForPanelLayout.createSequentialGroup()
-                        .addGap(177, 177, 177)
+                        .addComponent(literalCheckBox)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(completionForPanelLayout.createSequentialGroup()
                         .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(staticMethodInvocationImportedTypesCheckBox)
-                            .addComponent(staticFieldAccessImportedTypesCheckBox)))
-                    .addComponent(staticMethodInvocationCheckBox)
-                    .addComponent(methodInvocationCheckBox)
-                    .addComponent(chainedMethodInvocationCheckBox)
-                    .addComponent(chainedFieldAccessCheckBox)
-                    .addComponent(chainedEnumConstantCheckBox)
-                    .addComponent(samePackageTypeCheckBox))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(localMethodInvocationCheckBox)
+                            .addComponent(staticFieldAccessCheckBox)
+                            .addComponent(localVariableCheckBox)
+                            .addComponent(externalTypeCheckBox)
+                            .addComponent(internalTypeCheckBox)
+                            .addComponent(fieldCheckBox)
+                            .addComponent(parameterCheckBox)
+                            .addComponent(enumConstantCheckBox)
+                            .addComponent(exceptionParameterCheckBox)
+                            .addComponent(resourceVariableCheckBox)
+                            .addComponent(modifierCheckBox)
+                            .addComponent(primitiveTypeCheckBox)
+                            .addGroup(completionForPanelLayout.createSequentialGroup()
+                                .addGap(177, 177, 177)
+                                .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(staticMethodInvocationImportedTypesCheckBox)
+                                    .addComponent(staticFieldAccessImportedTypesCheckBox)))
+                            .addComponent(staticMethodInvocationCheckBox)
+                            .addComponent(methodInvocationCheckBox)
+                            .addComponent(chainedMethodInvocationCheckBox)
+                            .addComponent(chainedFieldAccessCheckBox)
+                            .addComponent(chainedEnumConstantCheckBox)
+                            .addComponent(keywordCheckBox)
+                            .addComponent(importedTypeCheckBox)
+                            .addComponent(samePackageTypeCheckBox))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         completionForPanelLayout.setVerticalGroup(
             completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -301,6 +314,8 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                 .addComponent(samePackageTypeCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(keywordCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(literalCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(modifierCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -426,6 +441,10 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         controller.changed();
     }//GEN-LAST:event_samePackageTypeCheckBoxActionPerformed
 
+    private void literalCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_literalCheckBoxActionPerformed
+        controller.changed();
+    }//GEN-LAST:event_literalCheckBoxActionPerformed
+
     void load() {
         methodInvocationCheckBox.setSelected(Preferences.getMethodInvocationFlag());
         staticMethodInvocationCheckBox.setSelected(Preferences.getStaticMethodInvocationFlag());
@@ -444,6 +463,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         externalTypeCheckBox.setSelected(Preferences.getExternalTypeFlag());
         importedTypeCheckBox.setSelected(Preferences.getImportedTypeFlag());
         keywordCheckBox.setSelected(Preferences.getKeywordFlag());
+        literalCheckBox.setSelected(Preferences.getLiteralFlag());
         modifierCheckBox.setSelected(Preferences.getModifierFlag());
         primitiveTypeCheckBox.setSelected(Preferences.getPrimitiveTypeFlag());
         samePackageTypeCheckBox.setSelected(Preferences.getSamePackageTypeFlag());
@@ -469,6 +489,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         Preferences.setExternalTypeFlag(externalTypeCheckBox.isSelected());
         Preferences.setImportedTypeFlag(importedTypeCheckBox.isSelected());
         Preferences.setKeywordFlag(keywordCheckBox.isSelected());
+        Preferences.setLiteralFlag(literalCheckBox.isSelected());
         Preferences.setModifierFlag(modifierCheckBox.isSelected());
         Preferences.setPrimitiveTypeFlag(primitiveTypeCheckBox.isSelected());
         Preferences.setSamePackageTypeFlag(samePackageTypeCheckBox.isSelected());
@@ -491,6 +512,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox importedTypeCheckBox;
     private javax.swing.JCheckBox internalTypeCheckBox;
     private javax.swing.JCheckBox keywordCheckBox;
+    private javax.swing.JCheckBox literalCheckBox;
     private javax.swing.JCheckBox localMethodInvocationCheckBox;
     private javax.swing.JCheckBox localVariableCheckBox;
     private javax.swing.JCheckBox methodInvocationCheckBox;

@@ -64,35 +64,43 @@
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="staticFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="internalTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="fieldCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="parameterCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="enumConstantCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="exceptionParameterCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="resourceVariableCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="importedTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" pref="177" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="staticMethodInvocationImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
-                              <Component id="staticFieldAccessImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="literalCheckBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="staticMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
-                      <Component id="chainedMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="chainedFieldAccessCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="chainedEnumConstantCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="samePackageTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="localMethodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="staticFieldAccessCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="localVariableCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="internalTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="fieldCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="parameterCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="enumConstantCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="exceptionParameterCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="resourceVariableCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="primitiveTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <EmptySpace min="-2" pref="177" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="staticMethodInvocationImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
+                                      <Component id="staticFieldAccessImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                              <Component id="staticMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="chainedMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="chainedFieldAccessCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="chainedEnumConstantCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="keywordCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="importedTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="samePackageTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="32767" attributes="0"/>
+                      </Group>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -141,6 +149,8 @@
                   <Component id="samePackageTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="literalCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="modifierCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -369,6 +379,16 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="samePackageTypeCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="literalCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.literalCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="literalCheckBoxActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

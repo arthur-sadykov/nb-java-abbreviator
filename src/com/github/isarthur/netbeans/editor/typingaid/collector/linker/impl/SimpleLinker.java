@@ -28,6 +28,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ModifierColl
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.PrimitiveTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.FieldCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LiteralCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalVariableCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ResourceVariableCollector;
@@ -83,6 +84,9 @@ public class SimpleLinker extends Linker {
         }
         if (Preferences.getKeywordFlag()) {
             collectors.add(collector.getKind() == Kind.KEYWORD ? collector : new KeywordCollector());
+        }
+        if (Preferences.getLiteralFlag()) {
+            collectors.add(collector.getKind() == Kind.LITERAL ? collector : new LiteralCollector());
         }
         if (Preferences.getModifierFlag()) {
             collectors.add(collector.getKind() == Kind.MODIFIER ? collector : new ModifierCollector());

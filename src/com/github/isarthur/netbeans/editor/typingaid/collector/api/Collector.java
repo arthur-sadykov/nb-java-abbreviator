@@ -41,6 +41,7 @@ public interface Collector {
         LOCAL_VARIABLE,
         LOCAL_METHOD_INVOCATION,
         INTERNAL_TYPE,
+        LITERAL,
         METHOD_INVOCATION,
         MODIFIER,
         PARAMETER,

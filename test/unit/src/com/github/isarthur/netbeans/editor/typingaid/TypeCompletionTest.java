@@ -56,6 +56,7 @@ public class TypeCompletionTest extends NbTestCase {
     private FileObject testFile;
     private Document document;
     private boolean keyword;
+    private boolean literal;
     private boolean primitiveType;
     private boolean modifier;
     private boolean externalType;
@@ -128,6 +129,7 @@ public class TypeCompletionTest extends NbTestCase {
         importedType = Preferences.getImportedTypeFlag();
         samePackageType = Preferences.getSamePackageTypeFlag();
         keyword = Preferences.getKeywordFlag();
+        literal = Preferences.getLiteralFlag();
         modifier = Preferences.getModifierFlag();
         primitiveType = Preferences.getPrimitiveTypeFlag();
     }
@@ -151,6 +153,7 @@ public class TypeCompletionTest extends NbTestCase {
         Preferences.setImportedTypeFlag(true);
         Preferences.setSamePackageTypeFlag(false);
         Preferences.setKeywordFlag(false);
+        Preferences.setLiteralFlag(false);
         Preferences.setModifierFlag(false);
         Preferences.setPrimitiveTypeFlag(false);
     }
@@ -218,6 +221,7 @@ public class TypeCompletionTest extends NbTestCase {
         Preferences.setImportedTypeFlag(importedType);
         Preferences.setSamePackageTypeFlag(samePackageType);
         Preferences.setKeywordFlag(keyword);
+        Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);
         Preferences.setPrimitiveTypeFlag(primitiveType);
     }

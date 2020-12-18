@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.codefragment.api;
+package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
+
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.Request;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public interface CodeFragment {
+public class LiteralCollector extends CodeFragmentCollector {
 
-    Kind getKind();
+    @Override
+    public void collect(Request request) {
+        request.getSourceHelper().collectLiterals(request.getCodeFragments(), request.getController());
+        super.collect(request);
+    }
 
-    public enum Kind {
-        FIELD_ACCESS,
-        KEYWORD,
-        LITERAL,
-        LOCAL_ELEMENT,
-        METHOD_INVOCATION,
-        MODIFIER,
-        PRIMITIVE_TYPE,
-        STATEMENT,
-        TYPE
+    @Override
+    public Kind getKind() {
+        return Kind.LITERAL;
     }
 }

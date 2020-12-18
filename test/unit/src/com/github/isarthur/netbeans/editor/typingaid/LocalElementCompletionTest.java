@@ -57,6 +57,7 @@ public class LocalElementCompletionTest extends NbTestCase {
     private FileObject testFile;
     private Document document;
     private boolean keyword;
+    private boolean literal;
     private boolean primitiveType;
     private boolean modifier;
     private boolean externalType;
@@ -129,6 +130,7 @@ public class LocalElementCompletionTest extends NbTestCase {
         importedType = Preferences.getImportedTypeFlag();
         samePackageType = Preferences.getSamePackageTypeFlag();
         keyword = Preferences.getKeywordFlag();
+        literal = Preferences.getLiteralFlag();
         modifier = Preferences.getModifierFlag();
         primitiveType = Preferences.getPrimitiveTypeFlag();
     }
@@ -152,6 +154,7 @@ public class LocalElementCompletionTest extends NbTestCase {
         Preferences.setImportedTypeFlag(false);
         Preferences.setSamePackageTypeFlag(false);
         Preferences.setKeywordFlag(false);
+        Preferences.setLiteralFlag(false);
         Preferences.setModifierFlag(false);
         Preferences.setPrimitiveTypeFlag(false);
     }
@@ -247,6 +250,7 @@ public class LocalElementCompletionTest extends NbTestCase {
         Preferences.setImportedTypeFlag(importedType);
         Preferences.setSamePackageTypeFlag(samePackageType);
         Preferences.setKeywordFlag(keyword);
+        Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);
         Preferences.setPrimitiveTypeFlag(primitiveType);
     }

@@ -40,6 +40,7 @@ public class Preferences {
     private static final String EXTERNAL_TYPE = "externalType"; //NOI18N
     private static final String IMPORTED_TYPE = "importedType"; //NOI18N
     private static final String KEYWORD = "keyword"; //NOI18N
+    private static final String LITERAL = "literal"; //NOI18N
     private static final String MODIFIER = "modifier"; //NOI18N
     private static final String PRIMITIVE_TYPE = "primitiveType"; //NOI18N
     private static final String SAME_PACKAGE_TYPE = "samePackageType"; //NOI18N
@@ -223,5 +224,13 @@ public class Preferences {
 
     public static void setSamePackageTypeFlag(boolean samePackageType) {
         NbPreferences.forModule(Preferences.class).putBoolean(SAME_PACKAGE_TYPE, samePackageType);
+    }
+
+    public static boolean getLiteralFlag() {
+        return NbPreferences.forModule(Preferences.class).getBoolean(LITERAL, true);
+    }
+
+    public static void setLiteralFlag(boolean literal) {
+        NbPreferences.forModule(Preferences.class).putBoolean(LITERAL, literal);
     }
 }

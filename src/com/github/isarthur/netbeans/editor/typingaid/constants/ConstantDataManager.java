@@ -16,6 +16,7 @@
 package com.github.isarthur.netbeans.editor.typingaid.constants;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Keyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.Literal;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.PrimitiveType;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,6 +43,7 @@ public class ConstantDataManager {
     public static final String INT = "int"; //NOI18N
     public static final String JAVA_SOURCE_NOT_ASSOCIATED_TO_DOCUMENT = "The Java source is not associated to document!"; //NOI18N
     public static final Set<Keyword> KEYWORDS;
+    public static final Set<Literal> LITERALS;
     public static final String LONG = "long"; //NOI18N
     public static final Set<String> MODIFIERS;
     public static final String NULL = "null"; //NOI18N
@@ -60,7 +62,8 @@ public class ConstantDataManager {
     public static final String ZERO_DOT_ZERO = "0.0"; //NOI18N
     public static final String ZERO_DOT_ZERO_F = "0.0F"; //NOI18N
     public static final String ZERO_L = "0L"; //NOI18N
-    private static final int KEYWORD_COUNT = 32;
+    private static final int KEYWORD_COUNT = 29;
+    private static final int LITERAL_COUNT = 3;
     private static final int MODIFIER_COUNT = 11;
     private static final int PRIMITIVE_TYPE_COUNT = 9;
 
@@ -80,7 +83,6 @@ public class ConstantDataManager {
         KEYWORDS.add(new Keyword("else")); //NOI18N
         KEYWORDS.add(new Keyword("enum")); //NOI18N
         KEYWORDS.add(new Keyword("extends")); //NOI18N
-        KEYWORDS.add(new Keyword("false")); //NOI18N
         KEYWORDS.add(new Keyword("finally")); //NOI18N
         KEYWORDS.add(new Keyword("for")); //NOI18N
         KEYWORDS.add(new Keyword("if")); //NOI18N
@@ -89,7 +91,6 @@ public class ConstantDataManager {
         KEYWORDS.add(new Keyword("implements")); //NOI18N
         KEYWORDS.add(new Keyword("import")); //NOI18N
         KEYWORDS.add(new Keyword("new")); //NOI18N
-        KEYWORDS.add(new Keyword("null")); //NOI18N
         KEYWORDS.add(new Keyword("Object")); //NOI18N
         KEYWORDS.add(new Keyword("return")); //NOI18N
         KEYWORDS.add(new Keyword("super")); //NOI18N
@@ -97,10 +98,13 @@ public class ConstantDataManager {
         KEYWORDS.add(new Keyword("this")); //NOI18N
         KEYWORDS.add(new Keyword("throw")); //NOI18N
         KEYWORDS.add(new Keyword("throws")); //NOI18N
-        KEYWORDS.add(new Keyword("true")); //NOI18N
         KEYWORDS.add(new Keyword("try")); //NOI18N
         KEYWORDS.add(new Keyword("void")); //NOI18N
         KEYWORDS.add(new Keyword("while")); //NOI18N
+        LITERALS = new HashSet<>(LITERAL_COUNT);
+        LITERALS.add(new Literal("false")); //NOI18N
+        LITERALS.add(new Literal("null")); //NOI18N
+        LITERALS.add(new Literal("true")); //NOI18N
         MODIFIERS = new HashSet<>(MODIFIER_COUNT);
         MODIFIERS.add("abstract"); //NOI18N
         MODIFIERS.add("final"); //NOI18N
