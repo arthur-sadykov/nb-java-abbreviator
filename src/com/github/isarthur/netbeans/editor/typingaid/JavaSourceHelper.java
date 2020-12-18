@@ -69,8 +69,10 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -625,6 +627,8 @@ public class JavaSourceHelper {
                 return insertReturnStatement();
             case "switch": //NOI18N
                 return insertSwitchStatement();
+            case "this": //NOI18N
+                return insertThisStatement();
             case "throw": //NOI18N
                 return insertThrowStatement();
             case "try": //NOI18N
@@ -1004,6 +1008,12 @@ public class JavaSourceHelper {
     }
 
     public void collectKeywords(List<CodeFragment> codeFragments, CompilationController controller) {
+        try {
+            moveStateToResolvedPhase(controller);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            return;
+        }
         TreeUtilities treeUtilities = controller.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
@@ -1134,6 +1144,19 @@ public class JavaSourceHelper {
                     case "false": //NOI18N
                     case "null": //NOI18N
                     case "true": //NOI18N
+                        switch (currentPath.getLeaf().getKind()) {
+                            case ASSIGNMENT:
+                            case EQUAL_TO:
+                            case METHOD_INVOCATION:
+                            case NEW_CLASS:
+                            case NOT_EQUAL_TO:
+                            case PARENTHESIZED:
+                            case RETURN:
+                            case VARIABLE:
+                                codeFragments.add(keyword);
+                                break;
+                        }
+                        break;
                     case "this": //NOI18N
                         switch (currentPath.getLeaf().getKind()) {
                             case ASSIGNMENT:
@@ -1145,6 +1168,37 @@ public class JavaSourceHelper {
                             case RETURN:
                             case VARIABLE:
                                 codeFragments.add(keyword);
+                                break;
+                            case BLOCK:
+                            case CASE:
+                                TreePath methodPath = treeUtilities.getPathElementOfKind(Tree.Kind.METHOD, currentPath);
+                                if (methodPath == null) {
+                                    return;
+                                }
+                                Supplier<Boolean> parameterHasCorrespondingField = () -> {
+                                    Trees trees = controller.getTrees();
+                                    Types types = controller.getTypes();
+                                    ExecutableElement method = (ExecutableElement) trees.getElement(methodPath);
+                                    List<? extends VariableElement> parameters = method.getParameters();
+                                    Element enclosingElement = method.getEnclosingElement();
+                                    if (enclosingElement.getKind() == ElementKind.CLASS
+                                            || enclosingElement.getKind() == ElementKind.ENUM) {
+                                        List<? extends Element> enclosedElements =
+                                                enclosingElement.getEnclosedElements();
+                                        List<VariableElement> fields = ElementFilter.fieldsIn(enclosedElements);
+                                        for (VariableElement field : fields) {
+                                            for (VariableElement parameter : parameters) {
+                                                if (types.isAssignable(field.asType(), parameter.asType())) {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    return false;
+                                };
+                                if (parameterHasCorrespondingField.get()) {
+                                    codeFragments.add(keyword);
+                                }
                                 break;
                         }
                         break;
@@ -2645,7 +2699,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertAssertStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertAssertStatementInBlock(copy));
+                    fragments.addAll(insertAssertStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -2678,7 +2732,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertAssertStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertAssertStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -2894,7 +2948,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertDoWhileStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertDoWhileStatementInBlock(copy));
+                    fragments.addAll(insertDoWhileStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -2928,7 +2982,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertDoWhileStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertDoWhileStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3049,7 +3103,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertIfStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertIfStatementInBlock(copy));
+                    fragments.addAll(insertIfStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3058,7 +3112,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(fragments);
     }
 
-    private List<CodeFragment> insertIfStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertIfStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3271,7 +3325,7 @@ public class JavaSourceHelper {
                 if (isSwitchStatement(copy)) {
                     fragments.addAll(insertReturnStatementInSwitch(copy));
                 } else {
-                    fragments.addAll(insertReturnStatementInBlock(copy));
+                    fragments.addAll(insertReturnStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3318,7 +3372,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertReturnStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertReturnStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3352,7 +3406,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertSwitchStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertSwitchStatementInBlock(copy));
+                    fragments.addAll(insertSwitchStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3389,7 +3443,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertSwitchStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertSwitchStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3426,7 +3480,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertTryStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertTryStatementInBlock(copy));
+                    fragments.addAll(insertTryStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3470,7 +3524,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertTryStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertTryStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3505,6 +3559,146 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
+    private List<CodeFragment> insertThisStatement() {
+        List<CodeFragment> fragments = new ArrayList<>();
+        JavaSource javaSource = getJavaSourceForDocument(document);
+        try {
+            javaSource.runModificationTask(copy -> {
+                moveStateToParsedPhase(copy);
+                if (isCaseStatement(copy)) {
+                    fragments.addAll(insertThisStatementInCaseTree(copy));
+                } else {
+                    fragments.addAll(insertThisStatementInBlockTree(copy));
+                }
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Collections.unmodifiableList(fragments);
+    }
+
+    private List<CodeFragment> insertThisStatementInCaseTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.CASE) {
+            return Collections.emptyList();
+        }
+        CaseTree currentCaseTree = (CaseTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentCaseTree.getStatements(), copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        TreePath methodPath = treeUtilities.getPathElementOfKind(Tree.Kind.METHOD, currentPath);
+        if (methodPath == null) {
+            return Collections.emptyList();
+        }
+        Supplier<Map<VariableElement, VariableElement>> getParametersByFields = () -> {
+            Map<VariableElement, VariableElement> parametersByFields = new HashMap<>();
+            Trees trees = copy.getTrees();
+            Types types = copy.getTypes();
+            ExecutableElement method = (ExecutableElement) trees.getElement(methodPath);
+            List<? extends VariableElement> parameters = method.getParameters();
+            Element enclosingElement = method.getEnclosingElement();
+            if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.ENUM) {
+                List<? extends Element> enclosedElements = enclosingElement.getEnclosedElements();
+                List<VariableElement> fields = ElementFilter.fieldsIn(enclosedElements);
+                OUTER:
+                for (VariableElement field : fields) {
+                    for (VariableElement parameter : parameters) {
+                        if (types.isAssignable(field.asType(), parameter.asType())) {
+                            parametersByFields.put(field, parameter);
+                            continue OUTER;
+                        }
+                    }
+                }
+            }
+            return Collections.unmodifiableMap(parametersByFields);
+        };
+        Map<VariableElement, VariableElement> parametersByFields = getParametersByFields.get();
+        if (parametersByFields.isEmpty()) {
+            return Collections.emptyList();
+        }
+        for (VariableElement field : parametersByFields.keySet()) {
+            AssignmentTree assignmentTree =
+                    make.Assignment(
+                            make.MemberSelect(make.Identifier("this"), field), //NOI18N
+                            make.Identifier(parametersByFields.get(field)));
+            CaseTree newCaseTree =
+                    make.insertCaseStatement(currentCaseTree, insertIndex, make.ExpressionStatement(assignmentTree));
+            copy.rewrite(currentCaseTree, newCaseTree);
+            currentCaseTree = newCaseTree;
+            statements.add(new Statement(assignmentTree.toString()));
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
+    private List<CodeFragment> insertThisStatementInBlockTree(WorkingCopy copy) {
+        List<CodeFragment> statements = new ArrayList<>(1);
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Collections.emptyList();
+        }
+        Tree currentTree = currentPath.getLeaf();
+        if (currentTree.getKind() != Tree.Kind.BLOCK) {
+            return Collections.emptyList();
+        }
+        BlockTree currentBlockTree = (BlockTree) currentTree;
+        int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
+        if (insertIndex == -1) {
+            return Collections.emptyList();
+        }
+        TreeMaker make = copy.getTreeMaker();
+        TreePath methodPath = treeUtilities.getPathElementOfKind(Tree.Kind.METHOD, currentPath);
+        if (methodPath == null) {
+            return Collections.emptyList();
+        }
+        Supplier<Map<VariableElement, VariableElement>> getParametersByFields = () -> {
+            Map<VariableElement, VariableElement> parametersByFields = new HashMap<>();
+            Trees trees = copy.getTrees();
+            Types types = copy.getTypes();
+            ExecutableElement method = (ExecutableElement) trees.getElement(methodPath);
+            List<? extends VariableElement> parameters = method.getParameters();
+            Element enclosingElement = method.getEnclosingElement();
+            if (enclosingElement.getKind() == ElementKind.CLASS || enclosingElement.getKind() == ElementKind.ENUM) {
+                List<? extends Element> enclosedElements = enclosingElement.getEnclosedElements();
+                List<VariableElement> fields = ElementFilter.fieldsIn(enclosedElements);
+                OUTER:
+                for (VariableElement field : fields) {
+                    for (VariableElement parameter : parameters) {
+                        if (types.isAssignable(field.asType(), parameter.asType())) {
+                            parametersByFields.put(field, parameter);
+                            continue OUTER;
+                        }
+                    }
+                }
+            }
+            return Collections.unmodifiableMap(parametersByFields);
+        };
+        Map<VariableElement, VariableElement> parametersByFields = getParametersByFields.get();
+        if (parametersByFields.isEmpty()) {
+            return Collections.emptyList();
+        }
+        for (VariableElement field : parametersByFields.keySet()) {
+            AssignmentTree assignmentTree =
+                    make.Assignment(
+                            make.MemberSelect(make.Identifier("this"), field), //NOI18N
+                            make.Identifier(parametersByFields.get(field)));
+            BlockTree newBlockTree =
+                    make.insertBlockStatement(currentBlockTree, insertIndex, make.ExpressionStatement(assignmentTree));
+            copy.rewrite(currentBlockTree, newBlockTree);
+            currentBlockTree = newBlockTree;
+            statements.add(new Statement(assignmentTree.toString()));
+        }
+        return Collections.unmodifiableList(statements);
+    }
+
     private List<CodeFragment> insertThrowStatement() {
         List<CodeFragment> fragments = new ArrayList<>();
         JavaSource javaSource = getJavaSourceForDocument(document);
@@ -3514,7 +3708,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertThrowStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertThrowStatementInBlock(copy));
+                    fragments.addAll(insertThrowStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3547,7 +3741,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertThrowStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertThrowStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3580,7 +3774,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertWhileStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertWhileStatementInBlock(copy));
+                    fragments.addAll(insertWhileStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -3613,7 +3807,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertWhileStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertWhileStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
@@ -3841,7 +4035,7 @@ public class JavaSourceHelper {
         TreePath path = treeUtilities.getPathElementOfKind(
                 EnumSet.of(Tree.Kind.BLOCK, Tree.Kind.CLASS, Tree.Kind.VARIABLE),
                 treeUtilities.pathFor(sequence.offset()));
-        Supplier<Void> insertStatementInBlock = () -> {
+        Supplier<Void> insertStatementInBlockTree = () -> {
             int insertIndex = findInsertIndexForTree(currentBlockTree.getStatements(), copy);
             if (insertIndex == -1) {
                 return null;
@@ -3990,7 +4184,7 @@ public class JavaSourceHelper {
                                 make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
                         copy.rewrite(modifiers, newModifiers);
                     } else {
-                        insertStatementInBlock.get();
+                        insertStatementInBlockTree.get();
                     }
                     break;
                 case VARIABLE:
@@ -4002,11 +4196,11 @@ public class JavaSourceHelper {
                                 make.addModifiersModifier(modifiers, Modifier.valueOf(expression.toString().toUpperCase(Locale.getDefault())));
                         copy.rewrite(modifiers, newModifiers);
                     } else {
-                        insertStatementInBlock.get();
+                        insertStatementInBlockTree.get();
                     }
                     break;
                 default:
-                    insertStatementInBlock.get();
+                    insertStatementInBlockTree.get();
             }
         }
     }
@@ -4434,7 +4628,7 @@ public class JavaSourceHelper {
                 if (isCaseStatement(copy)) {
                     fragments.addAll(insertForStatementInCaseTree(copy));
                 } else {
-                    fragments.addAll(insertForStatementInBlock(copy));
+                    fragments.addAll(insertForStatementInBlockTree(copy));
                 }
             }).commit();
         } catch (IOException ex) {
@@ -4477,7 +4671,7 @@ public class JavaSourceHelper {
         return Collections.unmodifiableList(statements);
     }
 
-    private List<CodeFragment> insertForStatementInBlock(WorkingCopy copy) {
+    private List<CodeFragment> insertForStatementInBlockTree(WorkingCopy copy) {
         List<CodeFragment> statements = new ArrayList<>(1);
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());

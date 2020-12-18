@@ -804,6 +804,53 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList("return"));
     }
 
+    public void testThisKeywordCompletionInBlockTree() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "import java.util.List;\n"
+                + "class Test {\n"
+                + "    private double salary;\n"
+                + "    private String employeeName;\n"
+                + "    private int age;\n"
+                + "    private List<String> departments;\n"
+                + "    int test(String name, int age, double salary, StringBuilder builder) {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "import java.util.List;\n"
+                + "class Test {\n"
+                + "    private double salary;\n"
+                + "    private String employeeName;\n"
+                + "    private int age;\n"
+                + "    private List<String> departments;\n"
+                + "    int test(String name, int age, double salary, StringBuilder builder) {\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("this", "throw", "try"));
+    }
+
+    public void testWhenThereIsNoMatchesBetweenFieldsAndParametersThenDoNotinvokeCompletionForThisKeywordInBlockTree()
+            throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "import java.util.List;\n"
+                + "class Test {\n"
+                + "    private List<String> departments;\n"
+                + "    int test(String name, int age, double salary, StringBuilder builder) {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "import java.util.List;\n"
+                + "class Test {\n"
+                + "    private List<String> departments;\n"
+                + "    int test(String name, int age, double salary, StringBuilder builder) {\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("throw", "try"));
+    }
+
     private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
             throws IOException {
         int caretOffset = code.indexOf('|');
