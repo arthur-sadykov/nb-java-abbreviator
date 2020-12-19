@@ -51,7 +51,6 @@ public class ConstantDataManager {
     public static final Set<PrimitiveType> PRIMITIVE_TYPES;
     public static final String SHORT = "short"; //NOI18N
     public static final String STRING = "java.lang.String"; //NOI18N
-    public static final String STATE_IS_NOT_IN_ELEMENTS_RESOLVED_PHASE = "Cannot move state to Phase.ELEMENTS_RESOLVED!"; //NOI18N
     public static final String STATE_IS_NOT_IN_PARSED_PHASE = "Cannot move state to Phase.PARSED!"; //NOI18N
     public static final String STATE_IS_NOT_IN_RESOLVED_PHASE = "Cannot move state to Phase.RESOLVED!"; //NOI18N
     public static final String SUPER = "super"; //NOI18N

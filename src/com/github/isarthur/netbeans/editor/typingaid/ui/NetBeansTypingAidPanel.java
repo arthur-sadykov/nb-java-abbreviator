@@ -25,13 +25,13 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         this.controller = controller;
         initComponents();
         if (!staticMethodInvocationCheckBox.isSelected()) {
-            staticMethodInvocationImportedTypesCheckBox.setSelected(false);
+            staticMethodInvocationForGlobalTypesCheckBox.setSelected(false);
         }
-        staticMethodInvocationImportedTypesCheckBox.setEnabled(staticMethodInvocationCheckBox.isSelected());
+        staticMethodInvocationForGlobalTypesCheckBox.setEnabled(staticMethodInvocationCheckBox.isSelected());
         if (!staticFieldAccessCheckBox.isSelected()) {
-            staticFieldAccessImportedTypesCheckBox.setSelected(false);
+            staticFieldAccessGlobalTypesCheckBox.setSelected(false);
         }
-        staticFieldAccessImportedTypesCheckBox.setEnabled(staticFieldAccessCheckBox.isSelected());
+        staticFieldAccessGlobalTypesCheckBox.setEnabled(staticFieldAccessCheckBox.isSelected());
         controller.changed();
     }
 
@@ -61,12 +61,11 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         resourceVariableCheckBox = new javax.swing.JCheckBox();
         modifierCheckBox = new javax.swing.JCheckBox();
         primitiveTypeCheckBox = new javax.swing.JCheckBox();
-        importedTypeCheckBox = new javax.swing.JCheckBox();
-        staticFieldAccessImportedTypesCheckBox = new javax.swing.JCheckBox();
-        staticMethodInvocationImportedTypesCheckBox = new javax.swing.JCheckBox();
+        globalTypeCheckBox = new javax.swing.JCheckBox();
+        staticFieldAccessGlobalTypesCheckBox = new javax.swing.JCheckBox();
+        staticMethodInvocationForGlobalTypesCheckBox = new javax.swing.JCheckBox();
         chainedFieldAccessCheckBox = new javax.swing.JCheckBox();
         chainedEnumConstantCheckBox = new javax.swing.JCheckBox();
-        samePackageTypeCheckBox = new javax.swing.JCheckBox();
         literalCheckBox = new javax.swing.JCheckBox();
 
         completionForPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.completionForPanel.border.title"))); // NOI18N
@@ -183,24 +182,24 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(importedTypeCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.importedTypeCheckBox.text")); // NOI18N
-        importedTypeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(globalTypeCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.globalTypeCheckBox.text")); // NOI18N
+        globalTypeCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importedTypeCheckBoxActionPerformed(evt);
+                globalTypeCheckBoxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(staticFieldAccessImportedTypesCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.staticFieldAccessImportedTypesCheckBox.text")); // NOI18N
-        staticFieldAccessImportedTypesCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(staticFieldAccessGlobalTypesCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.staticFieldAccessGlobalTypesCheckBox.text")); // NOI18N
+        staticFieldAccessGlobalTypesCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                staticFieldAccessImportedTypesCheckBoxActionPerformed(evt);
+                staticFieldAccessGlobalTypesCheckBoxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(staticMethodInvocationImportedTypesCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.staticMethodInvocationImportedTypesCheckBox.text")); // NOI18N
-        staticMethodInvocationImportedTypesCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(staticMethodInvocationForGlobalTypesCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.staticMethodInvocationForGlobalTypesCheckBox.text")); // NOI18N
+        staticMethodInvocationForGlobalTypesCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                staticMethodInvocationImportedTypesCheckBoxActionPerformed(evt);
+                staticMethodInvocationForGlobalTypesCheckBoxActionPerformed(evt);
             }
         });
 
@@ -215,13 +214,6 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         chainedEnumConstantCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chainedEnumConstantCheckBoxActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(samePackageTypeCheckBox, org.openide.util.NbBundle.getMessage(NetBeansTypingAidPanel.class, "NetBeansTypingAidPanel.samePackageTypeCheckBox.text")); // NOI18N
-        samePackageTypeCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                samePackageTypeCheckBoxActionPerformed(evt);
             }
         });
 
@@ -259,16 +251,15 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                             .addGroup(completionForPanelLayout.createSequentialGroup()
                                 .addGap(177, 177, 177)
                                 .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(staticMethodInvocationImportedTypesCheckBox)
-                                    .addComponent(staticFieldAccessImportedTypesCheckBox)))
+                                    .addComponent(staticMethodInvocationForGlobalTypesCheckBox)
+                                    .addComponent(staticFieldAccessGlobalTypesCheckBox)))
                             .addComponent(staticMethodInvocationCheckBox)
                             .addComponent(methodInvocationCheckBox)
                             .addComponent(chainedMethodInvocationCheckBox)
                             .addComponent(chainedFieldAccessCheckBox)
                             .addComponent(chainedEnumConstantCheckBox)
                             .addComponent(keywordCheckBox)
-                            .addComponent(importedTypeCheckBox)
-                            .addComponent(samePackageTypeCheckBox))
+                            .addComponent(globalTypeCheckBox))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         completionForPanelLayout.setVerticalGroup(
@@ -277,11 +268,11 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(staticMethodInvocationCheckBox)
-                    .addComponent(staticMethodInvocationImportedTypesCheckBox))
+                    .addComponent(staticMethodInvocationForGlobalTypesCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(completionForPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(staticFieldAccessCheckBox)
-                    .addComponent(staticFieldAccessImportedTypesCheckBox))
+                    .addComponent(staticFieldAccessGlobalTypesCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(methodInvocationCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -309,9 +300,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(externalTypeCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(importedTypeCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(samePackageTypeCheckBox)
+                .addComponent(globalTypeCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(keywordCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -341,9 +330,9 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
 
     private void staticMethodInvocationCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staticMethodInvocationCheckBoxActionPerformed
         if (!staticMethodInvocationCheckBox.isSelected()) {
-            staticMethodInvocationImportedTypesCheckBox.setSelected(false);
+            staticMethodInvocationForGlobalTypesCheckBox.setSelected(false);
         }
-        staticMethodInvocationImportedTypesCheckBox.setEnabled(staticMethodInvocationCheckBox.isSelected());
+        staticMethodInvocationForGlobalTypesCheckBox.setEnabled(staticMethodInvocationCheckBox.isSelected());
         controller.changed();
     }//GEN-LAST:event_staticMethodInvocationCheckBoxActionPerformed
 
@@ -357,9 +346,9 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
 
     private void staticFieldAccessCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staticFieldAccessCheckBoxActionPerformed
         if (!staticFieldAccessCheckBox.isSelected()) {
-            staticFieldAccessImportedTypesCheckBox.setSelected(false);
+            staticFieldAccessGlobalTypesCheckBox.setSelected(false);
         }
-        staticFieldAccessImportedTypesCheckBox.setEnabled(staticFieldAccessCheckBox.isSelected());
+        staticFieldAccessGlobalTypesCheckBox.setEnabled(staticFieldAccessCheckBox.isSelected());
         controller.changed();
     }//GEN-LAST:event_staticFieldAccessCheckBoxActionPerformed
 
@@ -369,8 +358,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
 
     private void externalTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_externalTypeCheckBoxActionPerformed
         if (externalTypeCheckBox.isSelected()) {
-            importedTypeCheckBox.setSelected(false);
-            samePackageTypeCheckBox.setSelected(false);
+            globalTypeCheckBox.setSelected(false);
         }
         controller.changed();
     }//GEN-LAST:event_externalTypeCheckBoxActionPerformed
@@ -411,20 +399,20 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         controller.changed();
     }//GEN-LAST:event_primitiveTypeCheckBoxActionPerformed
 
-    private void importedTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importedTypeCheckBoxActionPerformed
-        if (importedTypeCheckBox.isSelected()) {
+    private void globalTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_globalTypeCheckBoxActionPerformed
+        if (globalTypeCheckBox.isSelected()) {
             externalTypeCheckBox.setSelected(false);
         }
         controller.changed();
-    }//GEN-LAST:event_importedTypeCheckBoxActionPerformed
+    }//GEN-LAST:event_globalTypeCheckBoxActionPerformed
 
-    private void staticMethodInvocationImportedTypesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staticMethodInvocationImportedTypesCheckBoxActionPerformed
+    private void staticMethodInvocationForGlobalTypesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staticMethodInvocationForGlobalTypesCheckBoxActionPerformed
         controller.changed();
-    }//GEN-LAST:event_staticMethodInvocationImportedTypesCheckBoxActionPerformed
+    }//GEN-LAST:event_staticMethodInvocationForGlobalTypesCheckBoxActionPerformed
 
-    private void staticFieldAccessImportedTypesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staticFieldAccessImportedTypesCheckBoxActionPerformed
+    private void staticFieldAccessGlobalTypesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staticFieldAccessGlobalTypesCheckBoxActionPerformed
         controller.changed();
-    }//GEN-LAST:event_staticFieldAccessImportedTypesCheckBoxActionPerformed
+    }//GEN-LAST:event_staticFieldAccessGlobalTypesCheckBoxActionPerformed
 
     private void chainedFieldAccessCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chainedFieldAccessCheckBoxActionPerformed
         controller.changed();
@@ -433,13 +421,6 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     private void chainedEnumConstantCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chainedEnumConstantCheckBoxActionPerformed
         controller.changed();
     }//GEN-LAST:event_chainedEnumConstantCheckBoxActionPerformed
-
-    private void samePackageTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_samePackageTypeCheckBoxActionPerformed
-        if (samePackageTypeCheckBox.isSelected()) {
-            externalTypeCheckBox.setSelected(false);
-        }
-        controller.changed();
-    }//GEN-LAST:event_samePackageTypeCheckBoxActionPerformed
 
     private void literalCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_literalCheckBoxActionPerformed
         controller.changed();
@@ -461,14 +442,13 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         resourceVariableCheckBox.setSelected(Preferences.getResourceVariableFlag());
         internalTypeCheckBox.setSelected(Preferences.getInternalTypeFlag());
         externalTypeCheckBox.setSelected(Preferences.getExternalTypeFlag());
-        importedTypeCheckBox.setSelected(Preferences.getImportedTypeFlag());
+        globalTypeCheckBox.setSelected(Preferences.getGlobalTypeFlag());
         keywordCheckBox.setSelected(Preferences.getKeywordFlag());
         literalCheckBox.setSelected(Preferences.getLiteralFlag());
         modifierCheckBox.setSelected(Preferences.getModifierFlag());
         primitiveTypeCheckBox.setSelected(Preferences.getPrimitiveTypeFlag());
-        samePackageTypeCheckBox.setSelected(Preferences.getSamePackageTypeFlag());
-        staticMethodInvocationImportedTypesCheckBox.setSelected(Preferences.getStaticMethodInvocationImportedTypesFlag());
-        staticFieldAccessImportedTypesCheckBox.setSelected(Preferences.getStaticFieldAccessImportedTypesFlag());
+        staticMethodInvocationForGlobalTypesCheckBox.setSelected(Preferences.getStaticMethodInvocationGlobalTypesFlag());
+        staticFieldAccessGlobalTypesCheckBox.setSelected(Preferences.getStaticFieldAccessGlobalTypesFlag());
     }
 
     void store() {
@@ -487,14 +467,13 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         Preferences.setResourceVariableFlag(resourceVariableCheckBox.isSelected());
         Preferences.setInternalTypeFlag(internalTypeCheckBox.isSelected());
         Preferences.setExternalTypeFlag(externalTypeCheckBox.isSelected());
-        Preferences.setImportedTypeFlag(importedTypeCheckBox.isSelected());
+        Preferences.setGlobalTypeFlag(globalTypeCheckBox.isSelected());
         Preferences.setKeywordFlag(keywordCheckBox.isSelected());
         Preferences.setLiteralFlag(literalCheckBox.isSelected());
         Preferences.setModifierFlag(modifierCheckBox.isSelected());
         Preferences.setPrimitiveTypeFlag(primitiveTypeCheckBox.isSelected());
-        Preferences.setSamePackageTypeFlag(samePackageTypeCheckBox.isSelected());
-        Preferences.setStaticMethodInvocationImportedTypesFlag(staticMethodInvocationImportedTypesCheckBox.isSelected());
-        Preferences.setStaticFieldAccessImportedTypesFlag(staticFieldAccessImportedTypesCheckBox.isSelected());
+        Preferences.setStaticMethodInvocationGlobalTypesFlag(staticMethodInvocationForGlobalTypesCheckBox.isSelected());
+        Preferences.setStaticFieldAccessGlobalTypesFlag(staticFieldAccessGlobalTypesCheckBox.isSelected());
     }
 
     boolean valid() {
@@ -509,7 +488,7 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox exceptionParameterCheckBox;
     private javax.swing.JCheckBox externalTypeCheckBox;
     private javax.swing.JCheckBox fieldCheckBox;
-    private javax.swing.JCheckBox importedTypeCheckBox;
+    private javax.swing.JCheckBox globalTypeCheckBox;
     private javax.swing.JCheckBox internalTypeCheckBox;
     private javax.swing.JCheckBox keywordCheckBox;
     private javax.swing.JCheckBox literalCheckBox;
@@ -520,10 +499,9 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox parameterCheckBox;
     private javax.swing.JCheckBox primitiveTypeCheckBox;
     private javax.swing.JCheckBox resourceVariableCheckBox;
-    private javax.swing.JCheckBox samePackageTypeCheckBox;
     private javax.swing.JCheckBox staticFieldAccessCheckBox;
-    private javax.swing.JCheckBox staticFieldAccessImportedTypesCheckBox;
+    private javax.swing.JCheckBox staticFieldAccessGlobalTypesCheckBox;
     private javax.swing.JCheckBox staticMethodInvocationCheckBox;
-    private javax.swing.JCheckBox staticMethodInvocationImportedTypesCheckBox;
+    private javax.swing.JCheckBox staticMethodInvocationForGlobalTypesCheckBox;
     // End of variables declaration//GEN-END:variables
 }

@@ -61,8 +61,7 @@ public class GeneralCompletionTest extends NbTestCase {
     private boolean primitiveType;
     private boolean externalType;
     private boolean internalType;
-    private boolean importedType;
-    private boolean samePackageType;
+    private boolean globalType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -126,8 +125,7 @@ public class GeneralCompletionTest extends NbTestCase {
         resourceVariable = Preferences.getResourceVariableFlag();
         internalType = Preferences.getInternalTypeFlag();
         externalType = Preferences.getExternalTypeFlag();
-        importedType = Preferences.getImportedTypeFlag();
-        samePackageType = Preferences.getSamePackageTypeFlag();
+        globalType = Preferences.getGlobalTypeFlag();
         keyword = Preferences.getKeywordFlag();
         literal = Preferences.getLiteralFlag();
         modifier = Preferences.getModifierFlag();
@@ -150,8 +148,7 @@ public class GeneralCompletionTest extends NbTestCase {
         Preferences.setResourceVariableFlag(true);
         Preferences.setInternalTypeFlag(true);
         Preferences.setExternalTypeFlag(true);
-        Preferences.setImportedTypeFlag(true);
-        Preferences.setSamePackageTypeFlag(true);
+        Preferences.setGlobalTypeFlag(true);
         Preferences.setKeywordFlag(true);
         Preferences.setLiteralFlag(true);
         Preferences.setModifierFlag(true);
@@ -198,22 +195,22 @@ public class GeneralCompletionTest extends NbTestCase {
 
     public void testShouldSuggestCompletionForLocalVariableName() throws IOException {
         doAbbreviationInsert(
-                "ac",
+                "gac",
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        String applicationContext = \"\";\n"
+                + "        String generalApplicationContext = \"\";\n"
                 + "        if (|) {\n"
                 + "        }\n"
                 + "    }\n"
                 + "}",
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
-                + "        String applicationContext = \"\";\n"
-                + "        if (applicationContext) {\n"
+                + "        String generalApplicationContext = \"\";\n"
+                + "        if (generalApplicationContext) {\n"
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("applicationContext"));
+                Arrays.asList("generalApplicationContext"));
     }
 
     public void testShouldSuggestCompletionForMethodInvocation() throws IOException {
@@ -442,8 +439,7 @@ public class GeneralCompletionTest extends NbTestCase {
         Preferences.setResourceVariableFlag(resourceVariable);
         Preferences.setInternalTypeFlag(internalType);
         Preferences.setExternalTypeFlag(externalType);
-        Preferences.setImportedTypeFlag(importedType);
-        Preferences.setSamePackageTypeFlag(samePackageType);
+        Preferences.setGlobalTypeFlag(globalType);
         Preferences.setKeywordFlag(keyword);
         Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);

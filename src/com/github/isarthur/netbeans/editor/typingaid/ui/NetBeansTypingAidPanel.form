@@ -85,8 +85,8 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace min="-2" pref="177" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="staticMethodInvocationImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
-                                      <Component id="staticFieldAccessImportedTypesCheckBox" min="-2" max="-2" attributes="0"/>
+                                      <Component id="staticMethodInvocationForGlobalTypesCheckBox" min="-2" max="-2" attributes="0"/>
+                                      <Component id="staticFieldAccessGlobalTypesCheckBox" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <Component id="staticMethodInvocationCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -95,8 +95,7 @@
                               <Component id="chainedFieldAccessCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="chainedEnumConstantCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="keywordCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="importedTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="samePackageTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="globalTypeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
                       </Group>
@@ -110,12 +109,12 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="staticMethodInvocationCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="staticMethodInvocationImportedTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="staticMethodInvocationForGlobalTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="staticFieldAccessCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="staticFieldAccessImportedTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="staticFieldAccessGlobalTypesCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="methodInvocationCheckBox" min="-2" max="-2" attributes="0"/>
@@ -144,9 +143,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="externalTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="importedTypeCheckBox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="samePackageTypeCheckBox" min="-2" max="-2" attributes="0"/>
+                  <Component id="globalTypeCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="keywordCheckBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -321,34 +318,34 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="primitiveTypeCheckBoxActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JCheckBox" name="importedTypeCheckBox">
+        <Component class="javax.swing.JCheckBox" name="globalTypeCheckBox">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.importedTypeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.globalTypeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="importedTypeCheckBoxActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="globalTypeCheckBoxActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JCheckBox" name="staticFieldAccessImportedTypesCheckBox">
+        <Component class="javax.swing.JCheckBox" name="staticFieldAccessGlobalTypesCheckBox">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.staticFieldAccessImportedTypesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.staticFieldAccessGlobalTypesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticFieldAccessImportedTypesCheckBoxActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticFieldAccessGlobalTypesCheckBoxActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JCheckBox" name="staticMethodInvocationImportedTypesCheckBox">
+        <Component class="javax.swing.JCheckBox" name="staticMethodInvocationForGlobalTypesCheckBox">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.staticMethodInvocationImportedTypesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.staticMethodInvocationForGlobalTypesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticMethodInvocationImportedTypesCheckBoxActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="staticMethodInvocationForGlobalTypesCheckBoxActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JCheckBox" name="chainedFieldAccessCheckBox">
@@ -369,16 +366,6 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chainedEnumConstantCheckBoxActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JCheckBox" name="samePackageTypeCheckBox">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="com/github/isarthur/netbeans/editor/typingaid/ui/Bundle.properties" key="NetBeansTypingAidPanel.samePackageTypeCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="samePackageTypeCheckBoxActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JCheckBox" name="literalCheckBox">

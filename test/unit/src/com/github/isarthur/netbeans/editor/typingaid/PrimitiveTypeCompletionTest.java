@@ -62,8 +62,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
     private boolean modifier;
     private boolean externalType;
     private boolean internalType;
-    private boolean importedType;
-    private boolean samePackageType;
+    private boolean globalType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -127,8 +126,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         resourceVariable = Preferences.getResourceVariableFlag();
         internalType = Preferences.getInternalTypeFlag();
         externalType = Preferences.getExternalTypeFlag();
-        importedType = Preferences.getImportedTypeFlag();
-        samePackageType = Preferences.getSamePackageTypeFlag();
+        globalType = Preferences.getGlobalTypeFlag();
         keyword = Preferences.getKeywordFlag();
         literal = Preferences.getLiteralFlag();
         modifier = Preferences.getModifierFlag();
@@ -151,8 +149,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Preferences.setResourceVariableFlag(false);
         Preferences.setInternalTypeFlag(false);
         Preferences.setExternalTypeFlag(false);
-        Preferences.setImportedTypeFlag(false);
-        Preferences.setSamePackageTypeFlag(false);
+        Preferences.setGlobalTypeFlag(false);
         Preferences.setKeywordFlag(false);
         Preferences.setLiteralFlag(false);
         Preferences.setModifierFlag(false);
@@ -678,8 +675,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
         Preferences.setResourceVariableFlag(resourceVariable);
         Preferences.setInternalTypeFlag(internalType);
         Preferences.setExternalTypeFlag(externalType);
-        Preferences.setImportedTypeFlag(importedType);
-        Preferences.setSamePackageTypeFlag(samePackageType);
+        Preferences.setGlobalTypeFlag(globalType);
         Preferences.setKeywordFlag(keyword);
         Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);

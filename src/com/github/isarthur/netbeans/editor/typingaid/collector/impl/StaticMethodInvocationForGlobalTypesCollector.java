@@ -22,16 +22,17 @@ import com.github.isarthur.netbeans.editor.typingaid.Request;
  *
  * @author Arthur Sadykov
  */
-public class ImportedTypeCollector extends CodeFragmentCollector {
+public class StaticMethodInvocationForGlobalTypesCollector extends CodeFragmentCollector {
 
     @Override
     public void collect(Request request) {
-        request.getSourceHelper().collectImportedTypes(request.getCodeFragments(), request.getController());
+        request.getSourceHelper().collectStaticMethodInvocationsForGlobalTypes(
+                request.getCodeFragments(), request.getController());
         super.collect(request);
     }
 
     @Override
     public Kind getKind() {
-        return Kind.IMPORTED_TYPE;
+        return Kind.STATIC_METHOD_INVOCATION_FOR_GLOBAL_TYPES;
     }
 }

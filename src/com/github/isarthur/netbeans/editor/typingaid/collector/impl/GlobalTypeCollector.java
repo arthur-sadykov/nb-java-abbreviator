@@ -22,16 +22,16 @@ import com.github.isarthur.netbeans.editor.typingaid.Request;
  *
  * @author Arthur Sadykov
  */
-public class SamePackageTypeCollector extends CodeFragmentCollector {
+public class GlobalTypeCollector extends CodeFragmentCollector {
 
     @Override
     public void collect(Request request) {
-        request.getSourceHelper().collectTypesFromSamePackage(request.getCodeFragments(), request.getController());
+        request.getSourceHelper().collectGlobalTypes(request.getCodeFragments(), request.getController());
         super.collect(request);
     }
 
     @Override
     public Kind getKind() {
-        return Kind.SAME_PACKAGE_TYPE;
+        return Kind.GLOBAL_TYPE;
     }
 }

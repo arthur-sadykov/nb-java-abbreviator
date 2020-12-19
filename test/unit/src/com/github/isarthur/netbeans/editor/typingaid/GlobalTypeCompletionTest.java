@@ -43,7 +43,7 @@ import org.openide.filesystems.FileUtil;
  *
  * @author: Arthur Sadykov
  */
-public class ImportedTypeCompletionTest extends NbTestCase {
+public class GlobalTypeCompletionTest extends NbTestCase {
 
     private static final String JAVA_MIME_TYPE = "text/x-java";
     private static final String MIME_TYPE = "mimeType";
@@ -62,8 +62,7 @@ public class ImportedTypeCompletionTest extends NbTestCase {
     private boolean modifier;
     private boolean externalType;
     private boolean internalType;
-    private boolean importedType;
-    private boolean samePackageType;
+    private boolean globalType;
     private boolean resourceVariable;
     private boolean exceptionParameter;
     private boolean enumConstant;
@@ -78,12 +77,12 @@ public class ImportedTypeCompletionTest extends NbTestCase {
     private boolean staticMethodInvocation;
     private boolean methodInvocation;
 
-    public ImportedTypeCompletionTest(String testName) {
+    public GlobalTypeCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(ImportedTypeCompletionTest.class)
+        return NbModuleSuite.createConfiguration(GlobalTypeCompletionTest.class)
                 .clusters(EXTIDE_CLUSTER)
                 .clusters(IDE_CLUSTER)
                 .clusters(JAVA_CLUSTER)
@@ -108,7 +107,7 @@ public class ImportedTypeCompletionTest extends NbTestCase {
         handler = new JavaAbbreviationHandler(helper);
         abbreviation = new JavaAbbreviation();
         storeSettings();
-        setConfigurationForImportedTypeCompletion();
+        setConfigurationForGlobalTypeCompletion();
     }
 
     private void storeSettings() {
@@ -127,15 +126,14 @@ public class ImportedTypeCompletionTest extends NbTestCase {
         resourceVariable = Preferences.getResourceVariableFlag();
         internalType = Preferences.getInternalTypeFlag();
         externalType = Preferences.getExternalTypeFlag();
-        importedType = Preferences.getImportedTypeFlag();
-        samePackageType = Preferences.getSamePackageTypeFlag();
+        globalType = Preferences.getGlobalTypeFlag();
         keyword = Preferences.getKeywordFlag();
         literal = Preferences.getLiteralFlag();
         modifier = Preferences.getModifierFlag();
         primitiveType = Preferences.getPrimitiveTypeFlag();
     }
 
-    private void setConfigurationForImportedTypeCompletion() {
+    private void setConfigurationForGlobalTypeCompletion() {
         Preferences.setStaticMethodInvocationFlag(false);
         Preferences.setStaticFieldAccessFlag(false);
         Preferences.setMethodInvocationFlag(false);
@@ -151,8 +149,7 @@ public class ImportedTypeCompletionTest extends NbTestCase {
         Preferences.setResourceVariableFlag(false);
         Preferences.setInternalTypeFlag(false);
         Preferences.setExternalTypeFlag(false);
-        Preferences.setImportedTypeFlag(true);
-        Preferences.setSamePackageTypeFlag(false);
+        Preferences.setGlobalTypeFlag(true);
         Preferences.setKeywordFlag(false);
         Preferences.setLiteralFlag(false);
         Preferences.setModifierFlag(false);
@@ -288,8 +285,7 @@ public class ImportedTypeCompletionTest extends NbTestCase {
         Preferences.setResourceVariableFlag(resourceVariable);
         Preferences.setInternalTypeFlag(internalType);
         Preferences.setExternalTypeFlag(externalType);
-        Preferences.setImportedTypeFlag(importedType);
-        Preferences.setSamePackageTypeFlag(samePackageType);
+        Preferences.setGlobalTypeFlag(globalType);
         Preferences.setKeywordFlag(keyword);
         Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);

@@ -20,7 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.api.Collector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.Collector.Kind;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.EnumConstantCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExceptionParameterCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ImportedTypeCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.KeywordCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalMethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalTypeCollector;
@@ -32,7 +32,6 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LiteralColle
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalVariableCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ResourceVariableCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.SamePackageTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 
 /**
@@ -76,11 +75,8 @@ public class SimpleLinker extends Linker {
         if (Preferences.getExternalTypeFlag()) {
             collectors.add(collector.getKind() == Kind.EXTERNAL_TYPE ? collector : new ExternalTypeCollector());
         }
-        if (Preferences.getImportedTypeFlag()) {
-            collectors.add(collector.getKind() == Kind.IMPORTED_TYPE ? collector : new ImportedTypeCollector());
-        }
-        if (Preferences.getSamePackageTypeFlag()) {
-            collectors.add(collector.getKind() == Kind.SAME_PACKAGE_TYPE ? collector : new SamePackageTypeCollector());
+        if (Preferences.getGlobalTypeFlag()) {
+            collectors.add(collector.getKind() == Kind.GLOBAL_TYPE ? collector : new GlobalTypeCollector());
         }
         if (Preferences.getKeywordFlag()) {
             collectors.add(collector.getKind() == Kind.KEYWORD ? collector : new KeywordCollector());

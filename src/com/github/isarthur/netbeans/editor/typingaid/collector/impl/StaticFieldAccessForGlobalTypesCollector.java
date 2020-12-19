@@ -22,17 +22,17 @@ import com.github.isarthur.netbeans.editor.typingaid.Request;
  *
  * @author Arthur Sadykov
  */
-public class StaticFieldAccessForImportedTypesCollector extends CodeFragmentCollector {
+public class StaticFieldAccessForGlobalTypesCollector extends CodeFragmentCollector {
 
     @Override
     public void collect(Request request) {
-        request.getSourceHelper().collectStaticFieldAccessesForImportedTypes(
+        request.getSourceHelper().collectStaticFieldAccessesForGlobalTypes(
                 request.getCodeFragments(), request.getController());
         super.collect(request);
     }
 
     @Override
     public Kind getKind() {
-        return Kind.STATIC_FIELD_ACCESS_FOR_IMPORTED_TYPES;
+        return Kind.STATIC_FIELD_ACCESS_FOR_GLOBAL_TYPES;
     }
 }

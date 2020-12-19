@@ -119,14 +119,7 @@ import org.netbeans.api.lexer.TokenSequence;
 import org.openide.util.Exceptions;
 import org.openide.util.Parameters;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
-import org.netbeans.api.project.SourceGroup;
-import org.netbeans.api.project.Sources;
 import org.openide.filesystems.FileObject;
-import org.openide.loaders.DataObject;
-import org.openide.windows.TopComponent;
 
 /**
  *
@@ -192,13 +185,6 @@ public class JavaSourceHelper {
         Phase phase = controller.toPhase(Phase.RESOLVED);
         if (phase.compareTo(Phase.RESOLVED) < 0) {
             throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_RESOLVED_PHASE);
-        }
-    }
-
-    private void moveStateToElementsResolvedPhase(CompilationController controller) throws IOException {
-        Phase phase = controller.toPhase(Phase.ELEMENTS_RESOLVED);
-        if (phase.compareTo(Phase.ELEMENTS_RESOLVED) < 0) {
-            throw new IllegalStateException(ConstantDataManager.STATE_IS_NOT_IN_ELEMENTS_RESOLVED_PHASE);
         }
     }
 
@@ -933,9 +919,9 @@ public class JavaSourceHelper {
                 collectMethodInvocations(codeFragments, typeElement, getStaticMethodsInClass(typeElement), controller));
     }
 
-    public void collectStaticMethodInvocationsForImportedTypes(
+    public void collectStaticMethodInvocationsForGlobalTypes(
             List<CodeFragment> codeFragments, CompilationController controller) {
-        List<TypeElement> typeElements = collectImportedTypeElements(controller);
+        Iterable<? extends TypeElement> typeElements = collectGlobalTypeElements(controller);
         typeElements.forEach(element ->
                 collectMethodInvocations(codeFragments, element, getStaticMethodsInClass(element), controller));
     }
@@ -2649,9 +2635,9 @@ public class JavaSourceHelper {
         });
     }
 
-    public void collectStaticFieldAccessesForImportedTypes(List<CodeFragment> codeFragments,
+    public void collectStaticFieldAccessesForGlobalTypes(List<CodeFragment> codeFragments,
             CompilationController controller) {
-        List<TypeElement> typeElements = collectImportedTypeElements(controller);
+        Iterable<? extends TypeElement> typeElements = collectGlobalTypeElements(controller);
         typeElements.forEach(typeElement -> {
             try {
                 List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
@@ -5253,78 +5239,16 @@ public class JavaSourceHelper {
         }
     }
 
-    public void collectImportedTypes(List<CodeFragment> codeFragments, CompilationController controller) {
-        List<TypeElement> importedTypeElements = collectImportedTypeElements(controller);
-        importedTypeElements.forEach(importedTypeElement -> codeFragments.add(new Type(importedTypeElement)));
+    public void collectGlobalTypes(List<CodeFragment> codeFragments, CompilationController controller) {
+        Iterable<? extends TypeElement> globalTypes = collectGlobalTypeElements(controller);
+        globalTypes.forEach(globalType -> codeFragments.add(new Type(globalType)));
     }
 
-    private List<TypeElement> collectImportedTypeElements(CompilationController controller) {
-        List<TypeElement> importedTypeElements = new ArrayList<>();
-        Elements elements = controller.getElements();
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        List<? extends ImportTree> imports = compilationUnit.getImports();
-        for (ImportTree importTree : imports) {
-            if (importTree.isStatic()) {
-                continue;
-            }
-            String qualifiedIdentifier = importTree.getQualifiedIdentifier().toString();
-            if (qualifiedIdentifier.endsWith("*")) { //NOI18N
-                continue;
-            }
-            int lastDotIndex = qualifiedIdentifier.lastIndexOf('.');
-            if (lastDotIndex < 0) {
-                continue;
-            }
-            String simpleIdentifier = qualifiedIdentifier.substring(lastDotIndex + 1);
-            String typeAbbreviation = StringUtilities.getElementAbbreviation(simpleIdentifier);
-            if (typeAbbreviation.equals(abbreviation.getScope())) {
-                importedTypeElements.add(elements.getTypeElement(qualifiedIdentifier));
-            }
-        }
-        return Collections.unmodifiableList(importedTypeElements);
-    }
-
-    public void collectTypesFromSamePackage(List<CodeFragment> codeFragments, CompilationController controller) {
-        CompilationUnitTree compilationUnit = controller.getCompilationUnit();
-        ExpressionTree packageName = compilationUnit.getPackageName();
-        if (packageName == null) {
-            return;
-        }
-        Project project = TopComponent.getRegistry().getActivated().getLookup().lookup(Project.class);
-        if (project == null) {
-            DataObject dataObject = TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class);
-            if (dataObject != null) {
-                FileObject currentFile = dataObject.getPrimaryFile();
-                project = FileOwnerQuery.getOwner(currentFile);
-            }
-        }
-        if (project == null) {
-            return;
-        }
-        Sources sources = project.getLookup().lookup(Sources.class);
-        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-        String relativePath = packageName.toString().replaceAll("\\.", "/"); //NOI18N
-        FileObject rootFolder = sourceGroups[0].getRootFolder().getFileObject(relativePath);
-        FileObject[] files = rootFolder.getChildren();
-        for (FileObject file : files) {
-            if (file.getExt().equals("java")) { //NOI18N
-                JavaSource javaSource = getJavaSourceForFileObject(file);
-                try {
-                    javaSource.runUserActionTask(compilationController -> {
-                        moveStateToElementsResolvedPhase(compilationController);
-                        List<? extends TypeElement> topLevelElements = compilationController.getTopLevelElements();
-                        if (!topLevelElements.isEmpty()) {
-                            String topLevelElementName = topLevelElements.get(0).getSimpleName().toString();
-                            String typeAbbreviation = StringUtilities.getElementAbbreviation(topLevelElementName);
-                            if (typeAbbreviation.equals(abbreviation.getScope())) {
-                                codeFragments.add(new Type(topLevelElements.get(0)));
-                            }
-                        }
-                    }, true);
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-        }
+    private Iterable<? extends TypeElement> collectGlobalTypeElements(CompilationController controller) {
+        ElementUtilities elementUtilities = controller.getElementUtilities();
+        return elementUtilities.getGlobalTypes((element, type) -> {
+            String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+            return typeAbbreviation.equals(abbreviation.getScope());
+        });
     }
 }

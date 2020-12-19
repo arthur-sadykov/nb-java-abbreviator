@@ -38,14 +38,13 @@ public class Preferences {
     private static final String RESOURCE_VARIABLE = "resourceVariable"; //NOI18N
     private static final String INTERNAL_TYPE = "internalType"; //NOI18N
     private static final String EXTERNAL_TYPE = "externalType"; //NOI18N
-    private static final String IMPORTED_TYPE = "importedType"; //NOI18N
+    private static final String GLOBAL_TYPE = "globalType"; //NOI18N
     private static final String KEYWORD = "keyword"; //NOI18N
     private static final String LITERAL = "literal"; //NOI18N
     private static final String MODIFIER = "modifier"; //NOI18N
     private static final String PRIMITIVE_TYPE = "primitiveType"; //NOI18N
-    private static final String SAME_PACKAGE_TYPE = "samePackageType"; //NOI18N
-    private static final String STATIC_METHOD_INVOCATION_IMPORTED_TYPES = "staticMethodInvocationImportedTypes"; //NOI18N
-    private static final String STATIC_FIELD_ACCESS_IMPORTED_TYPES = "staticFieldAccessImportedTypes"; //NOI18N
+    private static final String STATIC_METHOD_INVOCATION_GLOBAL_TYPES = "staticMethodInvocationGlobalTypes"; //NOI18N
+    private static final String STATIC_FIELD_ACCESS_GLOBAL_TYPES = "staticFieldAccessGlobalTypes"; //NOI18N
 
     private Preferences() {
     }
@@ -154,12 +153,12 @@ public class Preferences {
         NbPreferences.forModule(Preferences.class).putBoolean(EXTERNAL_TYPE, type);
     }
 
-    public static boolean getImportedTypeFlag() {
-        return NbPreferences.forModule(Preferences.class).getBoolean(IMPORTED_TYPE, true);
+    public static boolean getGlobalTypeFlag() {
+        return NbPreferences.forModule(Preferences.class).getBoolean(GLOBAL_TYPE, true);
     }
 
-    public static void setImportedTypeFlag(boolean type) {
-        NbPreferences.forModule(Preferences.class).putBoolean(IMPORTED_TYPE, type);
+    public static void setGlobalTypeFlag(boolean type) {
+        NbPreferences.forModule(Preferences.class).putBoolean(GLOBAL_TYPE, type);
     }
 
     public static boolean getKeywordFlag() {
@@ -186,20 +185,20 @@ public class Preferences {
         NbPreferences.forModule(Preferences.class).putBoolean(PRIMITIVE_TYPE, primitiveType);
     }
 
-    public static boolean getStaticMethodInvocationImportedTypesFlag() {
-        return NbPreferences.forModule(Preferences.class).getBoolean(STATIC_METHOD_INVOCATION_IMPORTED_TYPES, true);
+    public static boolean getStaticMethodInvocationGlobalTypesFlag() {
+        return NbPreferences.forModule(Preferences.class).getBoolean(STATIC_METHOD_INVOCATION_GLOBAL_TYPES, true);
     }
 
-    public static void setStaticMethodInvocationImportedTypesFlag(boolean importedTypes) {
-        NbPreferences.forModule(Preferences.class).putBoolean(STATIC_METHOD_INVOCATION_IMPORTED_TYPES, importedTypes);
+    public static void setStaticMethodInvocationGlobalTypesFlag(boolean globalTypes) {
+        NbPreferences.forModule(Preferences.class).putBoolean(STATIC_METHOD_INVOCATION_GLOBAL_TYPES, globalTypes);
     }
 
-    public static boolean getStaticFieldAccessImportedTypesFlag() {
-        return NbPreferences.forModule(Preferences.class).getBoolean(STATIC_FIELD_ACCESS_IMPORTED_TYPES, true);
+    public static boolean getStaticFieldAccessGlobalTypesFlag() {
+        return NbPreferences.forModule(Preferences.class).getBoolean(STATIC_FIELD_ACCESS_GLOBAL_TYPES, true);
     }
 
-    public static void setStaticFieldAccessImportedTypesFlag(boolean importedTypes) {
-        NbPreferences.forModule(Preferences.class).putBoolean(STATIC_FIELD_ACCESS_IMPORTED_TYPES, importedTypes);
+    public static void setStaticFieldAccessGlobalTypesFlag(boolean globalTypes) {
+        NbPreferences.forModule(Preferences.class).putBoolean(STATIC_FIELD_ACCESS_GLOBAL_TYPES, globalTypes);
     }
 
     public static boolean getChainedFieldAccessFlag() {
@@ -216,14 +215,6 @@ public class Preferences {
 
     public static void setChainedEnumConstantAccessFlag(boolean chainedEnumConstant) {
         NbPreferences.forModule(Preferences.class).putBoolean(CHAINED_ENUM_CONSTANT_ACCESS, chainedEnumConstant);
-    }
-
-    public static boolean getSamePackageTypeFlag() {
-        return NbPreferences.forModule(Preferences.class).getBoolean(SAME_PACKAGE_TYPE, true);
-    }
-
-    public static void setSamePackageTypeFlag(boolean samePackageType) {
-        NbPreferences.forModule(Preferences.class).putBoolean(SAME_PACKAGE_TYPE, samePackageType);
     }
 
     public static boolean getLiteralFlag() {
