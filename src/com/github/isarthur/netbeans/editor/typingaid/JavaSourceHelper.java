@@ -1379,9 +1379,21 @@ public class JavaSourceHelper {
                             case NEW_CLASS:
                             case RETURN:
                             case VARIABLE:
+                                TypeMirror typeInContext = getTypeInContext(controller);
+                                if (typeInContext == null) {
+                                    break;
+                                }
+                                Element type = controller.getTypes().asElement(typeInContext);
+                                if (type == null) {
+                                    break;
+                                }
+                                if (getTargetConstructor(type, controller) == null) {
+                                    break;
+                                }
                                 codeFragments.add(keyword);
                                 break;
                         }
+                        break;
                 }
             }
         }
@@ -5127,6 +5139,19 @@ public class JavaSourceHelper {
     }
 
     private NewClassTree createNewClassTree(TreeMaker make, Element type, CompilationController controller) {
+        ExecutableElement targetConstructor = getTargetConstructor(type, controller);
+        if (targetConstructor == null) {
+            return null;
+        }
+        return make.NewClass(
+                null,
+                Collections.emptyList(),
+                make.QualIdent(type.toString()),
+                evaluateMethodArguments(targetConstructor),
+                null);
+    }
+
+    private ExecutableElement getTargetConstructor(Element type, CompilationController controller) {
         List<ExecutableElement> constructors = getConstructorsIn(type, controller);
         int minNumberOfParameters = Integer.MAX_VALUE;
         ExecutableElement targetConstructor = null;
@@ -5137,16 +5162,7 @@ public class JavaSourceHelper {
                 targetConstructor = constructor;
             }
         }
-        if (targetConstructor != null) {
-            List<ExpressionTree> constructorArguments = evaluateMethodArguments(targetConstructor);
-            return make.NewClass(
-                    null,
-                    Collections.emptyList(),
-                    make.QualIdent(type.toString()),
-                    constructorArguments,
-                    null);
-        }
-        return null;
+        return targetConstructor;
     }
 
     private List<ExecutableElement> getConstructorsIn(Element type, CompilationController controller) {
