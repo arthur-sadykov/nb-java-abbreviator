@@ -391,12 +391,8 @@ public class JavaSourceHelper {
 
     public void collectMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
         List<Element> localElements = getElementsByAbbreviation(controller);
-        localElements.forEach(element -> {
-            List<ExecutableElement> methods = getAllNonStaticMethodsInClassAndSuperclasses(element, controller);
-            methods = getMethodsByAbbreviation(methods);
-            methods.forEach(method ->
-                    codeFragments.add(new MethodInvocation(element, method, evaluateMethodArguments(method), this)));
-        });
+        localElements.forEach(element -> collectMethodInvocations(
+                codeFragments, element, getAllNonStaticMethodsInClassAndSuperclasses(element, controller), controller));
     }
 
     private List<ExecutableElement> getAllNonStaticMethodsInClassAndSuperclasses(
@@ -720,10 +716,36 @@ public class JavaSourceHelper {
     }
 
     public void collectLocalMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
-        List<ExecutableElement> methods = getMethodsInCurrentAndSuperclasses(controller);
+        collectMethodInvocations(codeFragments, null, getMethodsInCurrentAndSuperclasses(controller), controller);
+    }
+
+    private void collectMethodInvocations(List<CodeFragment> codeFragments, Element scope,
+            List<ExecutableElement> methods, CompilationController controller) {
+        Tree.Kind currentContext = getCurrentContext(controller);
+        if (currentContext == Tree.Kind.OTHER) {
+            return;
+        }
         methods = getMethodsByAbbreviation(methods);
-        methods.forEach(method ->
-                codeFragments.add(new MethodInvocation(null, method, evaluateMethodArguments(method), this)));
+        methods.forEach(method -> {
+            if (currentContext != Tree.Kind.BLOCK) {
+                TypeUtilities typeUtilities = controller.getTypeUtilities();
+                String typeName = typeUtilities.getTypeName(method.getReturnType()).toString();
+                if (!typeName.equals("void")) { //NOI18N
+                    codeFragments.add(new MethodInvocation(scope, method, evaluateMethodArguments(method), this));
+                }
+            } else {
+                codeFragments.add(new MethodInvocation(scope, method, evaluateMethodArguments(method), this));
+            }
+        });
+    }
+
+    private Tree.Kind getCurrentContext(CompilationController controller) {
+        TreeUtilities treeUtilities = controller.getTreeUtilities();
+        TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
+        if (currentPath == null) {
+            return Tree.Kind.OTHER;
+        }
+        return currentPath.getLeaf().getKind();
     }
 
     private List<ExecutableElement> getMethodsInCurrentAndSuperclasses(CompilationController controller) {
@@ -907,23 +929,15 @@ public class JavaSourceHelper {
 
     public void collectStaticMethodInvocations(List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> typeElements = collectTypesByAbbreviation(controller);
-        typeElements.forEach(typeElement -> {
-            List<ExecutableElement> methods = getStaticMethodsInClass(typeElement);
-            methods = getMethodsByAbbreviation(methods);
-            methods.forEach(method ->
-                    codeFragments.add(new MethodInvocation(typeElement, method, evaluateMethodArguments(method), this)));
-        });
+        typeElements.forEach(typeElement ->
+                collectMethodInvocations(codeFragments, typeElement, getStaticMethodsInClass(typeElement), controller));
     }
 
     public void collectStaticMethodInvocationsForImportedTypes(
             List<CodeFragment> codeFragments, CompilationController controller) {
         List<TypeElement> typeElements = collectImportedTypeElements(controller);
-        typeElements.forEach(element -> {
-            List<ExecutableElement> methods = getStaticMethodsInClass(element);
-            methods = getMethodsByAbbreviation(methods);
-            methods.forEach(method ->
-                    codeFragments.add(new MethodInvocation(element, method, evaluateMethodArguments(method), this)));
-        });
+        typeElements.forEach(element ->
+                collectMethodInvocations(codeFragments, element, getStaticMethodsInClass(element), controller));
     }
 
     private List<ExecutableElement> getStaticMethodsInClass(TypeElement element) {
