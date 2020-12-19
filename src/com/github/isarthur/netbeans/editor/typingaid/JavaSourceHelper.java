@@ -1347,17 +1347,6 @@ public class JavaSourceHelper {
                             codeFragments.add(keyword);
                         }
                         break;
-                    case "String": //NOI18N
-                        switch (currentPath.getLeaf().getKind()) {
-                            case CLASS:
-                            case BLOCK:
-                            case ENUM:
-                            case METHOD:
-                            case VARIABLE:
-                                codeFragments.add(keyword);
-                                break;
-                        }
-                        break;
                     case "new": //NOI18N
                         switch (currentPath.getLeaf().getKind()) {
                             case ASSIGNMENT:
@@ -4204,10 +4193,6 @@ public class JavaSourceHelper {
                             initializer = make.Literal(0.0);
                             type = types.getPrimitiveType(TypeKind.DOUBLE);
                             break;
-                        case "String": //NOI18N
-                            initializer = make.Literal(""); //NOI18N
-                            type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
-                            break;
                     }
                     variable =
                             make.Variable(
@@ -4423,10 +4408,6 @@ public class JavaSourceHelper {
                     case "double": //NOI18N
                         returnValue = make.Literal(0.0);
                         type = types.getPrimitiveType(TypeKind.DOUBLE);
-                        break;
-                    case "String": //NOI18N
-                        returnValue = make.Literal(""); //NOI18N
-                        type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
                 if (!isMethodSection(currentClassEnumOrInterfaceTree, copy)) {
@@ -4897,9 +4878,6 @@ public class JavaSourceHelper {
                         break;
                     case "double": //NOI18N
                         type = types.getPrimitiveType(TypeKind.DOUBLE);
-                        break;
-                    case "String": //NOI18N
-                        type = types.getDeclaredType(copy.getElements().getTypeElement("java.lang.String")); //NOI18N
                         break;
                 }
                 variable =

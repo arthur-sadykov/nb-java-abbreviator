@@ -64,7 +64,7 @@ public class ConstantDataManager {
     private static final int KEYWORD_COUNT = 29;
     private static final int LITERAL_COUNT = 3;
     private static final int MODIFIER_COUNT = 11;
-    private static final int PRIMITIVE_TYPE_COUNT = 9;
+    private static final int PRIMITIVE_TYPE_COUNT = 8;
 
     private ConstantDataManager() {
     }
@@ -125,6 +125,5 @@ public class ConstantDataManager {
         PRIMITIVE_TYPES.add(new PrimitiveType("int")); //NOI18N
         PRIMITIVE_TYPES.add(new PrimitiveType("long")); //NOI18N
         PRIMITIVE_TYPES.add(new PrimitiveType("short")); //NOI18N
-        PRIMITIVE_TYPES.add(new PrimitiveType("String")); //NOI18N
     }
 }

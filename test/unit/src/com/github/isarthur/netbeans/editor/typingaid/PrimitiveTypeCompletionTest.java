@@ -405,7 +405,7 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 Collections.singletonList("long"));
     }
 
-    public void testShortStringKeywordCompletionInBlock() throws IOException {
+    public void testShortKeywordCompletionInBlock() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -415,10 +415,11 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
+                + "        short s = 0;\n"
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("String", "short"));
+                Arrays.asList("short"));
     }
 
     public void testShortStringKeywordCompletionInTypeCast() throws IOException {
@@ -433,13 +434,13 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    void test() {\n"
                 + "        Object object = null;\n"
-                + "        short number = object;\n"
+                + "        short number = (short) object;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("String", "short"));
+                Arrays.asList("short"));
     }
 
-    public void testShortStringKeywordCompletionInMethodParameter() throws IOException {
+    public void testShortKeywordCompletionInMethodParameter() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -447,22 +448,24 @@ public class PrimitiveTypeCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, ) {\n"
+                + "    void test(int count, short s, ) {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("String", "short"));
+                Arrays.asList("short"));
     }
 
-    public void testShortStringKeywordCompletionInField() throws IOException {
+    public void testShortKeywordCompletionInField() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
                 + "    |\n"
                 + "}",
                 "class Test {\n"
+                + "\n"
+                + "    private short s;\n"
                 + "    \n"
                 + "}",
-                Arrays.asList("String", "short"));
+                Arrays.asList("short"));
     }
 
     public void testFloatKeywordCompletionInBlock() throws IOException {
