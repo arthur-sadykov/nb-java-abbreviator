@@ -722,7 +722,7 @@ public class JavaSourceHelper {
     private void collectMethodInvocations(List<CodeFragment> codeFragments, Element scope,
             List<ExecutableElement> methods, CompilationController controller) {
         Tree.Kind currentContext = getCurrentContext(controller);
-        if (currentContext == Tree.Kind.OTHER) {
+        if (currentContext == Tree.Kind.OTHER || currentContext == Tree.Kind.PARAMETERIZED_TYPE) {
             return;
         }
         methods = getMethodsByAbbreviation(methods);
