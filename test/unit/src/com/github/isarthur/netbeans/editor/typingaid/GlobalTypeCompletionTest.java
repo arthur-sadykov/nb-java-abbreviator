@@ -16,144 +16,32 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import javax.swing.JEditorPane;
-import javax.swing.text.Document;
-import javax.swing.text.EditorKit;
 import junit.framework.Test;
-import static org.junit.Assert.assertArrayEquals;
-import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.JavaSource;
-import org.netbeans.api.lexer.Language;
-import org.netbeans.junit.NbTestCase;
-import org.netbeans.junit.NbModuleSuite;
-import org.netbeans.modules.editor.NbEditorKit;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 /**
  *
  * @author: Arthur Sadykov
  */
-public class GlobalTypeCompletionTest extends NbTestCase {
-
-    private static final String JAVA_MIME_TYPE = "text/x-java";
-    private static final String MIME_TYPE = "mimeType";
-    private static final String JAVA_CLUSTER = "java";
-    private static final String IDE_CLUSTER = "ide";
-    private static final String EXTIDE_CLUSTER = "extide";
-    private static final String TEST_FILE = "Test.java";
-    private JavaAbbreviationHandler handler;
-    private JavaAbbreviation abbreviation;
-    private JEditorPane editor;
-    private FileObject testFile;
-    private Document document;
-    private boolean keyword;
-    private boolean literal;
-    private boolean primitiveType;
-    private boolean modifier;
-    private boolean externalType;
-    private boolean internalType;
-    private boolean globalType;
-    private boolean resourceVariable;
-    private boolean exceptionParameter;
-    private boolean enumConstant;
-    private boolean parameter;
-    private boolean field;
-    private boolean localVariable;
-    private boolean staticFieldAccess;
-    private boolean localMethodInvocation;
-    private boolean chainedMethodInvocation;
-    private boolean chainedFieldAccess;
-    private boolean chainedEnumConstantAccess;
-    private boolean staticMethodInvocation;
-    private boolean methodInvocation;
+public class GlobalTypeCompletionTest extends GeneralCompletionTest {
 
     public GlobalTypeCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(GlobalTypeCompletionTest.class)
-                .clusters(EXTIDE_CLUSTER)
-                .clusters(IDE_CLUSTER)
-                .clusters(JAVA_CLUSTER)
-                .gui(false)
-                .suite();
+        return suite(GlobalTypeCompletionTest.class);
     }
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
-        clearWorkDir();
-        testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
-        EditorKit kit = new NbEditorKit();
-        editor = new JEditorPane();
-        editor.setEditorKit(kit);
-        document = editor.getDocument();
-        document.putProperty(Document.StreamDescriptionProperty, testFile);
-        document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
-        document.putProperty(Language.class, JavaTokenId.language());
-        document.putProperty(JavaSource.class, new WeakReference<>(JavaSource.forFileObject(testFile)));
-        JavaSourceHelper helper = new JavaSourceHelper(editor);
-        handler = new JavaAbbreviationHandler(helper);
-        abbreviation = new JavaAbbreviation();
-        storeSettings();
-        setConfigurationForGlobalTypeCompletion();
+        before();
     }
 
-    private void storeSettings() {
-        staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
-        staticFieldAccess = Preferences.getStaticFieldAccessFlag();
-        methodInvocation = Preferences.getMethodInvocationFlag();
-        chainedMethodInvocation = Preferences.getChainedMethodInvocationFlag();
-        chainedFieldAccess = Preferences.getChainedFieldAccessFlag();
-        chainedEnumConstantAccess = Preferences.getChainedEnumConstantAccessFlag();
-        localMethodInvocation = Preferences.getLocalMethodInvocationFlag();
-        localVariable = Preferences.getLocalVariableFlag();
-        field = Preferences.getFieldFlag();
-        parameter = Preferences.getParameterFlag();
-        enumConstant = Preferences.getEnumConstantFlag();
-        exceptionParameter = Preferences.getExceptionParameterFlag();
-        resourceVariable = Preferences.getResourceVariableFlag();
-        internalType = Preferences.getInternalTypeFlag();
-        externalType = Preferences.getExternalTypeFlag();
-        globalType = Preferences.getGlobalTypeFlag();
-        keyword = Preferences.getKeywordFlag();
-        literal = Preferences.getLiteralFlag();
-        modifier = Preferences.getModifierFlag();
-        primitiveType = Preferences.getPrimitiveTypeFlag();
-    }
-
-    private void setConfigurationForGlobalTypeCompletion() {
-        Preferences.setStaticMethodInvocationFlag(false);
-        Preferences.setStaticFieldAccessFlag(false);
-        Preferences.setMethodInvocationFlag(false);
-        Preferences.setChainedMethodInvocationFlag(false);
-        Preferences.setChainedFieldAccessFlag(false);
-        Preferences.setChainedEnumConstantAccessFlag(false);
-        Preferences.setLocalMethodInvocationFlag(false);
-        Preferences.setLocalVariableFlag(false);
-        Preferences.setFieldFlag(false);
-        Preferences.setParameterFlag(false);
-        Preferences.setEnumConstantFlag(false);
-        Preferences.setExceptionParameterFlag(false);
-        Preferences.setResourceVariableFlag(false);
-        Preferences.setInternalTypeFlag(false);
-        Preferences.setExternalTypeFlag(false);
+    @Override
+    protected void setCodeCompletionConfiguration() {
         Preferences.setGlobalTypeFlag(true);
-        Preferences.setKeywordFlag(false);
-        Preferences.setLiteralFlag(false);
-        Preferences.setModifierFlag(false);
-        Preferences.setPrimitiveTypeFlag(false);
     }
 
     public void testImportedTypeCompletionInBlock() throws IOException {
@@ -176,10 +64,10 @@ public class GlobalTypeCompletionTest extends NbTestCase {
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("com.sun.source.tree.InstanceOfTree"));
+                Collections.singletonList("com.sun.source.tree.InstanceOfTree"));
     }
 
-    public void testImportedTypeCompletionInTypeCast() throws IOException {
+    public void testImportedTypeCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "iot",
                 "import com.sun.source.tree.ClassTree;\n"
@@ -201,6 +89,32 @@ public class GlobalTypeCompletionTest extends NbTestCase {
                 + "    }\n"
                 + "}",
                 Collections.singletonList("com.sun.source.tree.InstanceOfTree"));
+    }
+
+    public void testImportedTypeCompletionInVariable() throws IOException {
+        doAbbreviationInsert(
+                "al",
+                "package test;\n"
+                + "import com.sun.source.tree.ClassTree;\n"
+                + "import java.util.ArrayList;\n"
+                + "java.io.*;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        Object object = null;\n"
+                + "        List<String> list = | ;\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "import com.sun.source.tree.ClassTree;\n"
+                + "import java.util.ArrayList;\n"
+                + "java.io.*;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        Object object = null;\n"
+                + "        List<String> list =new ArrayList();\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.util.ArrayList"));
     }
 
     public void testImportedTypeCompletionInMethodParameter() throws IOException {
@@ -243,57 +157,92 @@ public class GlobalTypeCompletionTest extends NbTestCase {
                 Collections.singletonList("com.sun.source.tree.InstanceOfTree"));
     }
 
-    private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
-            throws IOException {
-        int caretOffset = code.indexOf('|');
-        String text = code.substring(0, caretOffset) + code.substring(caretOffset + 1);
-        editor.setText(text);
-        editor.setCaretPosition(caretOffset);
-        try ( OutputStream out = testFile.getOutputStream();  Writer writer = new OutputStreamWriter(out)) {
-            writer.append(text);
-        }
-        abbreviation.setStartOffset(caretOffset);
-        for (int i = 0; i < abbrev.length(); i++) {
-            abbreviation.append(abbrev.charAt(i));
-        }
-        List<CodeFragment> codeFragments = handler.process(abbreviation);
-        assertNotNull(codeFragments);
-        assertArrayEquals(proposals.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
-        assertEquals(golden, testFile.asText());
+    public void testImportedTypeCompletionInReturnStatement() throws IOException {
+        doAbbreviationInsert(
+                "fd",
+                "package test;\n"
+                + "import java.awt.FileDialog;\n"
+                + "class InstanceOfTree {\n"
+                + "    FileDialog test() {\n"
+                + "        return |;\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "import java.awt.FileDialog;\n"
+                + "class InstanceOfTree {\n"
+                + "    FileDialog test() {\n"
+                + "        return new FileDialog(null);\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.awt.FileDialog"));
+    }
+
+    public void testImportedTypeCompletionInParameterizedType() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "package test;\n"
+                + "import java.util.List;\n"
+                + "class InstanceOfTree {\n"
+                + "    private List<|> parts;\n"
+                + "}",
+                "package test;\n"
+                + "import java.util.List;\n"
+                + "class InstanceOfTree {\n"
+                + "    private List<Float> parts;\n"
+                + "}",
+                Collections.singletonList("java.lang.Float"));
+    }
+
+    public void testImportedTypeCompletionInParameterizedTypeInZeroPosition() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "package test;\n"
+                + "import java.util.Map;\n"
+                + "class InstanceOfTree {\n"
+                + "    private Map<| String> parts;\n"
+                + "}",
+                "package test;\n"
+                + "import java.util.Map;\n"
+                + "class InstanceOfTree {\n"
+                + "    private Map< Float, String> parts;\n"
+                + "}",
+                Collections.singletonList("java.lang.Float"));
+    }
+
+    public void testImportedTypeCompletionInParameterizedTypeInFirstPosition() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "package test;\n"
+                + "import java.util.Map;\n"
+                + "class InstanceOfTree {\n"
+                + "    private Map<String |> parts;\n"
+                + "}",
+                "package test;\n"
+                + "import java.util.Map;\n"
+                + "class InstanceOfTree {\n"
+                + "    private Map<String, Float > parts;\n"
+                + "}",
+                Collections.singletonList("java.lang.Float"));
+    }
+
+    public void testImportedTypeCompletionInParameterizedTypeInSecondPosition() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "package test;\n"
+                + "import java.util.function.BiFunction;\n"
+                + "class InstanceOfTree {\n"
+                + "    private BiFunction<String, Integer |> function;\n"
+                + "}",
+                "package test;\n"
+                + "import java.util.function.BiFunction;\n"
+                + "class InstanceOfTree {\n"
+                + "    private BiFunction<String, Integer, Float > function;\n"
+                + "}",
+                Collections.singletonList("java.lang.Float"));
     }
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        abbreviation.reset();
-        revertSettings();
-    }
-
-    private void revertSettings() {
-        Preferences.setMethodInvocationFlag(methodInvocation);
-        Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
-        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
-        Preferences.setChainedFieldAccessFlag(chainedFieldAccess);
-        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantAccess);
-        Preferences.setLocalMethodInvocationFlag(localMethodInvocation);
-        Preferences.setStaticFieldAccessFlag(staticFieldAccess);
-        Preferences.setLocalVariableFlag(localVariable);
-        Preferences.setFieldFlag(field);
-        Preferences.setParameterFlag(parameter);
-        Preferences.setEnumConstantFlag(enumConstant);
-        Preferences.setExceptionParameterFlag(exceptionParameter);
-        Preferences.setResourceVariableFlag(resourceVariable);
-        Preferences.setInternalTypeFlag(internalType);
-        Preferences.setExternalTypeFlag(externalType);
-        Preferences.setGlobalTypeFlag(globalType);
-        Preferences.setKeywordFlag(keyword);
-        Preferences.setLiteralFlag(literal);
-        Preferences.setModifierFlag(modifier);
-        Preferences.setPrimitiveTypeFlag(primitiveType);
-    }
-
-    @Override
-    protected boolean runInEQ() {
-        return true;
+        after();
     }
 }

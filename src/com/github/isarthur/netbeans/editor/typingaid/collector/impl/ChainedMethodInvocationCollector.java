@@ -15,23 +15,53 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.ChainedMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.context.api.CodeCompletionContext;
+import com.github.isarthur.netbeans.editor.typingaid.context.impl.CodeCompletionContextFactory;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
+import com.sun.source.util.TreePath;
+import java.util.List;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class ChainedMethodInvocationCollector extends CodeFragmentCollector {
+public class ChainedMethodInvocationCollector extends AbstractCodeFragmentCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectChainedMethodInvocations(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        Types types = copy.getTypes();
+        TreePath currentPath = request.getCurrentPath();
+        CodeCompletionContext context =
+                CodeCompletionContextFactory.getCodeCompletionContext(currentPath.getLeaf().getKind());
+        TypeMirror type = context.getType(request);
+        if (type == null) {
+            return;
+        }
+        Element typeElement = types.asElement(type);
+        if (typeElement == null) {
+            return;
+        }
+        List<ExecutableElement> methods = JavaSourceUtilities.getMethodsInClassHierarchy(typeElement, copy);
+        methods = JavaSourceUtilities.getMethodsByAbbreviation(methods, request.getAbbreviation());
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        methods.forEach(method -> {
+            ChainedMethodInvocation methodInvocation = new ChainedMethodInvocation(
+                    method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+            methodInvocation.setText(JavaSourceMaker.makeMethodInvocationExpressionTree(
+                    methodInvocation, request).toString());
+            codeFragments.add(methodInvocation);
+        });
         super.collect(request);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.CHAINED_METHOD_INVOCATION;
     }
 }

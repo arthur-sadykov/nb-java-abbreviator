@@ -15,23 +15,19 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.LocalElementCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import static javax.lang.model.element.ElementKind.LOCAL_VARIABLE;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class LocalVariableCollector extends CodeFragmentCollector {
+public class LocalVariableCollector extends LocalElementCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectLocalVariables(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        collect(request, LOCAL_VARIABLE);
         super.collect(request);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.LOCAL_VARIABLE;
     }
 }

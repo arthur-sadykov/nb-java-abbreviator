@@ -15,23 +15,64 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.LocalMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
+import com.sun.source.tree.Tree;
+import java.util.List;
+import javax.lang.model.element.ExecutableElement;
+import org.netbeans.api.java.source.TypeUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class LocalMethodInvocationCollector extends CodeFragmentCollector {
+public class LocalMethodInvocationCollector extends AbstractCodeFragmentCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectLocalMethodInvocations(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        List<ExecutableElement> methods =
+                JavaSourceUtilities.getMethodsInCurrentClassHierarchy(request.getWorkingCopy());
+        WorkingCopy copy = request.getWorkingCopy();
+        Tree.Kind currentContext = request.getCurrentPath().getLeaf().getKind();
+        if (currentContext == Tree.Kind.PARAMETERIZED_TYPE) {
+            return;
+        }
+        methods = JavaSourceUtilities.getMethodsByAbbreviation(methods, request.getAbbreviation());
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        methods.forEach(method -> {
+            if (currentContext != Tree.Kind.BLOCK) {
+                TypeUtilities typeUtilities = copy.getTypeUtilities();
+                String typeName = typeUtilities.getTypeName(method.getReturnType()).toString();
+                if (!typeName.equals("void")) { //NOI18N
+                    LocalMethodInvocation methodInvocation = new LocalMethodInvocation(
+                            method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                    if (JavaSourceUtilities.isMethodReturnVoid(method)) {
+                        methodInvocation.setText(
+                                JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
+                    } else {
+                        methodInvocation.setText(JavaSourceMaker.makeMethodInvocationExpressionTree(
+                                methodInvocation, request).toString());
+                    }
+                    codeFragments.add(methodInvocation);
+                }
+            } else {
+                LocalMethodInvocation methodInvocation = new LocalMethodInvocation(
+                        method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                if (JavaSourceUtilities.isMethodReturnVoid(method)) {
+                    methodInvocation.setText(
+                            JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
+                } else {
+                    methodInvocation.setText(JavaSourceMaker.makeMethodInvocationStatementTree(
+                            methodInvocation, request) + ";"); //NOI18N
+                }
+                codeFragments.add(methodInvocation);
+            }
+        });
         super.collect(request);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.LOCAL_METHOD_INVOCATION;
     }
 }

@@ -15,23 +15,19 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.LocalElementCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import static javax.lang.model.element.ElementKind.FIELD;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class FieldCollector extends CodeFragmentCollector {
+public class FieldCollector extends LocalElementCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectFields(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        collect(request, FIELD);
         super.collect(request);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.FIELD;
     }
 }

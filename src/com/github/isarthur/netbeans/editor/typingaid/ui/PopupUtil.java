@@ -18,6 +18,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.ui;
 
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Container;
@@ -40,6 +41,9 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
+import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 
@@ -59,6 +63,29 @@ public class PopupUtil {
     private static final int X_INSET = 10;
 
     private PopupUtil() {
+    }
+
+    public static void showPopup(JTextComponent component, CodeCompletionRequest request) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                Rectangle caretRectangle = component.modelToView(component.getCaretPosition());
+                if (caretRectangle == null) {
+                    return;
+                }
+                Point where = new Point((int) caretRectangle.getX(), (int) (caretRectangle.getY()
+                        + caretRectangle.getHeight()));
+                SwingUtilities.convertPointToScreen(where, component);
+                showPopup(
+                        new GenerateCodePanel(component, request),
+                        (Frame) SwingUtilities.getAncestorOfClass(Frame.class, component),
+                        where.getX(),
+                        where.getY(),
+                        true,
+                        caretRectangle.getHeight());
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        });
     }
 
     public static void showPopup(JComponent content, Frame parent, double x, double y, boolean undecorated,

@@ -24,14 +24,6 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
     NetBeansTypingAidPanel(NetBeansTypingAidOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
-        if (!staticMethodInvocationCheckBox.isSelected()) {
-            staticMethodInvocationForGlobalTypesCheckBox.setSelected(false);
-        }
-        staticMethodInvocationForGlobalTypesCheckBox.setEnabled(staticMethodInvocationCheckBox.isSelected());
-        if (!staticFieldAccessCheckBox.isSelected()) {
-            staticFieldAccessGlobalTypesCheckBox.setSelected(false);
-        }
-        staticFieldAccessGlobalTypesCheckBox.setEnabled(staticFieldAccessCheckBox.isSelected());
         controller.changed();
     }
 
@@ -447,8 +439,10 @@ final class NetBeansTypingAidPanel extends javax.swing.JPanel {
         literalCheckBox.setSelected(Preferences.getLiteralFlag());
         modifierCheckBox.setSelected(Preferences.getModifierFlag());
         primitiveTypeCheckBox.setSelected(Preferences.getPrimitiveTypeFlag());
-        staticMethodInvocationForGlobalTypesCheckBox.setSelected(Preferences.getStaticMethodInvocationGlobalTypesFlag());
-        staticFieldAccessGlobalTypesCheckBox.setSelected(Preferences.getStaticFieldAccessGlobalTypesFlag());
+        staticMethodInvocationForGlobalTypesCheckBox.setSelected(staticMethodInvocationCheckBox.isSelected());
+        staticMethodInvocationForGlobalTypesCheckBox.setEnabled(staticMethodInvocationCheckBox.isSelected());
+        staticFieldAccessGlobalTypesCheckBox.setSelected(staticFieldAccessCheckBox.isSelected());
+        staticFieldAccessGlobalTypesCheckBox.setEnabled(staticFieldAccessCheckBox.isSelected());
     }
 
     void store() {

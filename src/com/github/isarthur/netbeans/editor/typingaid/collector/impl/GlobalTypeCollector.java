@@ -15,23 +15,37 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.GlobalType;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import java.util.List;
+import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class GlobalTypeCollector extends CodeFragmentCollector {
+public class GlobalTypeCollector extends AbstractCodeFragmentCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectGlobalTypes(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        Iterable<? extends TypeElement> globalTypes = collectGlobalTypeElements(copy, request.getAbbreviation());
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        globalTypes.forEach(globalType -> codeFragments.add(new GlobalType(globalType)));
         super.collect(request);
     }
 
-    @Override
-    public Kind getKind() {
-        return Kind.GLOBAL_TYPE;
+    private Iterable<? extends TypeElement> collectGlobalTypeElements(WorkingCopy copy, Abbreviation abbreviation) {
+        ElementUtilities elementUtilities = copy.getElementUtilities();
+        return elementUtilities.getGlobalTypes((element, type) -> {
+            String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+            return typeAbbreviation.equals(abbreviation.getScope());
+        });
     }
 }

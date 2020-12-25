@@ -16,143 +16,32 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.List;
-import javax.swing.JEditorPane;
-import javax.swing.text.Document;
-import javax.swing.text.EditorKit;
+import java.util.Collections;
 import junit.framework.Test;
-import static org.junit.Assert.assertArrayEquals;
-import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.JavaSource;
-import org.netbeans.api.lexer.Language;
-import org.netbeans.junit.NbTestCase;
-import org.netbeans.junit.NbModuleSuite;
-import org.netbeans.modules.editor.NbEditorKit;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 /**
  *
  * @author: Arthur Sadykov
  */
-public class LiteralCompletionTest extends NbTestCase {
-
-    private static final String JAVA_MIME_TYPE = "text/x-java";
-    private static final String MIME_TYPE = "mimeType";
-    private static final String JAVA_CLUSTER = "java";
-    private static final String IDE_CLUSTER = "ide";
-    private static final String EXTIDE_CLUSTER = "extide";
-    private static final String TEST_FILE = "Test.java";
-    private JavaAbbreviationHandler handler;
-    private JavaAbbreviation abbreviation;
-    private JEditorPane editor;
-    private FileObject testFile;
-    private Document document;
-    private boolean keyword;
-    private boolean literal;
-    private boolean primitiveType;
-    private boolean modifier;
-    private boolean externalType;
-    private boolean internalType;
-    private boolean globalType;
-    private boolean resourceVariable;
-    private boolean exceptionParameter;
-    private boolean enumConstant;
-    private boolean parameter;
-    private boolean field;
-    private boolean localVariable;
-    private boolean staticFieldAccess;
-    private boolean localMethodInvocation;
-    private boolean chainedMethodInvocation;
-    private boolean chainedFieldAccess;
-    private boolean chainedEnumConstantAccess;
-    private boolean staticMethodInvocation;
-    private boolean methodInvocation;
+public class LiteralCompletionTest extends GeneralCompletionTest {
 
     public LiteralCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(LiteralCompletionTest.class)
-                .clusters(EXTIDE_CLUSTER)
-                .clusters(IDE_CLUSTER)
-                .clusters(JAVA_CLUSTER)
-                .gui(false)
-                .suite();
+        return suite(LiteralCompletionTest.class);
     }
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
-        clearWorkDir();
-        testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
-        EditorKit kit = new NbEditorKit();
-        editor = new JEditorPane();
-        editor.setEditorKit(kit);
-        document = editor.getDocument();
-        document.putProperty(Document.StreamDescriptionProperty, testFile);
-        document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
-        document.putProperty(Language.class, JavaTokenId.language());
-        document.putProperty(JavaSource.class, new WeakReference<>(JavaSource.forFileObject(testFile)));
-        JavaSourceHelper helper = new JavaSourceHelper(editor);
-        handler = new JavaAbbreviationHandler(helper);
-        abbreviation = new JavaAbbreviation();
-        storeSettings();
-        setConfigurationForTypeCompletion();
+        before();
     }
 
-    private void storeSettings() {
-        staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
-        staticFieldAccess = Preferences.getStaticFieldAccessFlag();
-        methodInvocation = Preferences.getMethodInvocationFlag();
-        chainedMethodInvocation = Preferences.getChainedMethodInvocationFlag();
-        chainedFieldAccess = Preferences.getChainedFieldAccessFlag();
-        chainedEnumConstantAccess = Preferences.getChainedEnumConstantAccessFlag();
-        localMethodInvocation = Preferences.getLocalMethodInvocationFlag();
-        localVariable = Preferences.getLocalVariableFlag();
-        field = Preferences.getFieldFlag();
-        parameter = Preferences.getParameterFlag();
-        enumConstant = Preferences.getEnumConstantFlag();
-        exceptionParameter = Preferences.getExceptionParameterFlag();
-        resourceVariable = Preferences.getResourceVariableFlag();
-        internalType = Preferences.getInternalTypeFlag();
-        externalType = Preferences.getExternalTypeFlag();
-        globalType = Preferences.getGlobalTypeFlag();
-        keyword = Preferences.getKeywordFlag();
-        literal = Preferences.getLiteralFlag();
-        modifier = Preferences.getModifierFlag();
-        primitiveType = Preferences.getPrimitiveTypeFlag();
-    }
-
-    private void setConfigurationForTypeCompletion() {
-        Preferences.setStaticMethodInvocationFlag(false);
-        Preferences.setStaticFieldAccessFlag(false);
-        Preferences.setMethodInvocationFlag(false);
-        Preferences.setChainedMethodInvocationFlag(false);
-        Preferences.setChainedFieldAccessFlag(false);
-        Preferences.setChainedEnumConstantAccessFlag(false);
-        Preferences.setLocalMethodInvocationFlag(false);
-        Preferences.setLocalVariableFlag(false);
-        Preferences.setFieldFlag(false);
-        Preferences.setParameterFlag(false);
-        Preferences.setEnumConstantFlag(false);
-        Preferences.setExceptionParameterFlag(false);
-        Preferences.setResourceVariableFlag(false);
-        Preferences.setInternalTypeFlag(false);
-        Preferences.setExternalTypeFlag(false);
-        Preferences.setGlobalTypeFlag(false);
-        Preferences.setKeywordFlag(false);
+    @Override
+    protected void setCodeCompletionConfiguration() {
         Preferences.setLiteralFlag(true);
-        Preferences.setModifierFlag(false);
-        Preferences.setPrimitiveTypeFlag(false);
     }
 
     public void testTrueLiteralInAssignmentTree() throws IOException {
@@ -170,7 +59,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        valid = \n"
                 + "        true;    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInEqualToTree() throws IOException {
@@ -190,7 +79,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInMethodInvocationTree() throws IOException {
@@ -206,7 +95,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        isValid(0, true, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInNewClassTree() throws IOException {
@@ -222,7 +111,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        Clazz clazz = new Clazz(0, true, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInNotEqualToTree() throws IOException {
@@ -242,7 +131,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInParenthesizedTree() throws IOException {
@@ -260,7 +149,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInReturnTree() throws IOException {
@@ -276,7 +165,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        return true;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testTrueLiteralInVariableTree() throws IOException {
@@ -292,7 +181,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        boolean valid =true;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("true"));
+                Collections.singletonList("true"));
     }
 
     public void testFalseLiteralInAssignmentTree() throws IOException {
@@ -310,7 +199,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        valid = \n"
                 + "        false;    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInEqualToTree() throws IOException {
@@ -330,7 +219,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInMethodInvocationTree() throws IOException {
@@ -346,7 +235,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        isValid(0, false, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInNewClassTree() throws IOException {
@@ -362,7 +251,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        Clazz clazz = new Clazz(0, false, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInNotEqualToTree() throws IOException {
@@ -382,7 +271,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInParenthesizedTree() throws IOException {
@@ -400,7 +289,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInReturnTree() throws IOException {
@@ -416,7 +305,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        return false;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testFalseLiteralInVariableTree() throws IOException {
@@ -432,7 +321,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        boolean valid =false;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("false"));
+                Collections.singletonList("false"));
     }
 
     public void testNullLiteralInAssignmentTree() throws IOException {
@@ -450,7 +339,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        valid = \n"
                 + "        null;    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInEqualToTree() throws IOException {
@@ -470,7 +359,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInMethodInvocationTree() throws IOException {
@@ -486,7 +375,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        isValid(0, null, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInNewClassTree() throws IOException {
@@ -502,7 +391,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        Clazz clazz = new Clazz(0, null, );\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInNotEqualToTree() throws IOException {
@@ -522,7 +411,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInParenthesizedTree() throws IOException {
@@ -540,7 +429,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInReturnTree() throws IOException {
@@ -556,7 +445,7 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        return null;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
+                Collections.singletonList("null"));
     }
 
     public void testNullLiteralInVariableTree() throws IOException {
@@ -572,60 +461,11 @@ public class LiteralCompletionTest extends NbTestCase {
                 + "        String valid =null;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("null"));
-    }
-
-    private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
-            throws IOException {
-        int caretOffset = code.indexOf('|');
-        String text = code.substring(0, caretOffset) + code.substring(caretOffset + 1);
-        editor.setText(text);
-        editor.setCaretPosition(caretOffset);
-        try ( OutputStream out = testFile.getOutputStream();  Writer writer = new OutputStreamWriter(out)) {
-            writer.append(text);
-        }
-        abbreviation.setStartOffset(caretOffset);
-        for (int i = 0; i < abbrev.length(); i++) {
-            abbreviation.append(abbrev.charAt(i));
-        }
-        List<CodeFragment> codeFragments = handler.process(abbreviation);
-        assertNotNull(codeFragments);
-        assertArrayEquals(proposals.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
-        assertEquals(golden, testFile.asText());
+                Collections.singletonList("null"));
     }
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        abbreviation.reset();
-        revertSettings();
-    }
-
-    private void revertSettings() {
-        Preferences.setMethodInvocationFlag(methodInvocation);
-        Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
-        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
-        Preferences.setChainedFieldAccessFlag(chainedFieldAccess);
-        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantAccess);
-        Preferences.setLocalMethodInvocationFlag(localMethodInvocation);
-        Preferences.setStaticFieldAccessFlag(staticFieldAccess);
-        Preferences.setLocalVariableFlag(localVariable);
-        Preferences.setFieldFlag(field);
-        Preferences.setParameterFlag(parameter);
-        Preferences.setEnumConstantFlag(enumConstant);
-        Preferences.setExceptionParameterFlag(exceptionParameter);
-        Preferences.setResourceVariableFlag(resourceVariable);
-        Preferences.setInternalTypeFlag(internalType);
-        Preferences.setExternalTypeFlag(externalType);
-        Preferences.setGlobalTypeFlag(globalType);
-        Preferences.setKeywordFlag(keyword);
-        Preferences.setLiteralFlag(literal);
-        Preferences.setModifierFlag(modifier);
-        Preferences.setPrimitiveTypeFlag(primitiveType);
-    }
-
-    @Override
-    protected boolean runInEQ() {
-        return true;
+        after();
     }
 }

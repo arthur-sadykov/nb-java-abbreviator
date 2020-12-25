@@ -15,8 +15,8 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.interceptor;
 
-import com.github.isarthur.netbeans.editor.typingaid.JavaAbbreviation;
-import com.github.isarthur.netbeans.editor.typingaid.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.impl.JavaAbbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import javax.swing.text.BadLocationException;
 import org.netbeans.api.editor.mimelookup.MimePath;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;

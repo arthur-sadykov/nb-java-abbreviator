@@ -15,23 +15,81 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.api.Keyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.BreakKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.CaseKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.CatchKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ClassKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ContinueKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.DefaultKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.DoKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ElseKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.EnumKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ExtendsKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.FinallyKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ForKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.IfKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ImplementsKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ImportKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InstanceofKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InterfaceKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThrowKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThrowsKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.TryKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.VoidKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.WhileKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.KeywordCollectVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.impl.KeywordCollectVisitorImpl;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class KeywordCollector extends CodeFragmentCollector {
+public class KeywordCollector extends AbstractCodeFragmentCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectKeywords(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        List<Keyword> keywords =
+                Arrays.asList(
+                        new AssertKeyword(),
+                        new BreakKeyword(),
+                        new CaseKeyword(),
+                        new CatchKeyword(),
+                        new ClassKeyword(),
+                        new ContinueKeyword(),
+                        new DefaultKeyword(),
+                        new DoKeyword(),
+                        new ElseKeyword(),
+                        new EnumKeyword(),
+                        new ExtendsKeyword(),
+                        new FinallyKeyword(),
+                        new ForKeyword(),
+                        new IfKeyword(),
+                        new ImplementsKeyword(),
+                        new ImportKeyword(),
+                        new InstanceofKeyword(),
+                        new InterfaceKeyword(),
+                        new NewKeyword(),
+                        new ReturnKeyword(),
+                        new SwitchKeyword(),
+                        new ThisKeyword(),
+                        new ThrowKeyword(),
+                        new ThrowsKeyword(),
+                        new TryKeyword(),
+                        new VoidKeyword(),
+                        new WhileKeyword()
+                );
+        KeywordCollectVisitor visitor = new KeywordCollectVisitorImpl();
+        keywords.forEach(keyword -> keyword.accept(visitor, request));
         super.collect(request);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.KEYWORD;
     }
 }

@@ -15,23 +15,80 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.StaticFieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+import org.netbeans.api.java.source.ClassIndex;
+import org.netbeans.api.java.source.ClasspathInfo;
+import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class StaticFieldAccessCollector extends CodeFragmentCollector {
+public class StaticFieldAccessCollector extends AbstractCodeFragmentCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectStaticFieldAccesses(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        Abbreviation abbreviation = request.getAbbreviation();
+        List<TypeElement> typeElements = collectTypesByAbbreviation(request.getWorkingCopy(), abbreviation);
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        typeElements.forEach(typeElement -> {
+            try {
+                List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
+                enclosedElements.stream().filter(element ->
+                        ((element.getKind() == ElementKind.FIELD
+                        && element.getModifiers().contains(Modifier.PUBLIC)
+                        && element.getModifiers().contains(Modifier.STATIC)
+                        && element.getModifiers().contains(Modifier.FINAL))
+                        || element.getKind() == ElementKind.ENUM_CONSTANT)).forEachOrdered(element -> {
+                    String elementName = element.getSimpleName().toString();
+                    String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
+                    if (abbreviation.getIdentifier().equals(elementAbbreviation)) {
+                        codeFragments.add(new StaticFieldAccess(typeElement, element));
+                    }
+                });
+            } catch (AssertionError ex) {
+            }
+        });
         super.collect(request);
     }
 
-    @Override
-    public Kind getKind() {
-        return Kind.STATIC_FIELD_ACCESS;
+    private List<TypeElement> collectTypesByAbbreviation(WorkingCopy copy, Abbreviation abbreviation) {
+        ClasspathInfo classpathInfo = copy.getClasspathInfo();
+        ClassIndex classIndex = classpathInfo.getClassIndex();
+        Set<ElementHandle<TypeElement>> declaredTypes = classIndex.getDeclaredTypes(
+                abbreviation.getScope().toUpperCase(),
+                ClassIndex.NameKind.CAMEL_CASE,
+                EnumSet.of(ClassIndex.SearchScope.SOURCE, ClassIndex.SearchScope.DEPENDENCIES));
+        List<TypeElement> typeElements = new ArrayList<>();
+        Elements elements = copy.getElements();
+        declaredTypes.forEach(type -> {
+            TypeElement typeElement = type.resolve(copy);
+            if (typeElement != null) {
+                String typeName = typeElement.getSimpleName().toString();
+                String typeAbbreviation = StringUtilities.getElementAbbreviation(typeName);
+                if (typeAbbreviation.equals(abbreviation.getScope())) {
+                    if (!elements.isDeprecated(typeElement)) {
+                        typeElements.add(typeElement);
+                    }
+                }
+            }
+        });
+        return Collections.unmodifiableList(typeElements);
     }
 }

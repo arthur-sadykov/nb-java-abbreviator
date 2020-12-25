@@ -15,25 +15,29 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid;
 
-import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.impl.JavaAbbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragmentCollectAndInsertHandler;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.JavaCodeFragmentCollectAndInsertHandler;
+import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.List;
 import javax.swing.JEditorPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import static org.junit.Assert.assertArrayEquals;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.lexer.Language;
-import org.netbeans.junit.NbTestCase;
 import org.netbeans.junit.NbModuleSuite;
+import org.netbeans.junit.NbTestCase;
 import org.netbeans.modules.editor.NbEditorKit;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -50,7 +54,7 @@ public class GeneralCompletionTest extends NbTestCase {
     private static final String IDE_CLUSTER = "ide";
     private static final String EXTIDE_CLUSTER = "extide";
     private static final String TEST_FILE = "Test.java";
-    private JavaAbbreviationHandler handler;
+    private CodeFragmentCollectAndInsertHandler handler;
     private JavaAbbreviation abbreviation;
     private JEditorPane editor;
     private FileObject testFile;
@@ -80,8 +84,8 @@ public class GeneralCompletionTest extends NbTestCase {
         super(testName);
     }
 
-    public static Test suite() {
-        return NbModuleSuite.createConfiguration(GeneralCompletionTest.class)
+    protected static Test suite(Class<? extends TestCase> testClass) {
+        return NbModuleSuite.createConfiguration(testClass)
                 .clusters(EXTIDE_CLUSTER)
                 .clusters(IDE_CLUSTER)
                 .clusters(JAVA_CLUSTER)
@@ -89,27 +93,29 @@ public class GeneralCompletionTest extends NbTestCase {
                 .suite();
     }
 
-    @Override
-    protected void setUp() throws Exception {
+    protected void before() throws Exception {
         super.setUp();
         clearWorkDir();
         testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
         EditorKit kit = new NbEditorKit();
         editor = new JEditorPane();
-        editor.setEditorKit(kit);
+        SwingUtilities.invokeAndWait(() -> editor.setEditorKit(kit));
         document = editor.getDocument();
         document.putProperty(Document.StreamDescriptionProperty, testFile);
         document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
         document.putProperty(Language.class, JavaTokenId.language());
         document.putProperty(JavaSource.class, new WeakReference<>(JavaSource.forFileObject(testFile)));
-        JavaSourceHelper helper = new JavaSourceHelper(editor);
-        handler = new JavaAbbreviationHandler(helper);
+        handler = new JavaCodeFragmentCollectAndInsertHandler(editor);
         abbreviation = new JavaAbbreviation();
-        storeSettings();
-        setConfigurationForGeneralCompletion();
+        storeCodeCompletionConfiguration();
+        resetCodeCompletionConfiguration();
+        setCodeCompletionConfiguration();
     }
 
-    private void storeSettings() {
+    protected void setCodeCompletionConfiguration() {
+    }
+
+    private void storeCodeCompletionConfiguration() {
         staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
         staticFieldAccess = Preferences.getStaticFieldAccessFlag();
         methodInvocation = Preferences.getMethodInvocationFlag();
@@ -132,273 +138,33 @@ public class GeneralCompletionTest extends NbTestCase {
         primitiveType = Preferences.getPrimitiveTypeFlag();
     }
 
-    private void setConfigurationForGeneralCompletion() {
-        Preferences.setStaticMethodInvocationFlag(true);
-        Preferences.setStaticFieldAccessFlag(true);
-        Preferences.setMethodInvocationFlag(true);
-        Preferences.setChainedMethodInvocationFlag(true);
-        Preferences.setChainedFieldAccessFlag(true);
-        Preferences.setChainedEnumConstantAccessFlag(true);
-        Preferences.setLocalMethodInvocationFlag(true);
-        Preferences.setLocalVariableFlag(true);
-        Preferences.setFieldFlag(true);
-        Preferences.setParameterFlag(true);
-        Preferences.setEnumConstantFlag(true);
-        Preferences.setExceptionParameterFlag(true);
-        Preferences.setResourceVariableFlag(true);
-        Preferences.setInternalTypeFlag(true);
-        Preferences.setExternalTypeFlag(true);
-        Preferences.setGlobalTypeFlag(true);
-        Preferences.setKeywordFlag(true);
-        Preferences.setLiteralFlag(true);
-        Preferences.setModifierFlag(true);
-        Preferences.setPrimitiveTypeFlag(true);
+    public void testSomeBehavior() {
     }
 
-    public void testShouldSuggestCompletionForParameterName() throws IOException {
-        doAbbreviationInsert(
-                "nos",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        if (|) {\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        if (numberOfSpaces) {\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("numberOfSpaces"));
+    private void resetCodeCompletionConfiguration() {
+        Preferences.setStaticMethodInvocationFlag(false);
+        Preferences.setStaticFieldAccessFlag(false);
+        Preferences.setMethodInvocationFlag(false);
+        Preferences.setChainedMethodInvocationFlag(false);
+        Preferences.setChainedFieldAccessFlag(false);
+        Preferences.setChainedEnumConstantAccessFlag(false);
+        Preferences.setLocalMethodInvocationFlag(false);
+        Preferences.setLocalVariableFlag(false);
+        Preferences.setFieldFlag(false);
+        Preferences.setParameterFlag(false);
+        Preferences.setEnumConstantFlag(false);
+        Preferences.setExceptionParameterFlag(false);
+        Preferences.setResourceVariableFlag(false);
+        Preferences.setInternalTypeFlag(false);
+        Preferences.setExternalTypeFlag(false);
+        Preferences.setGlobalTypeFlag(false);
+        Preferences.setKeywordFlag(false);
+        Preferences.setLiteralFlag(false);
+        Preferences.setModifierFlag(false);
+        Preferences.setPrimitiveTypeFlag(false);
     }
 
-    public void testShouldSuggestCompletionForFieldName() throws IOException {
-        doAbbreviationInsert(
-                "bn",
-                "public class Test {\n"
-                + "    private String branchName;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        if (|) {\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    private String branchName;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        if (branchName) {\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("branchName"));
-    }
-
-    public void testShouldSuggestCompletionForLocalVariableName() throws IOException {
-        doAbbreviationInsert(
-                "gac",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String generalApplicationContext = \"\";\n"
-                + "        if (|) {\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String generalApplicationContext = \"\";\n"
-                + "        if (generalApplicationContext) {\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("generalApplicationContext"));
-    }
-
-    public void testShouldSuggestCompletionForMethodInvocation() throws IOException {
-        doAbbreviationInsert(
-                "bn.ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        boolean b = branchName.isEmpty();\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean b = branchName.isEmpty();"));
-    }
-
-    public void testWhenMethodInvocationIsPartOfIfConditionThenSuggestRightSideOfStatementWithoutSemicolon()
-            throws IOException {
-        doAbbreviationInsert(
-                "bn.ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (|) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean b = branchName.isEmpty();"));
-    }
-
-    public void testWhenMethodInvocationIsPartOfWhileConditionThenSuggestRightSideOfStatementWithoutSemicolon()
-            throws IOException {
-        doAbbreviationInsert(
-                "bn.ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        while (|) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        while (branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean b = branchName.isEmpty();"));
-    }
-
-    public void testWhenMethodInvocationIsPartOfConditionalAndThenSuggestRightSideOfStatementWithoutSemicolon()
-            throws IOException {
-        doAbbreviationInsert(
-                "bn.ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && |) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean b = branchName.isEmpty();"));
-    }
-
-    public void testWhenMethodInvocationIsPartOfLogicalComplementThenSuggestRightSideOfStatementWithoutSemicolon()
-            throws IOException {
-        doAbbreviationInsert(
-                "bn.ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && !|) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        if (branchName.isBlank() && !branchName.isEmpty()) {\n"
-                + "            \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("boolean b = branchName.isEmpty();"));
-    }
-
-    public void testShouldSuggestCompletionForChainedMethodInvocation() throws IOException {
-        doAbbreviationInsert(
-                "ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        branchName.|;\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        branchName.;\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("isEmpty()"));
-    }
-
-    public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsMethodArgument() throws IOException {
-        doAbbreviationInsert(
-                "ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        System.out.println(branchName.|);\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        System.out.println(branchName.);\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("isEmpty()"));
-    }
-
-    public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsVariableInitializer() throws IOException {
-        doAbbreviationInsert(
-                "ie",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        boolean empty = branchName.|;\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        boolean empty = branchName.;\n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("isEmpty()"));
-    }
-
-    public void shouldNotAddDuplicatesToTheResultingList() throws IOException {
-        doAbbreviationInsert(
-                "nos",
-                "public class Test {\n"
-                + "    private int numberOfSpaces;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String numberOfSpaces = \"\";\n"
-                + "        |\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    private int numberOfSpaces;\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String numberOfSpaces = \"\";\n"
-                + "        \n"
-                + "    }\n"
-                + "}",
-                Arrays.asList("numberOfSpaces"));
-    }
-
-    private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
+    protected void doAbbreviationInsert(String abbrev, String code, String golden, List<String> results)
             throws IOException {
         int caretOffset = code.indexOf('|');
         String text = code.substring(0, caretOffset) + code.substring(caretOffset + 1);
@@ -408,22 +174,19 @@ public class GeneralCompletionTest extends NbTestCase {
             writer.append(text);
         }
         abbreviation.setStartOffset(caretOffset);
-        for (int i = 0; i < abbrev.length(); i++) {
-            abbreviation.append(abbrev.charAt(i));
-        }
+        abbreviation.setContent(abbrev);
         List<CodeFragment> codeFragments = handler.process(abbreviation);
-        assertArrayEquals(proposals.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
+        assertArrayEquals(results.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
         assertEquals(golden, testFile.asText());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    protected void after() throws Exception {
         super.tearDown();
         abbreviation.reset();
-        revertSettings();
+        revertCodeCompletionConfiguration();
     }
 
-    private void revertSettings() {
+    private void revertCodeCompletionConfiguration() {
         Preferences.setMethodInvocationFlag(methodInvocation);
         Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
         Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
@@ -444,10 +207,5 @@ public class GeneralCompletionTest extends NbTestCase {
         Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);
         Preferences.setPrimitiveTypeFlag(primitiveType);
-    }
-
-    @Override
-    protected boolean runInEQ() {
-        return true;
     }
 }

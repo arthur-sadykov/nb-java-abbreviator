@@ -15,12 +15,11 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.interceptor;
 
-import com.github.isarthur.netbeans.editor.typingaid.JavaAbbreviation;
-import com.github.isarthur.netbeans.editor.typingaid.JavaAbbreviationHandler;
-import com.github.isarthur.netbeans.editor.typingaid.JavaSourceHelper;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.impl.JavaAbbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.JavaCodeFragmentCollectAndInsertHandler;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
-import com.github.isarthur.netbeans.editor.typingaid.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.text.BadLocationException;
@@ -41,9 +40,9 @@ import org.openide.util.Lookup;
 public class JavaTypedTextInterceptor implements TypedTextInterceptor {
 
     private final Acceptor resetAcceptor;
-    private JavaAbbreviationHandler handler;
+    private JavaCodeFragmentCollectAndInsertHandler handler;
     private final Abbreviation abbreviation;
-    private List<CodeFragment> result;
+    private List<CodeFragment> codeFragments;
     private int caretPosition;
 
     private JavaTypedTextInterceptor() {
@@ -54,10 +53,10 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
     @Override
     public boolean beforeInsert(Context context) throws BadLocationException {
         if (handler == null) {
-            handler = new JavaAbbreviationHandler(new JavaSourceHelper(context.getComponent()));
+            handler = new JavaCodeFragmentCollectAndInsertHandler(context.getComponent());
         } else {
             if (context.getDocument() != handler.getDocument()) {
-                handler = new JavaAbbreviationHandler(new JavaSourceHelper(context.getComponent()));
+                handler = new JavaCodeFragmentCollectAndInsertHandler(context.getComponent());
             }
         }
         processTypedCharacter(context);
@@ -77,13 +76,13 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
                 abbreviation.append(typedCharacter);
                 abbreviation.setStartOffset(offset - abbreviation.length() + 1);
             }
-            result = Collections.emptyList();
+            codeFragments = Collections.emptyList();
         } else {
             if (abbreviation.isEmpty()) {
                 return;
             }
             removeAbbreviationFromDocument(abbreviation.getStartOffset(), abbreviation.getEndOffset(), document);
-            result = handler.process(abbreviation);
+            codeFragments = handler.process(abbreviation);
         }
     }
 
@@ -94,7 +93,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
             if (abbreviation.isEmpty()) {
                 return;
             }
-            if (result.isEmpty()) {
+            if (codeFragments.isEmpty()) {
                 context.setText(abbreviation.getContent() + " ", abbreviation.length() + 1); //NOI18N
             } else {
                 context.setText("", 0);
@@ -138,7 +137,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
 
     @Override
     public void afterInsert(Context context) throws BadLocationException {
-        if (!result.isEmpty()) {
+        if (!codeFragments.isEmpty()) {
             if (context.getText().isEmpty()) {
                 JTextComponent component = context.getComponent();
                 component.setCaretPosition(caretPosition);

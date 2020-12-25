@@ -15,25 +15,15 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.api;
 
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public abstract class CodeFragmentCollector implements Collector {
+public interface CodeFragmentCollector {
 
-    protected Collector nextCollector;
+    void collect(CodeCompletionRequest request);
 
-    @Override
-    public void collect(Request request) {
-        if (nextCollector != null) {
-            nextCollector.collect(request);
-        }
-    }
-
-    @Override
-    public void setNext(Collector nextCollector) {
-        this.nextCollector = nextCollector;
-    }
+    void setNext(CodeFragmentCollector nextCollector);
 }

@@ -16,144 +16,33 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import javax.swing.JEditorPane;
-import javax.swing.text.Document;
-import javax.swing.text.EditorKit;
 import junit.framework.Test;
-import static org.junit.Assert.assertArrayEquals;
-import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.JavaSource;
-import org.netbeans.api.lexer.Language;
-import org.netbeans.junit.NbTestCase;
-import org.netbeans.junit.NbModuleSuite;
-import org.netbeans.modules.editor.NbEditorKit;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 /**
  *
  * @author: Arthur Sadykov
  */
-public class ModifierCompletionTest extends NbTestCase {
-
-    private static final String JAVA_MIME_TYPE = "text/x-java";
-    private static final String MIME_TYPE = "mimeType";
-    private static final String JAVA_CLUSTER = "java";
-    private static final String IDE_CLUSTER = "ide";
-    private static final String EXTIDE_CLUSTER = "extide";
-    private static final String TEST_FILE = "Test.java";
-    private JavaAbbreviationHandler handler;
-    private JavaAbbreviation abbreviation;
-    private JEditorPane editor;
-    private FileObject testFile;
-    private Document document;
-    private boolean keyword;
-    private boolean literal;
-    private boolean modifier;
-    private boolean primitiveType;
-    private boolean externalType;
-    private boolean internalType;
-    private boolean globalType;
-    private boolean resourceVariable;
-    private boolean exceptionParameter;
-    private boolean enumConstant;
-    private boolean parameter;
-    private boolean field;
-    private boolean localVariable;
-    private boolean staticFieldAccess;
-    private boolean localMethodInvocation;
-    private boolean chainedMethodInvocation;
-    private boolean chainedFieldAccess;
-    private boolean chainedEnumConstantAccess;
-    private boolean staticMethodInvocation;
-    private boolean methodInvocation;
+public class ModifierCompletionTest extends GeneralCompletionTest {
 
     public ModifierCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(ModifierCompletionTest.class)
-                .clusters(EXTIDE_CLUSTER)
-                .clusters(IDE_CLUSTER)
-                .clusters(JAVA_CLUSTER)
-                .gui(false)
-                .suite();
+        return suite(ModifierCompletionTest.class);
     }
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
-        clearWorkDir();
-        testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
-        EditorKit kit = new NbEditorKit();
-        editor = new JEditorPane();
-        editor.setEditorKit(kit);
-        document = editor.getDocument();
-        document.putProperty(Document.StreamDescriptionProperty, testFile);
-        document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
-        document.putProperty(Language.class, JavaTokenId.language());
-        document.putProperty(JavaSource.class, new WeakReference<>(JavaSource.forFileObject(testFile)));
-        JavaSourceHelper helper = new JavaSourceHelper(editor);
-        handler = new JavaAbbreviationHandler(helper);
-        abbreviation = new JavaAbbreviation();
-        storeSettings();
-        setConfigurationForModifierCompletion();
+        before();
     }
 
-    private void storeSettings() {
-        staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
-        staticFieldAccess = Preferences.getStaticFieldAccessFlag();
-        methodInvocation = Preferences.getMethodInvocationFlag();
-        chainedMethodInvocation = Preferences.getChainedMethodInvocationFlag();
-        chainedFieldAccess = Preferences.getChainedFieldAccessFlag();
-        chainedEnumConstantAccess = Preferences.getChainedEnumConstantAccessFlag();
-        localMethodInvocation = Preferences.getLocalMethodInvocationFlag();
-        localVariable = Preferences.getLocalVariableFlag();
-        field = Preferences.getFieldFlag();
-        parameter = Preferences.getParameterFlag();
-        enumConstant = Preferences.getEnumConstantFlag();
-        exceptionParameter = Preferences.getExceptionParameterFlag();
-        resourceVariable = Preferences.getResourceVariableFlag();
-        internalType = Preferences.getInternalTypeFlag();
-        externalType = Preferences.getExternalTypeFlag();
-        globalType = Preferences.getGlobalTypeFlag();
-        keyword = Preferences.getKeywordFlag();
-        literal = Preferences.getLiteralFlag();
-        modifier = Preferences.getModifierFlag();
-        primitiveType = Preferences.getPrimitiveTypeFlag();
-    }
-
-    private void setConfigurationForModifierCompletion() {
-        Preferences.setStaticMethodInvocationFlag(false);
-        Preferences.setStaticFieldAccessFlag(false);
-        Preferences.setMethodInvocationFlag(false);
-        Preferences.setChainedMethodInvocationFlag(false);
-        Preferences.setChainedFieldAccessFlag(false);
-        Preferences.setChainedEnumConstantAccessFlag(false);
-        Preferences.setLocalMethodInvocationFlag(false);
-        Preferences.setLocalVariableFlag(false);
-        Preferences.setFieldFlag(false);
-        Preferences.setParameterFlag(false);
-        Preferences.setEnumConstantFlag(false);
-        Preferences.setExceptionParameterFlag(false);
-        Preferences.setResourceVariableFlag(false);
-        Preferences.setInternalTypeFlag(false);
-        Preferences.setExternalTypeFlag(false);
-        Preferences.setGlobalTypeFlag(false);
-        Preferences.setKeywordFlag(false);
-        Preferences.setLiteralFlag(false);
+    @Override
+    protected void setCodeCompletionConfiguration() {
         Preferences.setModifierFlag(true);
-        Preferences.setPrimitiveTypeFlag(false);
     }
 
     public void testPublicModifierCompletionForTopLevelClassWithoutModifiers() throws IOException {
@@ -163,37 +52,37 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "public class Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInZeroPositionForTopLevelClass() throws IOException {
+    public void testPublicModifierCompletionInZeroModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "|final strictfp class Test {\n"
                 + "}",
                 "public final strictfp class Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInFirstPositionForTopLevelClass() throws IOException {
+    public void testPublicModifierCompletionInFirstModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "final |strictfp class Test {\n"
                 + "}",
                 "public final strictfp class Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInSecondPositionForTopLevelClass() throws IOException {
+    public void testPublicModifierCompletionInSecondModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "final strictfp |class Test {\n"
                 + "}",
                 "public final strictfp class Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
     public void testAbstractModifierCompletionForTopLevelClassWithoutModifiers() throws IOException {
@@ -203,37 +92,37 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "abstract class Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInZeroPositionForTopLevelClass() throws IOException {
+    public void testAbstractModifierCompletionInZeroModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "|public strictfp class Test {\n"
                 + "}",
                 "public abstract strictfp class Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInFirstPositionForTopLevelClass() throws IOException {
+    public void testAbstractModifierCompletionInFirstModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "public |strictfp class Test {\n"
                 + "}",
                 "public abstract strictfp class Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInSecondPositionForTopLevelClass() throws IOException {
+    public void testAbstractModifierCompletionInSecondModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "public strictfp |class Test {\n"
                 + "}",
                 "public abstract strictfp class Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
     public void testFinalModifierCompletionForTopLevelClassWithoutModifiers() throws IOException {
@@ -243,37 +132,37 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "final class Test {\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInZeroPositionForTopLevelClass() throws IOException {
+    public void testFinalModifierCompletionInZeroModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "|public strictfp class Test {\n"
                 + "}",
                 "public final strictfp class Test {\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInFirstPositionForTopLevelClass() throws IOException {
+    public void testFinalModifierCompletionInFirstModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "public |strictfp class Test {\n"
                 + "}",
                 "public final strictfp class Test {\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInSecondPositionForTopLevelClass() throws IOException {
+    public void testFinalModifierCompletionInSecondModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "public strictfp |class Test {\n"
                 + "}",
                 "public final strictfp class Test {\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
     public void testStrictfpModifierCompletionForTopLevelClassWithoutModifiers() throws IOException {
@@ -283,37 +172,37 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "strictfp class Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForTopLevelClass() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "|public abstract class Test {\n"
                 + "}",
                 "public abstract strictfp class Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForTopLevelClass() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "public |abstract class Test {\n"
                 + "}",
                 "public abstract strictfp class Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInSecondPositionForTopLevelClass() throws IOException {
+    public void testStrictfpModifierCompletionInSecondModifierPositionForTopLevelClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "public abstract |class Test {\n"
                 + "}",
                 "public abstract strictfp class Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
     public void testWhenAbstractModifierIsPresentThenDoNotSuggestFinalModifierCompletionForTopLevelClass()
@@ -366,7 +255,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Collections.emptyList());
     }
 
-    public void testAccessModifierCompletionForInnerClassWithoutModifiers() throws IOException {
+    public void testAccessModifierCompletionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -380,7 +269,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInZeroPositionForInnerClass() throws IOException {
+    public void testAccessModifierCompletionInZeroModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -394,7 +283,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInFirstPositionForInnerClass() throws IOException {
+    public void testAccessModifierCompletionInFirstModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -408,7 +297,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInSecondPositionForInnerClass() throws IOException {
+    public void testAccessModifierCompletionInSecondModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -422,7 +311,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testStaticModifierCompletionForInnerClassWithoutModifiers() throws IOException {
+    public void testStaticModifierCompletionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -436,7 +325,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp"));
     }
 
-    public void testStaticModifierCompletionInZeroPositionForInnerClass() throws IOException {
+    public void testStaticModifierCompletionInZeroModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -447,10 +336,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInFirstPositionForInnerClass() throws IOException {
+    public void testStaticModifierCompletionInFirstModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -461,10 +350,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInSecondPositionForInnerClass() throws IOException {
+    public void testStaticModifierCompletionInSecondModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -475,10 +364,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testAbstractModifierCompletionForInnerClassWithoutModifiers() throws IOException {
+    public void testAbstractModifierCompletionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -489,10 +378,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    abstract class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInZeroPositionForInnerClass() throws IOException {
+    public void testAbstractModifierCompletionInZeroModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -503,10 +392,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static abstract class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInFirstPositionForInnerClass() throws IOException {
+    public void testAbstractModifierCompletionInFirstModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -517,10 +406,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static abstract class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInSecondPositionForInnerClass() throws IOException {
+    public void testAbstractModifierCompletionInSecondModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -531,10 +420,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static abstract class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testFinalModifierCompletionForInnerClassWithoutModifiers() throws IOException {
+    public void testFinalModifierCompletionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Outer {\n"
@@ -545,10 +434,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    final class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInZeroPositionForInnerClass() throws IOException {
+    public void testFinalModifierCompletionInZeroModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Outer {\n"
@@ -559,10 +448,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static final class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInFirstPositionForInnerClass() throws IOException {
+    public void testFinalModifierCompletionInFirstModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Outer {\n"
@@ -573,10 +462,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static final class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInSecondPositionForInnerClass() throws IOException {
+    public void testFinalModifierCompletionInSecondModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Outer {\n"
@@ -587,10 +476,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static final class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testStrictfpModifierCompletionForInnerClassWithoutModifiers() throws IOException {
+    public void testStrictfpModifierCompletionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -604,7 +493,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForInnerClass() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -615,10 +504,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForInnerClass() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -629,10 +518,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInSecondPositionForInnerClass() throws IOException {
+    public void testStrictfpModifierCompletionInSecondModifierPositionForClassDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -643,10 +532,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp class Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testWhenAccessModifierIsPresentThenDoNotSuggestAccessModifierCompletionForInnerClass()
+    public void testWhenAccessModifierIsPresentThenDoNotSuggestAccessModifierCompletionForClassDeclaredInsideClass()
             throws IOException {
         doAbbreviationInsert(
                 "p",
@@ -683,7 +572,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Collections.emptyList());
     }
 
-    public void testWhenAbstractModifierIsPresentThenDoNotSuggestFinalModifierCompletionForInnerClass()
+    public void testWhenAbstractModifierIsPresentThenDoNotSuggestFinalModifierCompletionForClassDeclaredInsideClass()
             throws IOException {
         doAbbreviationInsert(
                 "f",
@@ -697,7 +586,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 Collections.emptyList());
         doAbbreviationInsert(
-                "p",
+                "f",
                 "class Outer {\n"
                 + "    public |abstract class Inner {\n"
                 + "    }\n"
@@ -708,7 +597,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 Collections.emptyList());
         doAbbreviationInsert(
-                "p",
+                "f",
                 "class Outer {\n"
                 + "    public abstract |class Inner {\n"
                 + "    }\n"
@@ -720,7 +609,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Collections.emptyList());
     }
 
-    public void testWhenFinalModifierIsPresentThenDoNotSuggestAbstractModifierCompletionForInnerClass()
+    public void testWhenFinalModifierIsPresentThenDoNotSuggestAbstractModifierCompletionForClassDeclaredInsideClass()
             throws IOException {
         doAbbreviationInsert(
                 "a",
@@ -772,10 +661,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInZeroPositionForMethodLocalInnerClass() throws IOException {
+    public void testAbstractModifierCompletionInZeroModifierPositionForMethodLocalInnerClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -790,10 +679,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInFirstPositionForMethodLocalInnerClass() throws IOException {
+    public void testAbstractModifierCompletionInFirstModifierPositionForMethodLocalInnerClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -808,7 +697,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
     public void testFinalModifierCompletionForMethodLocalInnerClassWithoutModifiers() throws IOException {
@@ -826,10 +715,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInZeroPositionForMethodLocalInnerClass() throws IOException {
+    public void testFinalModifierCompletionInZeroModifierPositionForMethodLocalInnerClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Outer {\n"
@@ -844,10 +733,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInFirstPositionForMethodLocalInnerClass() throws IOException {
+    public void testFinalModifierCompletionInFirstModifierPositionForMethodLocalInnerClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Outer {\n"
@@ -862,7 +751,43 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
+    }
+
+    public void testStrictfpModifierCompletionForMethodLocalInnerClassWithoutModifiers() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "class Outer {\n"
+                + "    void test() {\n"
+                + "        |class Inner {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Outer {\n"
+                + "    void test() {\n"
+                + "        strictfp class Inner {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("strictfp"));
+    }
+
+    public void testStrictfpModifierCompletionInZeroModifierPositionForMethodLocalInnerClass() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "class Outer {\n"
+                + "    void test() {\n"
+                + "        |final class Inner {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Outer {\n"
+                + "    void test() {\n"
+                + "        final strictfp class Inner {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("strictfp"));
     }
 
     public void testWhenAbstractModifierIsPresentThenDoNotSuggestFinalModifierCompletionForMethodLocalInnerClass()
@@ -970,37 +895,37 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "public interface Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInZeroPositionForTopLevelInterface() throws IOException {
+    public void testPublicModifierCompletionInZeroModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "|abstract strictfp interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInFirstPositionForTopLevelInterface() throws IOException {
+    public void testPublicModifierCompletionInFirstModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "abstract |strictfp interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInSecondPositionForTopLevelInterface() throws IOException {
+    public void testPublicModifierCompletionInSecondModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "abstract strictfp |interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
     public void testAbstractModifierCompletionForTopLevelInterfaceWithoutModifiers() throws IOException {
@@ -1010,37 +935,37 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "abstract interface Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInZeroPositionForTopLevelInterface() throws IOException {
+    public void testAbstractModifierCompletionInZeroModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "|public strictfp interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInFirstPositionForTopLevelInterface() throws IOException {
+    public void testAbstractModifierCompletionInFirstModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "public |strictfp interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInSecondPositionForTopLevelInterface() throws IOException {
+    public void testAbstractModifierCompletionInSecondModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "public strictfp |interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
     public void testStrictfpModifierCompletionForTopLevelInterfaceWithoutModifiers() throws IOException {
@@ -1050,40 +975,40 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForTopLevelInterface() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "|public abstract interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForTopLevelInterface() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "public |abstract interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInSecondPositionForTopLevelInterface() throws IOException {
+    public void testStrictfpModifierCompletionInSecondModifierPositionForTopLevelInterface() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "public abstract |interface Test {\n"
                 + "}",
                 "public abstract strictfp interface Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testAccessModifierCompletionForInnerInterfaceWithoutModifiers() throws IOException {
+    public void testAccessModifierCompletionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1097,7 +1022,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInZeroPositionForInnerInterface() throws IOException {
+    public void testAccessModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1111,7 +1036,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInFirstPositionForInnerInterface() throws IOException {
+    public void testAccessModifierCompletionInFirstModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1125,7 +1050,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInSecondPositionForInnerInterface() throws IOException {
+    public void testAccessModifierCompletionInSecondModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1139,7 +1064,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAbstractModifierCompletionForInnerInterfaceWithoutModifiers() throws IOException {
+    public void testAbstractModifierCompletionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -1150,10 +1075,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    abstract interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInZeroPositionForInnerInterface() throws IOException {
+    public void testAbstractModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -1164,10 +1089,11 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static abstract interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInFirstPositionForInnerInterface() throws IOException {
+    public void testAbstractModifierCompletionInFirstModifierPositionForInterfaceDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -1178,10 +1104,11 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static abstract interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInSecondPositionForInnerInterface() throws IOException {
+    public void testAbstractModifierCompletionInSecondModifierPositionForInterfaceDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Outer {\n"
@@ -1192,10 +1119,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static abstract interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testStaticModifierCompletionForInnerInterfaceWithoutModifiers() throws IOException {
+    public void testStaticModifierCompletionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1209,7 +1136,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp"));
     }
 
-    public void testStaticModifierCompletionInZeroPositionForInnerInterface() throws IOException {
+    public void testStaticModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1220,10 +1147,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInFirstPositionForInnerInterface() throws IOException {
+    public void testStaticModifierCompletionInFirstModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1234,10 +1161,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInSecondPositionForInnerInterface() throws IOException {
+    public void testStaticModifierCompletionInSecondModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1248,10 +1175,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStrictfpModifierCompletionForInnerInterfaceWithoutModifiers() throws IOException {
+    public void testStrictfpModifierCompletionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1265,7 +1192,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForInnerInterface() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1276,10 +1203,11 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForInnerInterface() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForInterfaceDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1290,10 +1218,11 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInSecondPositionForInnerInterface() throws IOException {
+    public void testStrictfpModifierCompletionInSecondModifierPositionForInterfaceDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1304,7 +1233,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp interface Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
     public void testPublicModifierCompletionForTopLevelEnumWithoutModifiers() throws IOException {
@@ -1314,27 +1243,27 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "public enum Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInZeroPositionForTopLevelEnum() throws IOException {
+    public void testPublicModifierCompletionInZeroModifierPositionForTopLevelEnum() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "|strictfp enum Test {\n"
                 + "}",
                 "public strictfp enum Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
-    public void testPublicModifierCompletionInFirstPositionForTopLevelEnum() throws IOException {
+    public void testPublicModifierCompletionInFirstModifierPositionForTopLevelEnum() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "strictfp |enum Test {\n"
                 + "}",
                 "public strictfp enum Test {\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
     }
 
     public void testStrictfpModifierCompletionForTopLevelEnumWithoutModifiers() throws IOException {
@@ -1344,30 +1273,30 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "}",
                 "strictfp enum Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForTopLevelEnum() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForTopLevelEnum() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "|public enum Test {\n"
                 + "}",
                 "public strictfp enum Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForTopLevelEnum() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForTopLevelEnum() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "public |enum Test {\n"
                 + "}",
                 "public strictfp enum Test {\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testAccessModifierCompletionForInnerEnumWithoutModifiers() throws IOException {
+    public void testAccessModifierCompletionForEnumDeclaredInsideClassWithoutModifiers() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1381,7 +1310,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInZeroPositionForInnerEnum() throws IOException {
+    public void testAccessModifierCompletionInZeroModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1395,7 +1324,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInFirstPositionForInnerEnum() throws IOException {
+    public void testAccessModifierCompletionInFirstModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1409,7 +1338,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInSecondPositionForInnerEnum() throws IOException {
+    public void testAccessModifierCompletionInSecondModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Outer {\n"
@@ -1423,7 +1352,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testStaticModifierCompletionForInnerEnumWithoutModifiers() throws IOException {
+    public void testStaticModifierCompletionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1437,7 +1366,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp"));
     }
 
-    public void testStaticModifierCompletionInZeroPositionForInnerEnum() throws IOException {
+    public void testStaticModifierCompletionInZeroModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1448,10 +1377,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp enum Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInFirstPositionForInnerEnum() throws IOException {
+    public void testStaticModifierCompletionInFirstModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1462,10 +1391,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp enum Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInSecondPositionForInnerEnum() throws IOException {
+    public void testStaticModifierCompletionInSecondModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1476,10 +1405,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp enum Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStrictfpModifierCompletionForInnerEnumWithoutModifiers() throws IOException {
+    public void testStrictfpModifierCompletionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1493,7 +1422,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForInnerEnum() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1504,10 +1433,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp enum Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForInnerEnum() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1518,10 +1447,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp enum Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testStrictfpModifierCompletionInSecondPositionForInnerEnum() throws IOException {
+    public void testStrictfpModifierCompletionInSecondModifierPositionForEnumDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Outer {\n"
@@ -1532,10 +1461,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static strictfp enum Inner {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("strictfp"));
+                Collections.singletonList("strictfp"));
     }
 
-    public void testAccessModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testAccessModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1549,7 +1478,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testAccessModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1563,7 +1492,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testAccessModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1577,7 +1506,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInSecondPositionForMethod() throws IOException {
+    public void testAccessModifierCompletionInSecondModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1591,7 +1520,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAbstractModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testAbstractModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Test {\n"
@@ -1602,10 +1531,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    abstract void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testAbstractModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Test {\n"
@@ -1616,10 +1545,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    protected abstract void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testAbstractModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testAbstractModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "a",
                 "class Test {\n"
@@ -1630,10 +1559,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    protected abstract void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("abstract"));
+                Collections.singletonList("abstract"));
     }
 
-    public void testStaticModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testStaticModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1647,7 +1576,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStaticModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testStaticModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1661,7 +1590,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStaticModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testStaticModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1675,7 +1604,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStaticModifierCompletionInSecondPositionForMethod() throws IOException {
+    public void testStaticModifierCompletionInSecondModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1689,7 +1618,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testFinalModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testFinalModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -1700,10 +1629,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    final void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testFinalModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -1714,10 +1643,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static final void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testFinalModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -1728,10 +1657,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static final void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInSecondPositionForMethod() throws IOException {
+    public void testFinalModifierCompletionInSecondModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -1742,10 +1671,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static final void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testNativeModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testNativeModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "n",
                 "class Test {\n"
@@ -1756,10 +1685,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    native void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("native"));
+                Collections.singletonList("native"));
     }
 
-    public void testNativeModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testNativeModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "n",
                 "class Test {\n"
@@ -1770,10 +1699,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static native void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("native"));
+                Collections.singletonList("native"));
     }
 
-    public void testNativeModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testNativeModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "n",
                 "class Test {\n"
@@ -1784,10 +1713,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static native void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("native"));
+                Collections.singletonList("native"));
     }
 
-    public void testNativeModifierCompletionInSecondPositionForMethod() throws IOException {
+    public void testNativeModifierCompletionInSecondModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "n",
                 "class Test {\n"
@@ -1798,10 +1727,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "    public static native void test() {\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("native"));
+                Collections.singletonList("native"));
     }
 
-    public void testSynchronizedModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testSynchronizedModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1815,7 +1744,8 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testSynchronizedModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testSynchronizedModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1829,7 +1759,8 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testSynchronizedModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testSynchronizedModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1843,7 +1774,8 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testSynchronizedModifierCompletionInSecondPositionForMethod() throws IOException {
+    public void testSynchronizedModifierCompletionInSecondModifierPositionForMethodDeclaredInsideClass()
+            throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1857,7 +1789,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStrictfpModifierCompletionForMethodWithoutModifiers() throws IOException {
+    public void testStrictfpModifierCompletionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1871,7 +1803,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStrictfpModifierCompletionInZeroPositionForMethod() throws IOException {
+    public void testStrictfpModifierCompletionInZeroModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1885,7 +1817,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStrictfpModifierCompletionInFirstPositionForMethod() throws IOException {
+    public void testStrictfpModifierCompletionInFirstModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1899,7 +1831,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testStrictfpModifierCompletionInSecondPositionForMethod() throws IOException {
+    public void testStrictfpModifierCompletionInSecondModifierPositionForMethodDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1913,7 +1845,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("static", "strictfp", "synchronized"));
     }
 
-    public void testAccessModifierCompletionForFieldWithoutModifiers() throws IOException {
+    public void testAccessModifierCompletionForFieldForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1925,7 +1857,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInZeroPositionForField() throws IOException {
+    public void testAccessModifierCompletionInZeroModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1937,7 +1869,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInFirstPositionForField() throws IOException {
+    public void testAccessModifierCompletionInFirstModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1949,7 +1881,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testAccessModifierCompletionInSecondPositionForField() throws IOException {
+    public void testAccessModifierCompletionInSecondModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "p",
                 "class Test {\n"
@@ -1961,7 +1893,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 Arrays.asList("private", "protected", "public"));
     }
 
-    public void testStaticModifierCompletionForFieldWithoutModifiers() throws IOException {
+    public void testStaticModifierCompletionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1970,10 +1902,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    static int count;\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInZeroPositionForField() throws IOException {
+    public void testStaticModifierCompletionInZeroModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1982,10 +1914,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static transient int count;\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInFirstPositionForField() throws IOException {
+    public void testStaticModifierCompletionInFirstModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -1994,10 +1926,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static transient int count;\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testStaticModifierCompletionInSecondPositionForField() throws IOException {
+    public void testStaticModifierCompletionInSecondModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -2006,10 +1938,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static transient int count;\n"
                 + "}",
-                Arrays.asList("static"));
+                Collections.singletonList("static"));
     }
 
-    public void testFinalModifierCompletionForFieldWithoutModifiers() throws IOException {
+    public void testFinalModifierCompletionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -2018,10 +1950,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    final int count;\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInZeroPositionForField() throws IOException {
+    public void testFinalModifierCompletionInZeroModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -2030,10 +1962,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private final transient int count;\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInFirstPositionForField() throws IOException {
+    public void testFinalModifierCompletionInFirstModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -2042,10 +1974,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private final transient int count;\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testFinalModifierCompletionInSecondPositionForField() throws IOException {
+    public void testFinalModifierCompletionInSecondModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -2054,10 +1986,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private final transient int count;\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    public void testTransientModifierCompletionForFieldWithoutModifiers() throws IOException {
+    public void testTransientModifierCompletionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "t",
                 "class Test {\n"
@@ -2066,10 +1998,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    transient int count;\n"
                 + "}",
-                Arrays.asList("transient"));
+                Collections.singletonList("transient"));
     }
 
-    public void testTransientModifierCompletionInZeroPositionForField() throws IOException {
+    public void testTransientModifierCompletionInZeroModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "t",
                 "class Test {\n"
@@ -2078,10 +2010,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static transient int count;\n"
                 + "}",
-                Arrays.asList("transient"));
+                Collections.singletonList("transient"));
     }
 
-    public void testTransientModifierCompletionInFirstPositionForField() throws IOException {
+    public void testTransientModifierCompletionInFirstModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "t",
                 "class Test {\n"
@@ -2090,10 +2022,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static transient int count;\n"
                 + "}",
-                Arrays.asList("transient"));
+                Collections.singletonList("transient"));
     }
 
-    public void testTransientModifierCompletionInSecondPositionForField() throws IOException {
+    public void testTransientModifierCompletionInSecondModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "t",
                 "class Test {\n"
@@ -2102,10 +2034,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static transient int count;\n"
                 + "}",
-                Arrays.asList("transient"));
+                Collections.singletonList("transient"));
     }
 
-    public void testVolatileModifierCompletionForFieldWithoutModifiers() throws IOException {
+    public void testVolatileModifierCompletionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "v",
                 "class Test {\n"
@@ -2114,10 +2046,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    volatile int count;\n"
                 + "}",
-                Arrays.asList("volatile"));
+                Collections.singletonList("volatile"));
     }
 
-    public void testVolatileModifierCompletionInZeroPositionForField() throws IOException {
+    public void testVolatileModifierCompletionInZeroModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "v",
                 "class Test {\n"
@@ -2126,10 +2058,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static volatile int count;\n"
                 + "}",
-                Arrays.asList("volatile"));
+                Collections.singletonList("volatile"));
     }
 
-    public void testVolatileModifierCompletionInFirstPositionForField() throws IOException {
+    public void testVolatileModifierCompletionInFirstModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "v",
                 "class Test {\n"
@@ -2138,10 +2070,10 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static volatile int count;\n"
                 + "}",
-                Arrays.asList("volatile"));
+                Collections.singletonList("volatile"));
     }
 
-    public void testVolatileModifierCompletionInSecondPositionForField() throws IOException {
+    public void testVolatileModifierCompletionInSecondModifierPositionForFieldDeclaredInsideClass() throws IOException {
         doAbbreviationInsert(
                 "v",
                 "class Test {\n"
@@ -2150,7 +2082,7 @@ public class ModifierCompletionTest extends NbTestCase {
                 "class Test {\n"
                 + "    private static volatile int count;\n"
                 + "}",
-                Arrays.asList("volatile"));
+                Collections.singletonList("volatile"));
     }
 
     public void testWhenFinalModifierIsPresentThenDoNotSuggestVolatileModifierCompletionForMethod()
@@ -2228,60 +2160,787 @@ public class ModifierCompletionTest extends NbTestCase {
                 + "        final int count = 0;\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("final"));
+                Collections.singletonList("final"));
     }
 
-    private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
+    public void testAbstractModifierCompletionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    abstract class Inner {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testAbstractModifierCompletionInZeroModifierPositionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |public static class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    public static abstract class Inner {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testFinalModifierCompletionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    final class Inner {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testFinalModifierCompletionInZeroModifierPositionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |public static class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    public static final class Inner {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testAccessModifierCompletionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    class Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testAccessModifierCompletionInZeroModifierPositionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |static class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    static class Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testStaticAndStrictfpModifierCompletionForClassDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    class Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp"));
+    }
+
+    public void testStaticAndStrictfpModifierCompletionInZeroModifierPositionForClassDeclaredInsideEnum()
             throws IOException {
-        int caretOffset = code.indexOf('|');
-        String text = code.substring(0, caretOffset) + code.substring(caretOffset + 1);
-        editor.setText(text);
-        editor.setCaretPosition(caretOffset);
-        try ( OutputStream out = testFile.getOutputStream();  Writer writer = new OutputStreamWriter(out)) {
-            writer.append(text);
-        }
-        abbreviation.setStartOffset(caretOffset);
-        for (int i = 0; i < abbrev.length(); i++) {
-            abbreviation.append(abbrev.charAt(i));
-        }
-        List<CodeFragment> codeFragments = handler.process(abbreviation);
-        assertNotNull(codeFragments);
-        assertArrayEquals(proposals.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
-        assertEquals(golden, testFile.asText());
+        doAbbreviationInsert(
+                "s",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |public class Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    public class Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp"));
+    }
+
+    public void testAbstractModifierCompletionForInterfaceDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |interface Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    abstract interface Inner {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testAbstractModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |public static interface Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    public static abstract interface Inner {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testAccessModifierCompletionForInterfaceDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |interface Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    interface Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testAccessModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |static interface Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    static interface Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testStaticAndStrictfpModifierCompletionForInterfaceDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |interface Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    interface Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp"));
+    }
+
+    public void testStaticAndStrictfpModifierCompletionInZeroModifierPositionForInterfaceDeclaredInsideEnum()
+            throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |public interface Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    public interface Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp"));
+    }
+
+    public void testAccessModifierCompletionForEnumDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |enum Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    enum Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testAccessModifierCompletionInZeroModifierPositionForEnumDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |static enum Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    static enum Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testStaticAndStrictfpModifierCompletionForEnumDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |enum Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    enum Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp"));
+    }
+
+    public void testStaticAndStrictfpModifierCompletionInZeroModifierPositionForEnumDeclaredInsideEnum()
+            throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    |public enum Inner {\n"
+                + "    }\n"
+                + "}",
+                "enum Outer {\n"
+                + "    TEST;\n"
+                + "    public enum Inner {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp"));
+    }
+
+    public void testAccessModifierCompletionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testAccessModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |static final void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    static final void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testAbstractModifierCompletionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    abstract void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testAbstractModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |protected void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    protected abstract void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testStaticModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |public final void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    public final void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp", "synchronized"));
+    }
+
+    public void testFinalModifierCompletionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    final void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testFinalModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |public static void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    public static final void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testNativeModifierCompletionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    native void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("native"));
+    }
+
+    public void testNativeModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |public static void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    public static native void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("native"));
+    }
+
+    public void testSynchronizedModifierCompletionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp", "synchronized"));
+    }
+
+    public void testSynchronizedModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum()
+            throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |public final void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    public final void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp", "synchronized"));
+    }
+
+    public void testStrictfpModifierCompletionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp", "synchronized"));
+    }
+
+    public void testStrictfpModifierCompletionInZeroModifierPositionForMethodDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |public final void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    public final void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("static", "strictfp", "synchronized"));
+    }
+
+    public void testAccessModifierCompletionForFieldForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    int count;\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testAccessModifierCompletionInZeroModifierPositionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |static final int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    static final int count;\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testStaticModifierCompletionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    static int count;\n"
+                + "}",
+                Collections.singletonList("static"));
+    }
+
+    public void testStaticModifierCompletionInZeroModifierPositionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |private transient int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    private static transient int count;\n"
+                + "}",
+                Collections.singletonList("static"));
+    }
+
+    public void testFinalModifierCompletionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    final int count;\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testFinalModifierCompletionInZeroModifierPositionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |private transient int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    private final transient int count;\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testTransientModifierCompletionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    transient int count;\n"
+                + "}",
+                Collections.singletonList("transient"));
+    }
+
+    public void testTransientModifierCompletionInZeroModifierPositionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |private static int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    private static transient int count;\n"
+                + "}",
+                Collections.singletonList("transient"));
+    }
+
+    public void testVolatileModifierCompletionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    volatile int count;\n"
+                + "}",
+                Collections.singletonList("volatile"));
+    }
+
+    public void testVolatileModifierCompletionInZeroModifierPositionForFieldDeclaredInsideEnum() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |private static int count;\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    private static volatile int count;\n"
+                + "}",
+                Collections.singletonList("volatile"));
+    }
+
+    public void testPublicModifierCompletionForMethodDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "interface Test {\n"
+                + "    |void test();\n"
+                + "}",
+                "interface Test {\n"
+                + "    public void test();\n"
+                + "}",
+                Collections.singletonList("public"));
+    }
+
+    public void testPublicModifierCompletionInZeroModifierPositionForMethodDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "interface Test {\n"
+                + "    |abstract void test();\n"
+                + "}",
+                "interface Test {\n"
+                + "    public abstract void test();\n"
+                + "}",
+                Collections.singletonList("public"));
+    }
+
+    public void testAbstractModifierCompletionForMethodDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "a",
+                "interface Test {\n"
+                + "    |void test();\n"
+                + "}",
+                "interface Test {\n"
+                + "    abstract void test();\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testAbstractModifierCompletionInZeroModifierPositionForMethodDeclaredInsideInterface() throws
+            IOException {
+        doAbbreviationInsert(
+                "a",
+                "interface Test {\n"
+                + "    |public void test();\n"
+                + "}",
+                "interface Test {\n"
+                + "    public abstract void test();\n"
+                + "}",
+                Collections.singletonList("abstract"));
+    }
+
+    public void testStaticSynchronizedAndStrictfpModifierCompletionInZeroModifierPositionForMethodDeclaredInsideInterface()
+            throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "interface Test {\n"
+                + "    |public void test() {\n"
+                + "    }\n"
+                + "}",
+                "interface Test {\n"
+                + "    public static void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("static"));
+    }
+
+    public void testPublicModifierCompletionForFieldForFieldDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "interface Test {\n"
+                + "    |int count;\n"
+                + "}",
+                "interface Test {\n"
+                + "    public int count;\n"
+                + "}",
+                Collections.singletonList("public"));
+    }
+
+    public void testPublicModifierCompletionInZeroModifierPositionForFieldDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "interface Test {\n"
+                + "    |static final int count;\n"
+                + "}",
+                "interface Test {\n"
+                + "    public static final int count;\n"
+                + "}",
+                Collections.singletonList("public"));
+    }
+
+    public void testStaticModifierCompletionForFieldDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "interface Test {\n"
+                + "    |int count;\n"
+                + "}",
+                "interface Test {\n"
+                + "    static int count;\n"
+                + "}",
+                Collections.singletonList("static"));
+    }
+
+    public void testStaticModifierCompletionInZeroModifierPositionForFieldDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "interface Test {\n"
+                + "    |private int count;\n"
+                + "}",
+                "interface Test {\n"
+                + "    private static int count;\n"
+                + "}",
+                Collections.singletonList("static"));
+    }
+
+    public void testFinalModifierCompletionForFieldDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "interface Test {\n"
+                + "    |int count;\n"
+                + "}",
+                "interface Test {\n"
+                + "    final int count;\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testFinalModifierCompletionInZeroModifierPositionForFieldDeclaredInsideInterface() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "interface Test {\n"
+                + "    |private int count;\n"
+                + "}",
+                "interface Test {\n"
+                + "    private final int count;\n"
+                + "}",
+                Collections.singletonList("final"));
     }
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        abbreviation.reset();
-        revertSettings();
-    }
-
-    private void revertSettings() {
-        Preferences.setMethodInvocationFlag(methodInvocation);
-        Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
-        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
-        Preferences.setChainedFieldAccessFlag(chainedFieldAccess);
-        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantAccess);
-        Preferences.setLocalMethodInvocationFlag(localMethodInvocation);
-        Preferences.setStaticFieldAccessFlag(staticFieldAccess);
-        Preferences.setLocalVariableFlag(localVariable);
-        Preferences.setFieldFlag(field);
-        Preferences.setParameterFlag(parameter);
-        Preferences.setEnumConstantFlag(enumConstant);
-        Preferences.setExceptionParameterFlag(exceptionParameter);
-        Preferences.setResourceVariableFlag(resourceVariable);
-        Preferences.setInternalTypeFlag(internalType);
-        Preferences.setExternalTypeFlag(externalType);
-        Preferences.setGlobalTypeFlag(globalType);
-        Preferences.setKeywordFlag(keyword);
-        Preferences.setLiteralFlag(literal);
-        Preferences.setModifierFlag(modifier);
-        Preferences.setPrimitiveTypeFlag(primitiveType);
-    }
-
-    @Override
-    protected boolean runInEQ() {
-        return true;
+        after();
     }
 }

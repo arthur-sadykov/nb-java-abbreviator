@@ -16,147 +16,33 @@
 package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import javax.swing.JEditorPane;
-import javax.swing.SwingUtilities;
-import javax.swing.text.Document;
-import javax.swing.text.EditorKit;
 import junit.framework.Test;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertArrayEquals;
-import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.JavaSource;
-import org.netbeans.api.lexer.Language;
-import org.netbeans.junit.NbTestCase;
-import org.netbeans.junit.NbModuleSuite;
-import org.netbeans.modules.editor.NbEditorKit;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 /**
  *
  * @author: Arthur Sadykov
  */
-public class KeywordCompletionTest extends NbTestCase {
-
-    private static final String JAVA_MIME_TYPE = "text/x-java";
-    private static final String MIME_TYPE = "mimeType";
-    private static final String JAVA_CLUSTER = "java";
-    private static final String IDE_CLUSTER = "ide";
-    private static final String EXTIDE_CLUSTER = "extide";
-    private static final String TEST_FILE = "Test.java";
-    private JavaAbbreviationHandler handler;
-    private JavaAbbreviation abbreviation;
-    private JEditorPane editor;
-    private FileObject testFile;
-    private Document document;
-    private boolean keyword;
-    private boolean literal;
-    private boolean modifier;
-    private boolean primitiveType;
-    private boolean externalType;
-    private boolean internalType;
-    private boolean globalType;
-    private boolean resourceVariable;
-    private boolean exceptionParameter;
-    private boolean enumConstant;
-    private boolean parameter;
-    private boolean field;
-    private boolean localVariable;
-    private boolean staticFieldAccess;
-    private boolean localMethodInvocation;
-    private boolean chainedMethodInvocation;
-    private boolean chainedFieldAccess;
-    private boolean chainedEnumConstantAccess;
-    private boolean staticMethodInvocation;
-    private boolean methodInvocation;
+public class KeywordCompletionTest extends GeneralCompletionTest {
 
     public KeywordCompletionTest(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return NbModuleSuite.createConfiguration(KeywordCompletionTest.class)
-                .clusters(EXTIDE_CLUSTER)
-                .clusters(IDE_CLUSTER)
-                .clusters(JAVA_CLUSTER)
-                .gui(false)
-                .suite();
+        return suite(KeywordCompletionTest.class);
     }
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
-        clearWorkDir();
-        testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
-        EditorKit kit = new NbEditorKit();
-        editor = new JEditorPane();
-        SwingUtilities.invokeAndWait(() -> editor.setEditorKit(kit));
-        document = editor.getDocument();
-        document.putProperty(Document.StreamDescriptionProperty, testFile);
-        document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
-        document.putProperty(Language.class, JavaTokenId.language());
-        document.putProperty(JavaSource.class, new WeakReference<>(JavaSource.forFileObject(testFile)));
-        JavaSourceHelper helper = new JavaSourceHelper(editor);
-        handler = new JavaAbbreviationHandler(helper);
-        abbreviation = new JavaAbbreviation();
-        storeSettings();
-        setConfigurationForKeywordCompletion();
+        before();
     }
 
-    private void storeSettings() {
-        staticMethodInvocation = Preferences.getStaticMethodInvocationFlag();
-        staticFieldAccess = Preferences.getStaticFieldAccessFlag();
-        methodInvocation = Preferences.getMethodInvocationFlag();
-        chainedMethodInvocation = Preferences.getChainedMethodInvocationFlag();
-        chainedFieldAccess = Preferences.getChainedFieldAccessFlag();
-        chainedEnumConstantAccess = Preferences.getChainedEnumConstantAccessFlag();
-        localMethodInvocation = Preferences.getLocalMethodInvocationFlag();
-        localVariable = Preferences.getLocalVariableFlag();
-        field = Preferences.getFieldFlag();
-        parameter = Preferences.getParameterFlag();
-        enumConstant = Preferences.getEnumConstantFlag();
-        exceptionParameter = Preferences.getExceptionParameterFlag();
-        resourceVariable = Preferences.getResourceVariableFlag();
-        internalType = Preferences.getInternalTypeFlag();
-        externalType = Preferences.getExternalTypeFlag();
-        globalType = Preferences.getGlobalTypeFlag();
-        keyword = Preferences.getKeywordFlag();
-        literal = Preferences.getLiteralFlag();
-        modifier = Preferences.getModifierFlag();
-        primitiveType = Preferences.getPrimitiveTypeFlag();
-    }
-
-    private void setConfigurationForKeywordCompletion() {
-        Preferences.setStaticMethodInvocationFlag(false);
-        Preferences.setStaticFieldAccessFlag(false);
-        Preferences.setMethodInvocationFlag(false);
-        Preferences.setChainedMethodInvocationFlag(false);
-        Preferences.setChainedFieldAccessFlag(false);
-        Preferences.setChainedEnumConstantAccessFlag(false);
-        Preferences.setLocalMethodInvocationFlag(false);
-        Preferences.setLocalVariableFlag(false);
-        Preferences.setFieldFlag(false);
-        Preferences.setParameterFlag(false);
-        Preferences.setEnumConstantFlag(false);
-        Preferences.setExceptionParameterFlag(false);
-        Preferences.setResourceVariableFlag(false);
-        Preferences.setInternalTypeFlag(false);
-        Preferences.setExternalTypeFlag(false);
-        Preferences.setGlobalTypeFlag(false);
+    @Override
+    protected void setCodeCompletionConfiguration() {
         Preferences.setKeywordFlag(true);
-        Preferences.setLiteralFlag(false);
-        Preferences.setModifierFlag(false);
-        Preferences.setPrimitiveTypeFlag(false);
     }
 
     public void testAssertKeywordCompletion() throws IOException {
@@ -454,26 +340,24 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("throw", "try"));
     }
 
-    public void testImplementsKeywordCompletionForClass() throws IOException {
-        doAbbreviationInsert(
-                "i",
-                "class Test |{\n"
-                + "}",
-                "class Test implements  {\n"
-                + "}",
-                Collections.singletonList("implements"));
-    }
-
-    public void testImplementsKeywordCompletionForEnum() throws IOException {
-        doAbbreviationInsert(
-                "i",
-                "enum Test |{\n"
-                + "}",
-                "enum Test implements  {\n"
-                + "}",
-                Collections.singletonList("implements"));
-    }
-
+//    public void testImplementsKeywordCompletionForClass() throws IOException {
+//        doAbbreviationInsert(
+//                "i",
+//                "class Test |{\n"
+//                + "}",
+//                "class Test implements  {\n"
+//                + "}",
+//                Collections.singletonList("implements"));
+//    }
+//    public void testImplementsKeywordCompletionForEnum() throws IOException {
+//        doAbbreviationInsert(
+//                "i",
+//                "enum Test |{\n"
+//                + "}",
+//                "enum Test implements  {\n"
+//                + "}",
+//                Collections.singletonList("implements"));
+//    }
     public void testInterfaceKeywordCompletionInClass() throws IOException {
         doAbbreviationInsert(
                 "i",
@@ -671,26 +555,24 @@ public class KeywordCompletionTest extends NbTestCase {
                 Collections.singletonList("enum"));
     }
 
-    public void testExtendsKeywordCompletionForClass() throws IOException {
-        doAbbreviationInsert(
-                "e",
-                "class Test |{\n"
-                + "}",
-                "class Test extends  {\n"
-                + "}",
-                Collections.singletonList("extends"));
-    }
-
-    public void testExtendsKeywordCompletionForInterface() throws IOException {
-        doAbbreviationInsert(
-                "e",
-                "interface Test |{\n"
-                + "}",
-                "interface Test extends  {\n"
-                + "}",
-                Collections.singletonList("extends"));
-    }
-
+//    public void testExtendsKeywordCompletionForClass() throws IOException {
+//        doAbbreviationInsert(
+//                "e",
+//                "class Test |{\n"
+//                + "}",
+//                "class Test extends  {\n"
+//                + "}",
+//                Collections.singletonList("extends"));
+//    }
+//    public void testExtendsKeywordCompletionForInterface() throws IOException {
+//        doAbbreviationInsert(
+//                "e",
+//                "interface Test |{\n"
+//                + "}",
+//                "interface Test extends  {\n"
+//                + "}",
+//                Collections.singletonList("extends"));
+//    }
     public void testElseKeywordCompletion() throws IOException {
         doAbbreviationInsert(
                 "e",
@@ -854,52 +736,150 @@ public class KeywordCompletionTest extends NbTestCase {
                 Arrays.asList("throw", "try"));
     }
 
-    private void doAbbreviationInsert(String abbrev, String code, String golden, List<String> proposals)
-            throws IOException {
-        int caretOffset = code.indexOf('|');
-        String text = code.substring(0, caretOffset) + code.substring(caretOffset + 1);
-        editor.setText(text);
-        editor.setCaretPosition(caretOffset);
-        try ( OutputStream out = testFile.getOutputStream();  Writer writer = new OutputStreamWriter(out)) {
-            writer.append(text);
-        }
-        abbreviation.setStartOffset(caretOffset);
-        for (int i = 0; i < abbrev.length(); i++) {
-            abbreviation.append(abbrev.charAt(i));
-        }
-        List<CodeFragment> codeFragments = handler.process(abbreviation);
-        assertNotNull(codeFragments);
-        assertArrayEquals(proposals.toArray(), codeFragments.stream().map(fragment -> fragment.toString()).toArray());
-        assertEquals(golden, testFile.asText());
+    public void testCaseKeywordCompletionInSwitchStatementWithoutCases() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            case :\n"
+                + "                break;\n"
+                + "            \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("case"));
+    }
+
+    public void testCaseKeywordCompletionInZeroPositionOfSwitchStatement() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            |\n"
+                + "            case 0:\n"
+                + "                break;\n"
+                + "            case 1:\n"
+                + "                break;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            case :\n"
+                + "                break;\n"
+                + "            \n"
+                + "            case 0:\n"
+                + "                break;\n"
+                + "            case 1:\n"
+                + "                break;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("case"));
+    }
+
+    public void testCaseKeywordCompletionInMiddlePositionOfSwitchStatement() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            case 0:\n"
+                + "                break;\n"
+                + "            |\n"
+                + "            case 1:\n"
+                + "                break;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            case 0:\n"
+                + "                break;\n"
+                + "                case :\n"
+                + "                    break;\n"
+                + "            \n"
+                + "            case 1:\n"
+                + "                break;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("case"));
+    }
+
+    public void testCaseKeywordCompletionInLastPositionOfSwitchStatement() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            case 0:\n"
+                + "                break;\n"
+                + "            case 1:\n"
+                + "                break;\n"
+                + "            |\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        int size = 10;\n"
+                + "        switch (size) {\n"
+                + "            case 0:\n"
+                + "                break;\n"
+                + "            case 1:\n"
+                + "                break;\n"
+                + "                case :\n"
+                + "                    break;\n"
+                + "            \n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("case"));
+    }
+
+    public void testNewKeywordCompletionInAssignmentTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "package test;\n"
+                + "import java.io.File;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        File file;\n"
+                + "        file = |;\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "import java.io.File;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        File file;\n"
+                + "        file = new File(null);\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("new"));
     }
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        abbreviation.reset();
-        revertSettings();
-    }
-
-    private void revertSettings() {
-        Preferences.setMethodInvocationFlag(methodInvocation);
-        Preferences.setStaticMethodInvocationFlag(staticMethodInvocation);
-        Preferences.setChainedMethodInvocationFlag(chainedMethodInvocation);
-        Preferences.setChainedFieldAccessFlag(chainedFieldAccess);
-        Preferences.setChainedEnumConstantAccessFlag(chainedEnumConstantAccess);
-        Preferences.setLocalMethodInvocationFlag(localMethodInvocation);
-        Preferences.setStaticFieldAccessFlag(staticFieldAccess);
-        Preferences.setLocalVariableFlag(localVariable);
-        Preferences.setFieldFlag(field);
-        Preferences.setParameterFlag(parameter);
-        Preferences.setEnumConstantFlag(enumConstant);
-        Preferences.setExceptionParameterFlag(exceptionParameter);
-        Preferences.setResourceVariableFlag(resourceVariable);
-        Preferences.setInternalTypeFlag(internalType);
-        Preferences.setExternalTypeFlag(externalType);
-        Preferences.setGlobalTypeFlag(globalType);
-        Preferences.setKeywordFlag(keyword);
-        Preferences.setLiteralFlag(literal);
-        Preferences.setModifierFlag(modifier);
-        Preferences.setPrimitiveTypeFlag(primitiveType);
+        after();
     }
 }

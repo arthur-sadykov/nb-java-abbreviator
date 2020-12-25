@@ -15,23 +15,19 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.LocalElementCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import static javax.lang.model.element.ElementKind.ENUM_CONSTANT;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class EnumConstantCollector extends CodeFragmentCollector {
+public class EnumConstantCollector extends LocalElementCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectEnumConstants(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        collect(request, ENUM_CONSTANT);
         super.collect(request);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.ENUM_CONSTANT;
     }
 }

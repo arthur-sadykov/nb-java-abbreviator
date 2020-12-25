@@ -15,6 +15,9 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.api;
 
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+
 /**
  *
  * @author Arthur Sadykov
@@ -23,15 +26,72 @@ public interface CodeFragment {
 
     Kind getKind();
 
+    boolean isAbbreviationEqualTo(String abbreviation);
+
     public enum Kind {
+        ABSTRACT_MODIFIER,
+        ASSERT_KEYWORD,
+        BOOLEAN_PRIMITIVE_TYPE,
+        BREAK_KEYWORD,
+        BYTE_PRIMITIVE_TYPE,
+        CASE_KEYWORD,
+        CATCH_KEYWORD,
+        CHAINED_FIELD_ACCESS,
+        CHAINED_METHOD_INVOCATION,
+        CHAR_PRIMITIVE_TYPE,
+        CLASS_KEYWORD,
+        CONTINUE_KEYWORD,
+        DEFAULT_KEYWORD,
+        DO_KEYWORD,
+        DOUBLE_PRIMITIVE_TYPE,
+        ELSE_KEYWORD,
+        ENUM_KEYWORD,
+        EXTENDS_KEYWORD,
+        EXTERNAL_TYPE,
+        FALSE_LITERAL,
         FIELD_ACCESS,
-        KEYWORD,
-        LITERAL,
+        FINAL_MODIFIER,
+        FINALLY_KEYWORD,
+        FLOAT_PRIMITIVE_TYPE,
+        FOR_KEYWORD,
+        GLOBAL_TYPE,
+        IF_KEYWORD,
+        IMPLEMENTS_KEYWORD,
+        IMPORT_KEYWORD,
+        INSTANCEOF_KEYWORD,
+        INT_PRIMITIVE_TYPE,
+        INTERFACE_KEYWORD,
+        INTERNAL_TYPE,
         LOCAL_ELEMENT,
-        METHOD_INVOCATION,
-        MODIFIER,
-        PRIMITIVE_TYPE,
+        LOCAL_FIELD_ACCESS,
+        LOCAL_METHOD_INVOCATION,
+        LONG_PRIMITIVE_TYPE,
+        NATIVE_MODIFIER,
+        NEW_KEYWORD,
+        NORMAL_METHOD_INVOCATION,
+        NULL_LITERAL,
+        PRIVATE_MODIFIER,
+        PROTECTED_MODIFIER,
+        PUBLIC_MODIFIER,
+        RETURN_KEYWORD,
+        SHORT_PRIMITIVE_TYPE,
         STATEMENT,
-        TYPE
+        STATIC_FIELD_ACCESS,
+        STATIC_METHOD_INVOCATION,
+        STATIC_MODIFIER,
+        STRICTFP_MODIFIER,
+        SWITCH_KEYWORD,
+        SYNCHRONIZED_MODIFIER,
+        THIS_KEYWORD,
+        THROW_KEYWORD,
+        THROWS_KEYWORD,
+        TRANSIENT_MODIFIER,
+        TRUE_LITERAL,
+        TRY_KEYWORD,
+        VOID_KEYWORD,
+        VOLATILE_MODIFIER,
+        WHILE_KEYWORD
     }
+
+    void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request);
 }

@@ -15,23 +15,71 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.Request;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.StaticMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
+import com.sun.source.tree.Tree;
+import java.util.List;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.TypeUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class StaticMethodInvocationCollector extends CodeFragmentCollector {
+public class StaticMethodInvocationCollector extends AbstractCodeFragmentCollector {
 
     @Override
-    public void collect(Request request) {
-        request.getSourceHelper().collectStaticMethodInvocations(request.getCodeFragments(), request.getController());
+    public void collect(CodeCompletionRequest request) {
+        List<TypeElement> typeElements =
+                JavaSourceUtilities.collectExternalTypes(request.getWorkingCopy(), request.getAbbreviation());
+        typeElements.forEach(typeElement ->
+                collectMethodInvocations(typeElement, JavaSourceUtilities.getStaticMethodsInClass(typeElement), request));
         super.collect(request);
     }
 
-    @Override
-    public Kind getKind() {
-        return Kind.STATIC_METHOD_INVOCATION;
+    private void collectMethodInvocations(
+            TypeElement scope, List<ExecutableElement> methods, CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        Tree.Kind currentContext = request.getCurrentPath().getLeaf().getKind();
+        if (currentContext == Tree.Kind.PARAMETERIZED_TYPE) {
+            return;
+        }
+        methods = JavaSourceUtilities.getMethodsByAbbreviation(methods, request.getAbbreviation());
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        methods.forEach(method -> {
+            if (currentContext != Tree.Kind.BLOCK) {
+                TypeUtilities typeUtilities = copy.getTypeUtilities();
+                String typeName = typeUtilities.getTypeName(method.getReturnType()).toString();
+                if (!typeName.equals("void")) { //NOI18N
+                    StaticMethodInvocation methodInvocation = new StaticMethodInvocation(
+                            scope, method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                    if (JavaSourceUtilities.isMethodReturnVoid(method)) {
+                        methodInvocation.setText(
+                                JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
+                    } else {
+                        methodInvocation.setText(JavaSourceMaker.makeMethodInvocationExpressionTree(
+                                methodInvocation, request).toString());
+                    }
+                    codeFragments.add(methodInvocation);
+                }
+            } else {
+                StaticMethodInvocation methodInvocation = new StaticMethodInvocation(
+                        scope, method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                if (JavaSourceUtilities.isMethodReturnVoid(method)) {
+                    methodInvocation.setText(
+                            JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
+                } else {
+                    methodInvocation.setText(JavaSourceMaker.makeMethodInvocationStatementTree(
+                            methodInvocation, request).toString());
+                }
+                codeFragments.add(methodInvocation);
+            }
+        });
     }
 }

@@ -15,20 +15,25 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.ui;
 
-import com.github.isarthur.netbeans.editor.typingaid.JavaSourceHelper;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.context.api.CodeCompletionContext;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceInitializeHandler;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.List;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.KeyStroke;
 import javax.swing.text.JTextComponent;
+import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.spi.editor.codegen.CodeGenerator;
+import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 
 /**
@@ -39,19 +44,19 @@ public class GenerateCodePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 9080172839928978517L;
     private final JTextComponent component;
-    private final JavaSourceHelper helper;
+    private final CodeCompletionRequest request;
 
-    public GenerateCodePanel(JTextComponent component, List<? extends CodeFragment> memberSelections,
-            JavaSourceHelper helper) {
+    public GenerateCodePanel(JTextComponent component, CodeCompletionRequest request) {
         this.component = component;
-        this.helper = helper;
+        this.request = request;
         initComponents();
         setFocusable(false);
         setBackground(codeFragmentsList.getBackground());
         scrollPane.setBackground(codeFragmentsList.getBackground());
-        codeFragmentsList.setModel(createModel(memberSelections));
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        codeFragmentsList.setModel(createModel(codeFragments));
         codeFragmentsList.setSelectedIndex(0);
-        codeFragmentsList.setVisibleRowCount(memberSelections.size() > 16 ? 16 : memberSelections.size());
+        codeFragmentsList.setVisibleRowCount(codeFragments.size() > 16 ? 16 : codeFragments.size());
         codeFragmentsList.setCellRenderer(new Renderer(codeFragmentsList));
         codeFragmentsList.grabFocus();
         codeFragmentsList.addFocusListener(new FocusAdapter() {
@@ -170,7 +175,17 @@ public class GenerateCodePanel extends javax.swing.JPanel {
             component.requestFocus();
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
-        helper.insertCodeFragment(codeFragment);
+        JavaSource javaSource = JavaSourceInitializeHandler.getJavaSourceForDocument(component.getDocument());
+        try {
+            javaSource.runModificationTask(copy -> {
+                JavaSourceInitializeHandler.moveStateToResolvedPhase(copy);
+                request.update(copy);
+                CodeCompletionContext context = request.getContext();
+                context.insert(codeFragment, request);
+            }).commit();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
     private static class Renderer extends DefaultListCellRenderer {
