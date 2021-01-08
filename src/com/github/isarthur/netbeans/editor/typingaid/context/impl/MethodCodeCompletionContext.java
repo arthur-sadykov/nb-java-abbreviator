@@ -35,8 +35,8 @@ public class MethodCodeCompletionContext extends AbstractCodeCompletionContext {
                 .linkExternalTypeCollector()
                 .linkGlobalTypeCollector()
                 .linkInternalTypeCollector()
-                .linkModifierCollector(METHOD)
                 .linkPrimitiveTypeCollector()
+                .linkModifierCollector(METHOD)
                 .build();
     }
 

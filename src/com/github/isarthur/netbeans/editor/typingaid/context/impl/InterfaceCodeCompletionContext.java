@@ -15,13 +15,17 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.context.impl;
 
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.InterfaceCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.sun.source.tree.ClassTree;
 import static com.sun.source.tree.Tree.Kind.INTERFACE;
 import javax.lang.model.type.TypeMirror;
+import org.netbeans.api.java.source.TreeUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -31,14 +35,21 @@ public class InterfaceCodeCompletionContext extends AbstractCodeCompletionContex
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
-        return CodeFragmentCollectorLinkerImpl.builder()
-                .linkExternalTypeCollector()
-                .linkGlobalTypeCollector()
-                .linkInternalTypeCollector()
-                .linkKeywordCollector()
-                .linkModifierCollector(INTERFACE)
-                .linkPrimitiveTypeCollector()
-                .build();
+        WorkingCopy copy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        int[] bodySpan = treeUtilities.findBodySpan((ClassTree) request.getCurrentTree());
+        Abbreviation abbreviation = request.getAbbreviation();
+        CodeFragmentCollectorLinkerImpl.CodeFragmentCollectorLinkerBuilder builder =
+                CodeFragmentCollectorLinkerImpl.builder();
+        if (bodySpan[0] < abbreviation.getStartOffset()) {
+            builder.linkExternalTypeCollector()
+                    .linkGlobalTypeCollector()
+                    .linkInternalTypeCollector()
+                    .linkKeywordCollector()
+                    .linkPrimitiveTypeCollector();
+        }
+        builder.linkModifierCollector(INTERFACE);
+        return builder.build();
     }
 
     @Override
