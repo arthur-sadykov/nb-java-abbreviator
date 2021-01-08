@@ -30,6 +30,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.source.JavaSource;
@@ -70,15 +74,29 @@ public class JavaCodeFragmentCollectAndInsertHandler implements CodeFragmentColl
                         context.insert(codeFragment, request);
                         break;
                     default:
-                        codeFragments.sort((fragment1, fragment2) ->
-                                fragment1.toString().compareTo(fragment2.toString()));
-                        PopupUtil.showPopup(component, request);
+                        codeFragments.removeIf(distinctByKey(CodeFragment::toString).negate());
+                        switch (codeFragments.size()) {
+                            case 0:
+                                break;
+                            case 1:
+                                context.insert(codeFragments.get(0), request);
+                                break;
+                            default:
+                                codeFragments.sort((fragment1, fragment2) ->
+                                        fragment1.toString().compareTo(fragment2.toString()));
+                                PopupUtil.showPopup(component, request);
+                        }
                 }
             }).commit();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
         return Collections.unmodifiableList(codeFragments);
+    }
+
+    private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
     public Document getDocument() {
