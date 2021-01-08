@@ -73,8 +73,10 @@ import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.LiteralTree;
+import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
@@ -389,7 +391,7 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     private Tree getTreeToInsert(CodeFragment codeFragment, CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
         TreeMaker make = copy.getTreeMaker();
-        LiteralTree initializer;
+        ExpressionTree initializer;
         Types types = copy.getTypes();
         switch (codeFragment.getKind()) {
             case ABSTRACT_MODIFIER:
@@ -463,7 +465,12 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                 DeclaredType declaredType = types.getDeclaredType(type.getType());
                 switch (request.getCurrentKind()) {
                     case BLOCK:
-                        initializer = make.Literal(null);
+                        NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(type.getType(), request);
+                        if (newClassTree != null) {
+                            initializer = newClassTree;
+                        } else {
+                            initializer = make.Literal(null);
+                        }
                         return make.Variable(make.Modifiers(Collections.emptySet()),
                                 JavaSourceUtilities.getVariableName(declaredType, request),
                                 make.QualIdent(type.getType()),

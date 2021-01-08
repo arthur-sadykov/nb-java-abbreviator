@@ -201,22 +201,32 @@ public class JavaSourceUtilities {
         Elements elements = copy.getElements();
         ElementUtilities elementUtilities = copy.getElementUtilities();
         ExpressionTree packageName = compilationUnit.getPackageName();
+        PackageElement packageElement;
         if (packageName == null) {
-            return Collections.emptyList();
-        }
-        PackageElement packageElement = elements.getPackageElement(packageName.toString());
-        if (packageElement == null) {
-            return Collections.emptyList();
+            packageElement = null;
+        } else {
+            packageElement = elements.getPackageElement(packageName.toString());
         }
         List<ExecutableElement> accessibleConstructors = constructors.stream()
                 .filter(constructor -> {
                     PackageElement constructorPackageElement = elements.getPackageOf(constructor);
                     TypeElement constructorOutermostTypeElement = elementUtilities.outermostTypeElement(constructor);
-                    return !elements.isDeprecated(constructor)
-                            && (constructor.getModifiers().contains(Modifier.PUBLIC)
-                            || topLevelTypeElement.equals(constructorOutermostTypeElement)
-                            || (!constructor.getModifiers().contains(Modifier.PRIVATE)
-                            && packageElement.equals(constructorPackageElement)));
+                    if (!elements.isDeprecated(constructor)) {
+                        if (constructor.getModifiers().contains(Modifier.PUBLIC)) {
+                            return true;
+                        } else if (topLevelTypeElement.equals(constructorOutermostTypeElement)) {
+                            return true;
+                        } else if (!constructor.getModifiers().contains(Modifier.PRIVATE)) {
+                            if (packageElement == null) {
+                                return false;
+                            } else {
+                                if (packageElement.equals(constructorPackageElement)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return false;
                 })
                 .collect(Collectors.toList());
         return Collections.unmodifiableList(accessibleConstructors);

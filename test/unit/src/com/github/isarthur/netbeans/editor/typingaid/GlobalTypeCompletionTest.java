@@ -241,6 +241,25 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("java.lang.Float"));
     }
 
+    public void testWhenTypeHasConstructorThenNewClassMustBeSubstitutedAsVariableInitializerInBlock() throws IOException {
+        doAbbreviationInsert(
+                "al",
+                "import java.util.ArrayList;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "import java.util.ArrayList;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        ArrayList arrayList = new ArrayList();\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.util.ArrayList"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();
