@@ -353,8 +353,12 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
             return;
         }
         if (JavaSourceUtilities.getParentTreeOfKind(Collections.singleton(METHOD), request)) {
-            List<CodeFragment> codeFragments = request.getCodeFragments();
-            codeFragments.add(keyword);
+            if (request.getCurrentKind() == BLOCK
+                    || request.getCurrentKind() == SWITCH
+                    || request.getCurrentKind() == CASE) {
+                List<CodeFragment> codeFragments = request.getCodeFragments();
+                codeFragments.add(keyword);
+            }
         }
     }
 
