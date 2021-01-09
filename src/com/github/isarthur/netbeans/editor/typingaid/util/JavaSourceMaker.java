@@ -156,7 +156,7 @@ public class JavaSourceMaker {
             return make.NewClass(
                     null,
                     Collections.emptyList(),
-                    make.QualIdent(type.toString()),
+                    make.QualIdent(type.getQualifiedName().toString()),
                     Collections.emptyList(),
                     null);
         }
@@ -168,7 +168,7 @@ public class JavaSourceMaker {
         NewClassTree newClassTree = make.NewClass(
                 null,
                 Collections.emptyList(),
-                make.QualIdent(type),
+                make.QualIdent(type.getQualifiedName().toString()),
                 JavaSourceUtilities.evaluateMethodArguments(targetConstructor, request),
                 null);
         if (type.getTypeParameters().isEmpty()) {
