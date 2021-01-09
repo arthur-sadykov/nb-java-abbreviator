@@ -21,9 +21,12 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedField
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedMethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.EnumConstantCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExceptionParameterCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.FieldCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalTypeCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.KeywordCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LiteralCollector;
@@ -80,6 +83,13 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkExternalThrowableTypeCollector() {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalThrowableTypeCollector());
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkLocalVariableCollector() {
             if (Preferences.getLocalVariableFlag()) {
                 collectors.add(new LocalVariableCollector());
@@ -129,9 +139,23 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkInternalThrowableTypeCollector() {
+            if (Preferences.getInternalTypeFlag()) {
+                collectors.add(new InternalThrowableTypeCollector());
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkGlobalTypeCollector() {
             if (Preferences.getGlobalTypeFlag()) {
                 collectors.add(new GlobalTypeCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkGlobalThrowableTypeCollector() {
+            if (Preferences.getGlobalTypeFlag()) {
+                collectors.add(new GlobalThrowableTypeCollector());
             }
             return this;
         }

@@ -279,6 +279,77 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("java.util.AbstractMap<String, String>"));
     }
 
+    public void testGlobalTypeCompletionInCatchTree() throws IOException {
+        doAbbreviationInsert(
+                "re",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (|ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (RuntimeException ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.lang.RuntimeException"));
+        doAbbreviationInsert(
+                "re",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch| (ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+        doAbbreviationInsert(
+                "re",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch |(ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+        doAbbreviationInsert(
+                "re",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (ex)| {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        try {\n"
+                + "        } catch (ex) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

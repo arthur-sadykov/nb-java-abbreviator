@@ -482,6 +482,8 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                                 JavaSourceUtilities.getVariableName(declaredType, request),
                                 make.Type(type.toString()),
                                 initializer);
+                    case CATCH:
+                        return make.Type(declaredType);
                     case CLASS:
                     case ENUM:
                     case INTERFACE:
