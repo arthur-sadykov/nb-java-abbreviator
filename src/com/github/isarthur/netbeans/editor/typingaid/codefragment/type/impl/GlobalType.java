@@ -24,9 +24,6 @@ import javax.lang.model.element.TypeElement;
  */
 public class GlobalType extends AbstractType {
 
-    public GlobalType() {
-    }
-
     public GlobalType(TypeElement type) {
         super(type);
     }

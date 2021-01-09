@@ -24,9 +24,6 @@ import javax.lang.model.element.TypeElement;
  */
 public class InternalType extends AbstractType {
 
-    public InternalType() {
-    }
-
     public InternalType(TypeElement type) {
         super(type);
     }

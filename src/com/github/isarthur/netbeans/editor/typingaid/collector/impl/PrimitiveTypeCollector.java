@@ -114,19 +114,9 @@ public class PrimitiveTypeCollector extends AbstractCodeFragmentCollector {
                                 return false;
                             }
                         } else if (tokenId == JavaTokenId.LBRACE || tokenId == JavaTokenId.SEMICOLON) {
-                            if (tokenSequence.offset() < abbreviation.getStartOffset()) {
-                                return false;
-                            }
-                            break;
-                        }
-                    }
-                    if (tokenId == JavaTokenId.LBRACE || tokenId == JavaTokenId.SEMICOLON) {
-                        while (tokenSequence.movePrevious()) {
-                            tokenId = tokenSequence.token().id();
-                            if (tokenId == JavaTokenId.RPAREN) {
-                                int rightParenthesisPosition = tokenSequence.offset();
-                                if (abbreviation.getStartOffset() <= rightParenthesisPosition) {
-                                    return true;
+                            while (tokenSequence.movePrevious()) {
+                                if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
+                                    return abbreviation.getStartOffset() <= tokenSequence.offset();
                                 }
                             }
                         }

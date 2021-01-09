@@ -24,9 +24,6 @@ import javax.lang.model.element.TypeElement;
  */
 public class ExternalType extends AbstractType {
 
-    public ExternalType() {
-    }
-
     public ExternalType(TypeElement type) {
         super(type);
     }

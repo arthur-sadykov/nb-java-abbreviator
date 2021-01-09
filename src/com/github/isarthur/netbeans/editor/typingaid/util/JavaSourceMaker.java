@@ -144,7 +144,7 @@ public class JavaSourceMaker {
         return make.Variable(modifiers, variableName, type, initializer);
     }
 
-    public static NewClassTree makeNewClassTree(Element type, CodeCompletionRequest request) {
+    public static NewClassTree makeNewClassTree(TypeElement type, CodeCompletionRequest request) {
         if (type.getKind() == ElementKind.INTERFACE
                 || (type.getKind() == ElementKind.CLASS && type.getModifiers().contains(Modifier.ABSTRACT))) {
             return null;
@@ -165,12 +165,20 @@ public class JavaSourceMaker {
             return null;
         }
         ExecutableElement targetConstructor = JavaSourceUtilities.getTargetConstructor(constructors);
-        return make.NewClass(
+        NewClassTree newClassTree = make.NewClass(
                 null,
                 Collections.emptyList(),
-                make.QualIdent(type.toString()),
+                make.QualIdent(type),
                 JavaSourceUtilities.evaluateMethodArguments(targetConstructor, request),
                 null);
+        if (type.getTypeParameters().isEmpty()) {
+            return newClassTree;
+        }
+        Tree identifier = newClassTree.getIdentifier();
+        Tree newIdentifier =
+                make.ParameterizedType(make.Type(type.getQualifiedName().toString()), Collections.emptyList());
+        copy.rewrite(identifier, newIdentifier);
+        return newClassTree;
     }
 
     public static ExpressionTree makeQualIdentTree(Element element, CodeCompletionRequest request) {

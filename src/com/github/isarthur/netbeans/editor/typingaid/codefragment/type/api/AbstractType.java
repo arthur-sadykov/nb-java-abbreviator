@@ -18,7 +18,9 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import java.util.List;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
 
 /**
  *
@@ -28,10 +30,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
 
     protected TypeElement type;
 
-    public AbstractType() {
-    }
-
-    public AbstractType(TypeElement type) {
+    protected AbstractType(TypeElement type) {
         this.type = type;
     }
 
@@ -52,7 +51,15 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
 
     @Override
     public String toString() {
-        return type.getQualifiedName().toString();
+        List<? extends TypeParameterElement> typeParameters = type.getTypeParameters();
+        if (typeParameters.isEmpty()) {
+            return type.getQualifiedName().toString();
+        } else {
+            StringBuilder stringBuilder = new StringBuilder();
+            typeParameters.forEach(typeParameter -> stringBuilder.append("String, ")); //NOI18N
+            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+            return type.getQualifiedName().toString() + "<" + stringBuilder.toString() + ">"; //NOI18N
+        }
     }
 
     @Override

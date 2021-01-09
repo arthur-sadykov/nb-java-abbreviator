@@ -77,6 +77,7 @@ import java.util.function.Supplier;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
@@ -340,7 +341,7 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
         if (type == null) {
             return;
         }
-        if (JavaSourceMaker.makeNewClassTree(type, request) == null) {
+        if (JavaSourceMaker.makeNewClassTree((TypeElement) type, request) == null) {
             return;
         }
         List<CodeFragment> codeFragments = request.getCodeFragments();

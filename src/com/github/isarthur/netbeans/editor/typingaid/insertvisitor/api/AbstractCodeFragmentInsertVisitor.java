@@ -132,6 +132,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -473,7 +474,7 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                         }
                         return make.Variable(make.Modifiers(Collections.emptySet()),
                                 JavaSourceUtilities.getVariableName(declaredType, request),
-                                make.QualIdent(type.getType()),
+                                make.Type(type.toString()),
                                 initializer);
                     case CLASS:
                     case ENUM:
@@ -482,7 +483,7 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                         if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
                             return make.Variable(make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
                                     JavaSourceUtilities.getVariableName(declaredType, request),
-                                    make.QualIdent(type.toString()),
+                                    make.Type(type.toString()),
                                     null);
                         } else {
                             String returnVar = JavaSourceUtilities.returnVar(type.toString());
@@ -500,10 +501,10 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                     case METHOD:
                         return make.Variable(make.Modifiers(Collections.emptySet()),
                                 JavaSourceUtilities.getVariableName(declaredType, request),
-                                make.QualIdent(type.getType()),
+                                make.Type(type.toString()),
                                 null);
                     case PARAMETERIZED_TYPE:
-                        return make.QualIdent(type.toString());
+                        return make.Type(type.toString());
                     case VARIABLE:
                         Abbreviation abbreviation = request.getAbbreviation();
                         TokenSequence<?> tokens = copy.getTokenHierarchy().tokenSequence();
@@ -658,11 +659,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                 if (typeInContext == null) {
                     return null;
                 }
-                Element typeElement = copy.getTypes().asElement(typeInContext);
-                if (typeElement == null) {
+                Element element = copy.getTypes().asElement(typeInContext);
+                if (element == null) {
                     return null;
                 }
-                return JavaSourceMaker.makeNewClassTree(typeElement, request);
+                return JavaSourceMaker.makeNewClassTree((TypeElement) element, request);
             case PRIVATE_MODIFIER:
                 return make.Modifiers(Collections.singleton(Modifier.PRIVATE));
             case PROTECTED_MODIFIER:

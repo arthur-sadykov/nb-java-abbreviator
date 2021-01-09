@@ -68,6 +68,16 @@ public class MethodCodeCompletionContext extends AbstractCodeCompletionContext {
                         }
                     }
                     break;
+                case SEMICOLON:
+                    while (tokenSequence.movePrevious()) {
+                        if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
+                            if (abbreviation.getStartOffset() <= tokenSequence.offset()) {
+                                beforeRightParenthesis = true;
+                            }
+                            break OUTER;
+                        }
+                    }
+                    break;
             }
         }
         if (beforeLeftParenthesis) {

@@ -111,10 +111,10 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 + "class Test {\n"
                 + "    void test() {\n"
                 + "        Object object = null;\n"
-                + "        List<String> list =new ArrayList();\n"
+                + "        List<String> list =new ArrayList<>();\n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("java.util.ArrayList"));
+                Collections.singletonList("java.util.ArrayList<String>"));
     }
 
     public void testImportedTypeCompletionInMethodParameter() throws IOException {
@@ -253,11 +253,30 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "import java.util.ArrayList;\n"
                 + "class Test {\n"
                 + "    void test() {\n"
-                + "        ArrayList arrayList = new ArrayList();\n"
+                + "        ArrayList<String> arrayList = new ArrayList<>();\n"
                 + "        \n"
                 + "    }\n"
                 + "}",
-                Collections.singletonList("java.util.ArrayList"));
+                Collections.singletonList("java.util.ArrayList<String>"));
+    }
+
+    public void testGenericTypeCompletionInBlock() throws IOException {
+        doAbbreviationInsert(
+                "am",
+                "import java.util.AbstractMap;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "import java.util.AbstractMap;\n"
+                + "class Test {\n"
+                + "    void test() {\n"
+                + "        AbstractMap<String, String> abstractMap = null;\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.util.AbstractMap<String, String>"));
     }
 
     @Override
