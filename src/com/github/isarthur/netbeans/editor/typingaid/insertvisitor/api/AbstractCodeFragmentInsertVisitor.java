@@ -55,6 +55,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.PublicModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.StaticModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.StrictfpModifier;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.SynchronizedModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.TransientModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.VolatileModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.api.PrimitiveType;
@@ -339,6 +340,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     @Override
     public void visit(SwitchKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
+    }
+
+    @Override
+    public void visit(SynchronizedModifier modifier, CodeCompletionRequest request) {
+        insertTree(modifier, request);
     }
 
     @Override
@@ -681,6 +687,8 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                         make.Identifier(""), //NOI18N
                         Collections.singletonList(
                                 make.Case(make.Identifier(""), Collections.singletonList(make.Break(null))))); //NOI18N
+            case SYNCHRONIZED_MODIFIER:
+                return make.Modifiers(Collections.singleton(Modifier.SYNCHRONIZED));
             case THROW_KEYWORD:
                 return make.Throw(make.Identifier("new IllegalArgumentException()")); //NOI18N
             case TRANSIENT_MODIFIER:
