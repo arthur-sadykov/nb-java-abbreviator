@@ -750,31 +750,6 @@ public class MethodInvocationCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("branchName.length()"));
     }
 
-    public void testMethodInvocationCompletionInSwitchTree() throws IOException {
-        doAbbreviationInsert(
-                "bn.l",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        switch (numberOfSpaces) {\n"
-                + "            case 0:\n"
-                + "                |\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        switch (numberOfSpaces) {\n"
-                + "            case 0:\n"
-                + "            int i = branchName.length();\n"
-                + "                \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("branchName.length()"));
-    }
-
     public void testMethodInvocationCompletionInUnsignedRightShiftAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "bn.l",

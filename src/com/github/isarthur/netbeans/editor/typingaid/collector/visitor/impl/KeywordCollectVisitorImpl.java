@@ -501,7 +501,7 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
         if (!keyword.isAbbreviationEqualTo(request.getAbbreviation().getContent())) {
             return;
         }
-        if (JavaSourceUtilities.getCurrentTreeOfKind(EnumSet.of(BLOCK, CASE, SWITCH), request)) {
+        if (JavaSourceUtilities.getCurrentTreeOfKind(EnumSet.of(BLOCK, CASE), request)) {
             List<CodeFragment> codeFragments = request.getCodeFragments();
             codeFragments.add(keyword);
         }

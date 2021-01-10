@@ -697,31 +697,6 @@ public class LocalElementCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("numberOfClasses"));
     }
 
-    public void testLocalElementCompletionInSwitchTree() throws IOException {
-        doAbbreviationInsert(
-                "nos",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        switch (numberOfSpaces) {\n"
-                + "            case 0:\n"
-                + "                |\n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                "public class Test {\n"
-                + "    public void test(int numberOfSpaces) {\n"
-                + "        String branchName = \"\";\n"
-                + "        switch (numberOfSpaces) {\n"
-                + "            case 0:\n"
-                + "            numberOfSpaces = 0;\n"
-                + "                \n"
-                + "        }\n"
-                + "    }\n"
-                + "}",
-                Collections.singletonList("numberOfSpaces"));
-    }
-
     public void testLocalElementCompletionInUnsignedRightShiftAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "noc",

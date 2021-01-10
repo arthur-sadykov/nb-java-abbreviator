@@ -67,11 +67,6 @@ public class SwitchCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertV
             return make.insertCaseStatement(caseTree, insertIndex, (StatementTree) tree);
         } else {
             SwitchTree switchTree = (SwitchTree) originalTree;
-            int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
-                    abbreviation.getStartOffset(), switchTree.getCases(), request.getWorkingCopy());
-            if (insertIndex == -1) {
-                return null;
-            }
             return make.insertSwitchCase(switchTree, 0, (CaseTree) tree);
         }
     }

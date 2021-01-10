@@ -30,25 +30,12 @@ public class SwitchCodeCompletionContext extends AbstractCodeCompletionContext {
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
-        if (!request.getAbbreviation().isSimple()) {
+        if (request.getAbbreviation().isSimple()) {
             return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkMethodInvocationCollector()
-                    .linkStaticMethodInvocationCollector()
+                    .linkKeywordCollector()
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
-                .linkExceptionParameterCollector()
-                .linkExternalTypeCollector()
-                .linkFieldCollector()
-                .linkGlobalTypeCollector()
-                .linkInternalTypeCollector()
-                .linkKeywordCollector()
-                .linkLocalMethodInvocationCollector()
-                .linkLocalVariableCollector()
-                .linkParameterCollector()
-                .linkPrimitiveTypeCollector()
-                .linkResourceVariableCollector()
                 .build();
     }
 
