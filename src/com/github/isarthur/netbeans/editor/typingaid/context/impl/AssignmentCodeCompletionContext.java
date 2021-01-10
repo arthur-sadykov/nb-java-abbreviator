@@ -41,7 +41,6 @@ public class AssignmentCodeCompletionContext extends AbstractCodeCompletionConte
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkExternalTypeCollector()
                 .linkFieldCollector()

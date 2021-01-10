@@ -41,7 +41,6 @@ public class MinusCodeCompletionContext extends AbstractCodeCompletionContext {
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

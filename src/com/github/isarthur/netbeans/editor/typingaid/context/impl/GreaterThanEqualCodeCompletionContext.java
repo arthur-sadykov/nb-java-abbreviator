@@ -41,7 +41,6 @@ public class GreaterThanEqualCodeCompletionContext extends AbstractCodeCompletio
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

@@ -41,7 +41,6 @@ public class OrAssignmentCodeCompletionContext extends AbstractCodeCompletionCon
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

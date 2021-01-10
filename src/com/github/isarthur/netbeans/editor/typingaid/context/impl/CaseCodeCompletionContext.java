@@ -15,6 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.context.impl;
 
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
@@ -26,7 +27,10 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import javax.lang.model.type.TypeMirror;
+import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.TreeUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
+import org.netbeans.api.lexer.TokenSequence;
 
 /**
  *
@@ -36,26 +40,46 @@ public class CaseCodeCompletionContext extends AbstractCodeCompletionContext {
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
-        if (!request.getAbbreviation().isSimple()) {
+        Abbreviation abbreviation = request.getAbbreviation();
+        Tree originalTree = request.getCurrentTree();
+        WorkingCopy copy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(originalTree);
+        tokenSequence.moveStart();
+        boolean afterColon = false;
+        while (tokenSequence.moveNext()) {
+            if (tokenSequence.token().id() == JavaTokenId.COLON) {
+                if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                    afterColon = true;
+                    break;
+                }
+            }
+        }
+        if (afterColon) {
+            if (!request.getAbbreviation().isSimple()) {
+                return CodeFragmentCollectorLinkerImpl.builder()
+                        .linkMethodInvocationCollector()
+                        .linkStaticMethodInvocationCollector()
+                        .build();
+            }
             return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkMethodInvocationCollector()
-                    .linkStaticMethodInvocationCollector()
+                    .linkExceptionParameterCollector()
+                    .linkExternalTypeCollector()
+                    .linkFieldCollector()
+                    .linkGlobalTypeCollector()
+                    .linkInternalTypeCollector()
+                    .linkKeywordCollector()
+                    .linkLocalMethodInvocationCollector()
+                    .linkLocalVariableCollector()
+                    .linkParameterCollector()
+                    .linkPrimitiveTypeCollector()
+                    .linkResourceVariableCollector()
+                    .build();
+        } else {
+            return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkEnumConstantCollector()
                     .build();
         }
-        return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
-                .linkExceptionParameterCollector()
-                .linkExternalTypeCollector()
-                .linkFieldCollector()
-                .linkGlobalTypeCollector()
-                .linkInternalTypeCollector()
-                .linkKeywordCollector()
-                .linkLocalMethodInvocationCollector()
-                .linkLocalVariableCollector()
-                .linkParameterCollector()
-                .linkPrimitiveTypeCollector()
-                .linkResourceVariableCollector()
-                .build();
     }
 
     @Override

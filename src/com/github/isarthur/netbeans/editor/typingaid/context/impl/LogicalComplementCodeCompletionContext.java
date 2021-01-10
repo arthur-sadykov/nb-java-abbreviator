@@ -41,7 +41,6 @@ public class LogicalComplementCodeCompletionContext extends AbstractCodeCompleti
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

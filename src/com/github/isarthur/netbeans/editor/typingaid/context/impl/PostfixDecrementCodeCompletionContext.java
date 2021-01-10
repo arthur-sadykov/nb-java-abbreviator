@@ -41,7 +41,6 @@ public class PostfixDecrementCodeCompletionContext extends AbstractCodeCompletio
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

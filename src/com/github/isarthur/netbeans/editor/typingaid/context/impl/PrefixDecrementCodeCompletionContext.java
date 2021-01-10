@@ -41,7 +41,6 @@ public class PrefixDecrementCodeCompletionContext extends AbstractCodeCompletion
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

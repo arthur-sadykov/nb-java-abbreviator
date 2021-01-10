@@ -39,7 +39,6 @@ public class RemainderAssignmentCodeCompletionContext extends AbstractCodeComple
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

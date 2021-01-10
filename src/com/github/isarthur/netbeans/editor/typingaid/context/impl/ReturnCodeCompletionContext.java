@@ -39,7 +39,6 @@ public class ReturnCodeCompletionContext extends AbstractCodeCompletionContext {
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkExternalTypeCollector()
                 .linkFieldCollector()

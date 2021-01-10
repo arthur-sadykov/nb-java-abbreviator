@@ -41,7 +41,6 @@ public class UnsignedRightShiftCodeCompletionContext extends AbstractCodeComplet
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

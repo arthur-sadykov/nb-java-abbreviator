@@ -41,7 +41,6 @@ public class XorCodeCompletionContext extends AbstractCodeCompletionContext {
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

@@ -23,8 +23,11 @@ import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
+import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.TreeMaker;
+import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
+import org.netbeans.api.lexer.TokenSequence;
 
 /**
  *
@@ -34,15 +37,31 @@ public class CaseCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVis
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        CaseTree originalTree = (CaseTree) request.getCurrentTree();
-        Abbreviation abbreviation = request.getAbbreviation();
-        int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
-                abbreviation.getStartOffset(), originalTree.getStatements(), request.getWorkingCopy());
-        if (insertIndex == -1) {
-            return null;
-        }
         WorkingCopy copy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        CaseTree originalTree = (CaseTree) request.getCurrentTree();
+        TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(originalTree);
+        tokenSequence.moveStart();
+        Abbreviation abbreviation = request.getAbbreviation();
+        boolean afterColon = false;
+        while (tokenSequence.moveNext()) {
+            if (tokenSequence.token().id() == JavaTokenId.COLON) {
+                if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                    afterColon = true;
+                    break;
+                }
+            }
+        }
         TreeMaker make = copy.getTreeMaker();
-        return make.insertCaseStatement(originalTree, insertIndex, (StatementTree) tree);
+        if (afterColon) {
+            int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
+                    abbreviation.getStartOffset(), originalTree.getStatements(), request.getWorkingCopy());
+            if (insertIndex == -1) {
+                return null;
+            }
+            return make.insertCaseStatement(originalTree, insertIndex, (StatementTree) tree);
+        } else {
+            return make.Case(make.Identifier(codeFragment.toString()), originalTree.getStatements());
+        }
     }
 }

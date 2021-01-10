@@ -45,7 +45,6 @@ public class MethodInvocationCompletionTest extends GeneralCompletionTest {
         Preferences.setLocalVariableFlag(true);
         Preferences.setFieldFlag(true);
         Preferences.setParameterFlag(true);
-        Preferences.setEnumConstantFlag(true);
         Preferences.setExceptionParameterFlag(true);
         Preferences.setResourceVariableFlag(true);
     }

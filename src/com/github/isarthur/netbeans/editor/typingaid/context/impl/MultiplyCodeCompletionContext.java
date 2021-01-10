@@ -41,7 +41,6 @@ public class MultiplyCodeCompletionContext extends AbstractCodeCompletionContext
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

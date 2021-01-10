@@ -43,7 +43,6 @@ public class VariableCodeCompletionContext extends AbstractCodeCompletionContext
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkExternalTypeCollector()
                 .linkFieldCollector()

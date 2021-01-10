@@ -41,7 +41,6 @@ public class LeftShiftAssignmentCodeCompletionContext extends AbstractCodeComple
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()
