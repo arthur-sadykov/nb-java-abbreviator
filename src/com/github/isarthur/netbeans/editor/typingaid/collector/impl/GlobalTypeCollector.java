@@ -45,7 +45,7 @@ public class GlobalTypeCollector extends AbstractCodeFragmentCollector {
         ElementUtilities elementUtilities = copy.getElementUtilities();
         return elementUtilities.getGlobalTypes((element, type) -> {
             String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-            return typeAbbreviation.equals(abbreviation.getScope());
+            return typeAbbreviation.equals(abbreviation.getContent());
         });
     }
 }

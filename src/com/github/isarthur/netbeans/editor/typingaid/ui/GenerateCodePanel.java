@@ -18,6 +18,7 @@ package com.github.isarthur.netbeans.editor.typingaid.ui;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.CodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.CodeFragmentSelector;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceInitializeHandler;
 import java.awt.Color;
 import java.awt.Component;
@@ -26,13 +27,16 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.KeyStroke;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.source.JavaSource;
+import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.spi.editor.codegen.CodeGenerator;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 
@@ -175,14 +179,18 @@ public class GenerateCodePanel extends javax.swing.JPanel {
             component.requestFocus();
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
+        AtomicReference<FileObject> fileObject = new AtomicReference<>();
         JavaSource javaSource = JavaSourceInitializeHandler.getJavaSourceForDocument(component.getDocument());
         try {
-            javaSource.runModificationTask(copy -> {
+            ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
                 JavaSourceInitializeHandler.moveStateToResolvedPhase(copy);
+                fileObject.set(copy.getFileObject());
                 request.update(copy);
                 CodeCompletionContext context = request.getContext();
                 context.insert(codeFragment, request);
-            }).commit();
+            });
+            modificationResult.commit();
+            CodeFragmentSelector.select(codeFragment, modificationResult, fileObject.get(), component);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

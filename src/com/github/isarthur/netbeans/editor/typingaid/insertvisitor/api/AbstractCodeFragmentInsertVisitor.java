@@ -555,7 +555,7 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                                 make.Unary(Tree.Kind.POSTFIX_INCREMENT, make.Identifier("i")))), //NOI18N
                         make.Block(Collections.emptyList(), false));
             case IF_KEYWORD:
-                return make.If(make.Identifier("true"), make.Block(Collections.emptyList(), false), null);
+                return make.If(make.Literal(true), make.Block(Collections.emptyList(), false), null);
             case IMPORT_KEYWORD:
                 return make.Import(make.Identifier(""), false); //NOI18N
             case INTERFACE_KEYWORD:

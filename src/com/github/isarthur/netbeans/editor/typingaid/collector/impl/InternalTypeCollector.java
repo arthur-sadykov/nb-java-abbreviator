@@ -67,7 +67,7 @@ public class InternalTypeCollector extends AbstractCodeFragmentCollector {
         localElements
                 .stream()
                 .filter(element -> StringUtilities.getElementAbbreviation(
-                        element.getSimpleName().toString()).equals(abbreviation.getIdentifier()))
+                        element.getSimpleName().toString()).equals(abbreviation.getContent()))
                 .filter(distinctByKey(Element::getSimpleName))
                 .forEach(element -> codeFragments.add(new InternalType(elements.getTypeElement(element.toString()))));
         super.collect(request);

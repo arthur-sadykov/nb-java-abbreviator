@@ -23,6 +23,7 @@ import com.github.isarthur.netbeans.editor.typingaid.context.impl.CodeCompletion
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.request.impl.CodeCompletionRequestImpl;
 import com.github.isarthur.netbeans.editor.typingaid.ui.PopupUtil;
+import com.github.isarthur.netbeans.editor.typingaid.util.CodeFragmentSelector;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceInitializeHandler;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.Tree;
@@ -32,11 +33,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.source.JavaSource;
+import org.netbeans.api.java.source.ModificationResult;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 
 /**
@@ -57,9 +61,11 @@ public class JavaCodeFragmentCollectAndInsertHandler implements CodeFragmentColl
     public List<CodeFragment> process(Abbreviation abbreviation) {
         List<CodeFragment> codeFragments = new ArrayList<>();
         JavaSource javaSource = JavaSourceInitializeHandler.getJavaSourceForDocument(document);
+        AtomicReference<FileObject> fileObject = new AtomicReference<>();
         try {
-            javaSource.runModificationTask(copy -> {
+            ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
                 JavaSourceInitializeHandler.moveStateToResolvedPhase(copy);
+                fileObject.set(copy.getFileObject());
                 CodeCompletionRequest request =
                         new CodeCompletionRequestImpl(abbreviation, codeFragments, copy, component);
                 Tree.Kind currentTreeKind = JavaSourceUtilities.getCurrentTreeKind(request);
@@ -87,7 +93,11 @@ public class JavaCodeFragmentCollectAndInsertHandler implements CodeFragmentColl
                                 PopupUtil.showPopup(component, request);
                         }
                 }
-            }).commit();
+            });
+            modificationResult.commit();
+            if (codeFragments.size() == 1) {
+                CodeFragmentSelector.select(codeFragments.get(0), modificationResult, fileObject.get(), component);
+            }
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

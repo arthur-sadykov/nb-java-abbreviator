@@ -68,7 +68,7 @@ public class ExternalTypeCollector extends AbstractCodeFragmentCollector {
             if (typeElement != null) {
                 String typeName = typeElement.getSimpleName().toString();
                 String typeAbbreviation = StringUtilities.getElementAbbreviation(typeName);
-                if (typeAbbreviation.equals(abbreviation.getScope())) {
+                if (typeAbbreviation.equals(abbreviation.getContent())) {
                     if (!elements.isDeprecated(typeElement)) {
                         typeElements.add(typeElement);
                     }
