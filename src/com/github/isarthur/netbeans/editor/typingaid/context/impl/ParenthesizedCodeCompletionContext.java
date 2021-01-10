@@ -38,18 +38,12 @@ public class ParenthesizedCodeCompletionContext extends AbstractCodeCompletionCo
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
-                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
-                .linkExternalTypeCollector()
                 .linkFieldCollector()
-                .linkGlobalTypeCollector()
-                .linkInternalTypeCollector()
-                .linkKeywordCollector()
                 .linkLiteralCollector()
                 .linkLocalMethodInvocationCollector()
                 .linkLocalVariableCollector()
                 .linkParameterCollector()
-                .linkPrimitiveTypeCollector()
                 .linkResourceVariableCollector()
                 .build();
     }
