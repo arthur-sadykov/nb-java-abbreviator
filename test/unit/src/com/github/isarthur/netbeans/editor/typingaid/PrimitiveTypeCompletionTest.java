@@ -45,7 +45,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
         Preferences.setPrimitiveTypeFlag(true);
     }
 
-    public void testBooleanByteKeywordsCompletionInBlock() throws IOException {
+    public void testBooleanByteKeywordCompletionInBlock() throws IOException {
         doAbbreviationInsert(
                 "b",
                 "class Test {\n"
@@ -61,7 +61,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("boolean", "byte"));
     }
 
-    public void testBooleanByteKeywordsCompletionInTypeCast() throws IOException {
+    public void testBooleanByteKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "b",
                 "class Test {\n"
@@ -79,7 +79,25 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("boolean", "byte"));
     }
 
-    public void testBooleanByteKeywordsCompletionInMethodParameter() throws IOException {
+    public void testBooleanByteKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "b",
+                "class Test {\n"
+                + "    boolean test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    boolean test() {\n"
+                + "        Object object = null;\n"
+                + "        return object;\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("boolean", "byte"));
+    }
+
+    public void testBooleanByteKeywordCompletionInMethodParameter() throws IOException {
         doAbbreviationInsert(
                 "b",
                 "class Test {\n"
@@ -93,7 +111,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("boolean", "byte"));
     }
 
-    public void testBooleanByteKeywordsCompletionInInterfaceMethodParameter() throws IOException {
+    public void testBooleanByteKeywordCompletionInInterfaceMethodParameter() throws IOException {
         doAbbreviationInsert(
                 "b",
                 "interface Test {\n"
@@ -105,7 +123,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("boolean", "byte"));
     }
 
-    public void testBooleanByteKeywordsCompletionInField() throws IOException {
+    public void testBooleanByteKeywordCompletionInField() throws IOException {
         doAbbreviationInsert(
                 "b",
                 "class Test {\n"
@@ -134,7 +152,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("char"));
     }
 
-    public void testCharKeywordCompletionInTypeCast() throws IOException {
+    public void testCharKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "c",
                 "class Test {\n"
@@ -147,6 +165,24 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test() {\n"
                 + "        Object object = null;\n"
                 + "        char ch = (char) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("char"));
+    }
+
+    public void testCharKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "c",
+                "class Test {\n"
+                + "    char test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    char test() {\n"
+                + "        Object object = null;\n"
+                + "        return (char) object;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("char"));
@@ -209,7 +245,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("int"));
     }
 
-    public void testIntKeywordCompletionInTypeCast() throws IOException {
+    public void testIntKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "i",
                 "class Test {\n"
@@ -222,6 +258,24 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test() {\n"
                 + "        Object object = null;\n"
                 + "        int integer = (int) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("int"));
+    }
+
+    public void testIntKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test {\n"
+                + "    int test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    int test() {\n"
+                + "        Object object = null;\n"
+                + "        return (int) object;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("int"));
@@ -284,7 +338,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("long"));
     }
 
-    public void testLongKeywordCompletionInTypeCast() throws IOException {
+    public void testLongKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "l",
                 "class Test {\n"
@@ -297,6 +351,24 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test() {\n"
                 + "        Object object = null;\n"
                 + "        long number = (long) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("long"));
+    }
+
+    public void testLongKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "l",
+                "class Test {\n"
+                + "    long test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    long test() {\n"
+                + "        Object object = null;\n"
+                + "        return (long) object;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("long"));
@@ -359,7 +431,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("short"));
     }
 
-    public void testShortStringKeywordCompletionInTypeCast() throws IOException {
+    public void testShortStringKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "s",
                 "class Test {\n"
@@ -372,6 +444,24 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test() {\n"
                 + "        Object object = null;\n"
                 + "        short number = (short) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("short"));
+    }
+
+    public void testShortStringKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "class Test {\n"
+                + "    short test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    short test() {\n"
+                + "        Object object = null;\n"
+                + "        return (short) object;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("short"));
@@ -434,7 +524,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("float"));
     }
 
-    public void testFloatKeywordCompletionInTypeCast() throws IOException {
+    public void testFloatKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "class Test {\n"
@@ -447,6 +537,24 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test() {\n"
                 + "        Object object = null;\n"
                 + "        float number = (float) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("float"));
+    }
+
+    public void testFloatKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    float test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    float test() {\n"
+                + "        Object object = null;\n"
+                + "        return (float) object;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("float"));
@@ -509,7 +617,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("double"));
     }
 
-    public void testDoubleKeywordCompletionInTypeCast() throws IOException {
+    public void testDoubleKeywordCompletionInVariableTypeCast() throws IOException {
         doAbbreviationInsert(
                 "d",
                 "class Test {\n"
@@ -522,6 +630,24 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test() {\n"
                 + "        Object object = null;\n"
                 + "        double number = (double) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("double"));
+    }
+
+    public void testDoubleKeywordCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "d",
+                "class Test {\n"
+                + "    double test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    double test() {\n"
+                + "        Object object = null;\n"
+                + "        return (double) object;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("double"));

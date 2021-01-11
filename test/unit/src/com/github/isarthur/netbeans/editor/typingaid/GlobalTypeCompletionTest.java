@@ -350,6 +350,30 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Collections.emptyList());
     }
 
+    public void testImportedTypeCompletionInReturnTypeCast() throws IOException {
+        doAbbreviationInsert(
+                "iot",
+                "import com.sun.source.tree.ClassTree;\n"
+                + "import com.sun.source.tree.InstanceOfTree;\n"
+                + "java.io.*;\n"
+                + "class Test {\n"
+                + "    InstanceOfTree test() {\n"
+                + "        Object object = null;\n"
+                + "        return |object;\n"
+                + "    }\n"
+                + "}",
+                "import com.sun.source.tree.ClassTree;\n"
+                + "import com.sun.source.tree.InstanceOfTree;\n"
+                + "java.io.*;\n"
+                + "class Test {\n"
+                + "    InstanceOfTree test() {\n"
+                + "        Object object = null;\n"
+                + "        return (InstanceOfTree) object;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("com.sun.source.tree.InstanceOfTree"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

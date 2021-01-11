@@ -470,6 +470,8 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
             case INTERNAL_TYPE:
                 Type type = (Type) codeFragment;
                 DeclaredType declaredType = types.getDeclaredType(type.getType());
+                Abbreviation abbreviation = request.getAbbreviation();
+                TokenSequence<?> tokensSequence;
                 switch (request.getCurrentKind()) {
                     case BLOCK:
                         NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(type.getType(), request);
@@ -513,12 +515,26 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                                 null);
                     case PARAMETERIZED_TYPE:
                         return make.Type(type.toString());
+                    case RETURN:
+                        tokensSequence = copy.getTokenHierarchy().tokenSequence();
+                        tokensSequence.move(abbreviation.getStartOffset());
+                        while (tokensSequence.moveNext()) {
+                            Token<?> token = tokensSequence.token();
+                            if (token.id() == JavaTokenId.WHITESPACE) {
+                                continue;
+                            }
+                            if (token.id() == JavaTokenId.SEMICOLON) {
+                                return JavaSourceMaker.makeNewClassTree(type.getType(), request);
+                            } else {
+                                ReturnTree returnTree = (ReturnTree) getOriginalTree(codeFragment, request);
+                                return make.TypeCast(make.QualIdent(codeFragment.toString()), returnTree.getExpression());
+                            }
+                        }
                     case VARIABLE:
-                        Abbreviation abbreviation = request.getAbbreviation();
-                        TokenSequence<?> tokens = copy.getTokenHierarchy().tokenSequence();
-                        tokens.move(abbreviation.getStartOffset());
-                        while (tokens.moveNext()) {
-                            Token<?> token = tokens.token();
+                        tokensSequence = copy.getTokenHierarchy().tokenSequence();
+                        tokensSequence.move(abbreviation.getStartOffset());
+                        while (tokensSequence.moveNext()) {
+                            Token<?> token = tokensSequence.token();
                             if (token.id() == JavaTokenId.WHITESPACE) {
                                 continue;
                             }
@@ -767,6 +783,9 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
                         JavaSourceUtilities.getVariableName(type, request),
                         make.Identifier(codeFragment.toString()),
                         null);
+            case RETURN:
+                ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
+                return make.TypeCast(make.PrimitiveType(primitiveType.getTypeKind()), returnTree.getExpression());
             case VARIABLE:
                 VariableTree variableTree = (VariableTree) request.getCurrentTree();
                 return make.TypeCast(make.PrimitiveType(primitiveType.getTypeKind()), variableTree.getInitializer());

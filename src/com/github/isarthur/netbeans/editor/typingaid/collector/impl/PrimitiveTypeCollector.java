@@ -99,6 +99,7 @@ public class PrimitiveTypeCollector extends AbstractCodeFragmentCollector {
                 }
                 break;
             case BLOCK:
+            case RETURN:
                 collectPrimitiveTypes.get();
                 break;
             case METHOD:
