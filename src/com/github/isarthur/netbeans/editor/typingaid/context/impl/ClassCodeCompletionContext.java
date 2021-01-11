@@ -24,8 +24,10 @@ import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionR
 import com.sun.source.tree.ClassTree;
 import static com.sun.source.tree.Tree.Kind.CLASS;
 import javax.lang.model.type.TypeMirror;
+import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
+import org.netbeans.api.lexer.TokenSequence;
 
 /**
  *
@@ -42,13 +44,21 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
         CodeFragmentCollectorLinkerImpl.CodeFragmentCollectorLinkerBuilder builder =
                 CodeFragmentCollectorLinkerImpl.builder();
         if (bodySpan[0] < abbreviation.getStartOffset()) {
-            builder.linkExternalTypeCollector()
-                    .linkGlobalTypeCollector()
-                    .linkInternalTypeCollector()
-                    .linkKeywordCollector()
-                    .linkPrimitiveTypeCollector();
+            TokenSequence<?> tokenSequence = copy.getTokenHierarchy().tokenSequence();
+            tokenSequence.move(abbreviation.getStartOffset());
+            tokenSequence.moveNext();
+            if (tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+                builder.linkExternalTypeCollector()
+                        .linkGlobalTypeCollector()
+                        .linkInternalTypeCollector()
+                        .linkKeywordCollector()
+                        .linkPrimitiveTypeCollector();
+            } else {
+                builder.linkModifierCollector(CLASS);
+            }
+        } else {
+            builder.linkModifierCollector(CLASS);
         }
-        builder.linkModifierCollector(CLASS);
         return builder.build();
     }
 

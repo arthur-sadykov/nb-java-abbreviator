@@ -17,6 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid;
 
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import junit.framework.Test;
 
@@ -42,6 +43,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
     @Override
     protected void setCodeCompletionConfiguration() {
         Preferences.setGlobalTypeFlag(true);
+        Preferences.setModifierFlag(true);
     }
 
     public void testImportedTypeCompletionInBlock() throws IOException {
@@ -372,6 +374,173 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 Collections.singletonList("com.sun.source.tree.InstanceOfTree"));
+    }
+
+    public void testGlobalTypeCompletionInClassDeclarationWhenNextTokenIsWhitespaceAndMultipleResultsAreExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "class Test {\n"
+                + "    |\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    \n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("java.lang.Package", "java.lang.Process"));
+    }
+
+    public void testGlobalTypeCompletionInClassDeclarationWhenNextTokenIsNotWhitespaceAndMultipleResultsAreExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "class Test {\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testGlobalTypeCompletionInClassDeclarationWhenNextTokenIsWhitespaceAndOneResultIsExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    |\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "\n"
+                + "    private Float float1;\n"
+                + "    \n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.lang.Float"));
+    }
+
+    public void testGlobalTypeCompletionInClassDeclarationWhenNextTokenIsNotWhitespaceAndOneResultIsExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    final void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testGlobalTypeCompletionInEnumDeclarationWhenNextTokenIsWhitespaceAndMultipleResultsAreExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    \n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("java.lang.Package", "java.lang.Process"));
+    }
+
+    public void testGlobalTypeCompletionInEnumDeclarationWhenNextTokenIsNotWhitespaceAndMultipleResultsAreExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("private", "protected", "public"));
+    }
+
+    public void testGlobalTypeCompletionInEnumDeclarationWhenNextTokenIsWhitespaceAndOneResultIsExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |\n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    private Float float1;\n"
+                + "    \n"
+                + "    void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.lang.Float"));
+    }
+
+    public void testGlobalTypeCompletionInEnumDeclarationWhenNextTokenIsNotWhitespaceAndOneResultIsExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |void test() {\n"
+                + "    }\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    final void test() {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("final"));
+    }
+
+    public void testGlobalTypeCompletionInInterfaceDeclarationWhenNextTokenIsWhitespaceAndMultipleResultsAreExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "interface Test {\n"
+                + "    |\n"
+                + "    void test();\n"
+                + "}",
+                "interface Test {\n"
+                + "    \n"
+                + "    void test();\n"
+                + "}",
+                Arrays.asList("java.lang.Package", "java.lang.Process"));
+    }
+
+    public void testGlobalTypeCompletionInInterfaceDeclarationWhenNextTokenIsNotWhitespaceAndOneResultIsExpected()
+            throws IOException {
+        doAbbreviationInsert(
+                "p",
+                "interface Test {\n"
+                + "    |void test();\n"
+                + "}",
+                "interface Test {\n"
+                + "    public void test();\n"
+                + "}",
+                Arrays.asList("public"));
     }
 
     @Override
