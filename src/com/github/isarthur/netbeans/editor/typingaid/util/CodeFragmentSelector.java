@@ -40,7 +40,8 @@ public class CodeFragmentSelector {
             JTextComponent component) {
         List<? extends ModificationResult.Difference> differences = modificationResult.getDifferences(fileObject);
         if (differences != null && !differences.isEmpty()) {
-            ModificationResult.Difference difference = differences.get(differences.size() - 1);
+            ModificationResult.Difference difference =
+                    getDifferenceClosestToCurrentContext(differences, component.getCaretPosition());
             switch (codeFragment.getKind()) {
                 case ASSERT_KEYWORD:
                 case DO_KEYWORD:
@@ -99,7 +100,7 @@ public class CodeFragmentSelector {
         document.render(() -> {
             TokenHierarchy<?> tokenHierarchy = TokenHierarchy.get(component.getDocument());
             TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
-            tokenSequence.move(difference.getEndPosition().getOffset());
+            tokenSequence.move(getDifferenceStartPosition(difference));
             boolean literalFound = false;
             while (tokenSequence.moveNext()) {
                 if (tokenSequence.token().id() == JavaTokenId.INT_LITERAL
@@ -122,7 +123,7 @@ public class CodeFragmentSelector {
         document.render(() -> {
             TokenHierarchy<?> tokenHierarchy = TokenHierarchy.get(component.getDocument());
             TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
-            tokenSequence.move(difference.getEndPosition().getOffset());
+            tokenSequence.move(getDifferenceStartPosition(difference));
             boolean whitespaceFound = false;
             boolean newKeywordFound = false;
             while (tokenSequence.moveNext()
@@ -203,7 +204,7 @@ public class CodeFragmentSelector {
         document.render(() -> {
             TokenHierarchy<?> tokenHierarchy = TokenHierarchy.get(component.getDocument());
             TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
-            tokenSequence.move(difference.getEndPosition().getOffset());
+            tokenSequence.move(getDifferenceStartPosition(difference));
             while (tokenSequence.moveNext() && tokenSequence.token().id() != tokenId) {
             }
             if (tokenSequence.token().id() == tokenId) {
@@ -219,7 +220,7 @@ public class CodeFragmentSelector {
         document.render(() -> {
             TokenHierarchy<?> tokenHierarchy = TokenHierarchy.get(component.getDocument());
             TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
-            tokenSequence.move(difference.getEndPosition().getOffset());
+            tokenSequence.move(getDifferenceStartPosition(difference));
             while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.RETURN) {
             }
             while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
@@ -248,7 +249,7 @@ public class CodeFragmentSelector {
         document.render(() -> {
             TokenHierarchy<?> tokenHierarchy = TokenHierarchy.get(component.getDocument());
             TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
-            tokenSequence.move(difference.getEndPosition().getOffset());
+            tokenSequence.move(getDifferenceStartPosition(difference));
             while (tokenSequence.moveNext() && tokenSequence.token().id() != tokenId) {
             }
             if (tokenSequence.token().id() == tokenId) {
@@ -257,5 +258,26 @@ public class CodeFragmentSelector {
                 SwingUtilities.invokeLater(() -> component.setCaretPosition(endPosition + offset));
             }
         });
+    }
+
+    private static ModificationResult.Difference getDifferenceClosestToCurrentContext(
+            List<? extends ModificationResult.Difference> differences, int caretPosition) {
+        int minDelta = Integer.MAX_VALUE;
+        ModificationResult.Difference targetDifference = differences.get(0);
+        for (ModificationResult.Difference difference : differences) {
+            int differenceStartPosition = difference.getStartPosition().getOffset();
+            int differenceEndPosition = difference.getEndPosition().getOffset();
+            int delta = Math.min(
+                    Math.abs(caretPosition - differenceStartPosition), Math.abs(caretPosition - differenceEndPosition));
+            if (delta < minDelta) {
+                minDelta = delta;
+                targetDifference = difference;
+            }
+        }
+        return targetDifference;
+    }
+
+    private static int getDifferenceStartPosition(ModificationResult.Difference difference) {
+        return Math.min(difference.getStartPosition().getOffset(), difference.getEndPosition().getOffset());
     }
 }
