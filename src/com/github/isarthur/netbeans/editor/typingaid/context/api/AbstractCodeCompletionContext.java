@@ -16,9 +16,9 @@
 package com.github.isarthur.netbeans.editor.typingaid.context.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 
 /**
@@ -40,7 +40,29 @@ public abstract class AbstractCodeCompletionContext implements CodeCompletionCon
         codeFragment.accept(visitor, request);
     }
 
-    protected abstract CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request);
+    protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
+        if (!request.getAbbreviation().isSimple()) {
+            return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkExternalInnerTypeCollector()
+                    .linkGlobalInnerTypeCollector()
+                    .linkMethodInvocationCollector()
+                    .linkStaticFieldAccessCollector()
+                    .linkStaticMethodInvocationCollector()
+                    .build();
+        }
+        return CodeFragmentCollectorLinkerImpl.builder()
+                .linkExceptionParameterCollector()
+                .linkExternalTypeCollector()
+                .linkFieldCollector()
+                .linkGlobalTypeCollector()
+                .linkInternalTypeCollector()
+                .linkLiteralCollector()
+                .linkLocalMethodInvocationCollector()
+                .linkLocalVariableCollector()
+                .linkParameterCollector()
+                .linkResourceVariableCollector()
+                .build();
+    }
 
     protected abstract CodeFragmentInsertVisitor getCodeFragmentInsertVisitor();
 }

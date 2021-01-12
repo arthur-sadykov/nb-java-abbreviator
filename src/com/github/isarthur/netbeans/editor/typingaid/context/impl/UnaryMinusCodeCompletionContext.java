@@ -15,7 +15,6 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.context.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.UnaryExpressionCodeFragmentInsertVisitor;
@@ -28,28 +27,6 @@ import javax.lang.model.type.TypeMirror;
  * @author Arthur Sadykov
  */
 public class UnaryMinusCodeCompletionContext extends AbstractCodeCompletionContext {
-
-    @Override
-    protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
-        if (!request.getAbbreviation().isSimple()) {
-            return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkExternalInnerTypeCollector()
-                    .linkGlobalInnerTypeCollector()
-                    .linkMethodInvocationCollector()
-                    .linkStaticFieldAccessCollector()
-                    .linkStaticMethodInvocationCollector()
-                    .build();
-        }
-        return CodeFragmentCollectorLinkerImpl.builder()
-                .linkExceptionParameterCollector()
-                .linkFieldCollector()
-                .linkLiteralCollector()
-                .linkLocalMethodInvocationCollector()
-                .linkLocalVariableCollector()
-                .linkParameterCollector()
-                .linkResourceVariableCollector()
-                .build();
-    }
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {

@@ -21,11 +21,14 @@ import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionR
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompoundAssignmentTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Tree;
+import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import java.util.Collections;
 import java.util.List;
@@ -76,10 +79,52 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
         WorkingCopy copy = request.getWorkingCopy();
         Types types = copy.getTypes();
         DeclaredType declaredType = types.getDeclaredType(getIdentifier());
-        Abbreviation abbreviation = request.getAbbreviation();
-        TokenSequence<?> tokensSequence;
         ExpressionTree initializer;
         switch (request.getCurrentKind()) {
+            case AND:
+            case CONDITIONAL_AND:
+            case CONDITIONAL_OR:
+            case DIVIDE:
+            case EQUAL_TO:
+            case GREATER_THAN:
+            case GREATER_THAN_EQUAL:
+            case LEFT_SHIFT:
+            case LESS_THAN:
+            case LESS_THAN_EQUAL:
+            case MINUS:
+            case MULTIPLY:
+            case NOT_EQUAL_TO:
+            case OR:
+            case PLUS:
+            case REMAINDER:
+            case RIGHT_SHIFT:
+            case UNSIGNED_RIGHT_SHIFT:
+            case XOR:
+                BinaryTree binaryTree = (BinaryTree) request.getCurrentTree();
+                return getNewClassOrTypeCastTree(binaryTree.getRightOperand(), request);
+            case AND_ASSIGNMENT:
+            case DIVIDE_ASSIGNMENT:
+            case LEFT_SHIFT_ASSIGNMENT:
+            case MINUS_ASSIGNMENT:
+            case MULTIPLY_ASSIGNMENT:
+            case OR_ASSIGNMENT:
+            case PLUS_ASSIGNMENT:
+            case REMAINDER_ASSIGNMENT:
+            case RIGHT_SHIFT_ASSIGNMENT:
+            case UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+            case XOR_ASSIGNMENT:
+                CompoundAssignmentTree compoundAssignmentTree = (CompoundAssignmentTree) request.getCurrentTree();
+                return getNewClassOrTypeCastTree(compoundAssignmentTree.getExpression(), request);
+            case BITWISE_COMPLEMENT:
+            case LOGICAL_COMPLEMENT:
+            case POSTFIX_DECREMENT:
+            case POSTFIX_INCREMENT:
+            case PREFIX_DECREMENT:
+            case PREFIX_INCREMENT:
+            case UNARY_MINUS:
+            case UNARY_PLUS:
+                UnaryTree unaryTree = (UnaryTree) request.getCurrentTree();
+                return getNewClassOrTypeCastTree(unaryTree.getExpression(), request);
             case BLOCK:
                 NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
                 if (newClassTree != null) {
@@ -119,45 +164,34 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
             case PARAMETERIZED_TYPE:
                 return JavaSourceMaker.makeTypeTree(toString(), request);
             case RETURN:
-                tokensSequence = copy.getTokenHierarchy().tokenSequence();
-                tokensSequence.move(abbreviation.getStartOffset());
-                while (tokensSequence.moveNext()) {
-                    Token<?> token = tokensSequence.token();
-                    if (token.id() == JavaTokenId.WHITESPACE) {
-                        continue;
-                    }
-                    if (token.id() == JavaTokenId.SEMICOLON) {
-                        return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
-                    } else {
-                        ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
-                        return JavaSourceMaker.makeTypeCastTree(
-                                JavaSourceMaker.makeQualIdentTree(toString(), request),
-                                returnTree.getExpression(),
-                                request);
-                    }
-                }
-                break;
+                ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
+                return getNewClassOrTypeCastTree(returnTree.getExpression(), request);
             case VARIABLE:
-                tokensSequence = copy.getTokenHierarchy().tokenSequence();
-                tokensSequence.move(abbreviation.getStartOffset());
-                while (tokensSequence.moveNext()) {
-                    Token<?> token = tokensSequence.token();
-                    if (token.id() == JavaTokenId.WHITESPACE) {
-                        continue;
-                    }
-                    if (token.id() == JavaTokenId.SEMICOLON) {
-                        return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
-                    } else {
-                        VariableTree variableTree = (VariableTree) request.getCurrentTree();
-                        return JavaSourceMaker.makeTypeCastTree(
-                                JavaSourceMaker.makeQualIdentTree(toString(), request),
-                                variableTree.getInitializer(),
-                                request);
-                    }
-                }
-                break;
+                VariableTree variableTree = (VariableTree) request.getCurrentTree();
+                return getNewClassOrTypeCastTree(variableTree.getInitializer(), request);
             default:
                 return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+        }
+    }
+
+    private Tree getNewClassOrTypeCastTree(ExpressionTree expression, CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        TokenSequence<?> tokensSequence = copy.getTokenHierarchy().tokenSequence();
+        Abbreviation abbreviation = request.getAbbreviation();
+        tokensSequence.move(abbreviation.getStartOffset());
+        while (tokensSequence.moveNext()) {
+            Token<?> token = tokensSequence.token();
+            if (token.id() == JavaTokenId.WHITESPACE) {
+                continue;
+            }
+            if (token.id() == JavaTokenId.SEMICOLON) {
+                return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+            } else {
+                return JavaSourceMaker.makeTypeCastTree(
+                        JavaSourceMaker.makeQualIdentTree(toString(), request),
+                        expression,
+                        request);
+            }
         }
         return null;
     }
