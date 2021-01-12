@@ -16,6 +16,8 @@
 package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.StaticFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.ExternalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
@@ -24,18 +26,24 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.C
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.CatchKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ClassKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ContinueKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.DefaultKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.DoKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ElseKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.EnumKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ExtendsKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.FinallyKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ForKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.IfKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ImplementsKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ImportKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InstanceofKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InterfaceKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThrowKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThrowsKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.TryKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.VoidKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.WhileKeyword;
@@ -43,6 +51,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.literal.impl.F
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.literal.impl.NullLiteral;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.literal.impl.TrueLiteral;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.localelement.api.LocalElement;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.ChainedMethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.LocalMethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.NormalMethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.StaticMethodInvocation;
@@ -108,6 +117,16 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     }
 
     @Override
+    public void visit(ChainedFieldAccess fieldAccess, CodeCompletionRequest request) {
+        insertTree(fieldAccess, request);
+    }
+
+    @Override
+    public void visit(ChainedMethodInvocation methodInvocation, CodeCompletionRequest request) {
+        insertTree(methodInvocation, request);
+    }
+
+    @Override
     public void visit(CharPrimitiveType primitiveType, CodeCompletionRequest request) {
         insertTree(primitiveType, request);
     }
@@ -123,6 +142,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     }
 
     @Override
+    public void visit(DefaultKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
     public void visit(DoKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
     }
@@ -134,6 +158,16 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
 
     @Override
     public void visit(ElseKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
+    public void visit(EnumKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
+    public void visit(ExtendsKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
     }
 
@@ -173,17 +207,22 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     }
 
     @Override
-    public void visit(EnumKeyword keyword, CodeCompletionRequest request) {
-        insertTree(keyword, request);
-    }
-
-    @Override
     public void visit(IfKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
     }
 
     @Override
+    public void visit(ImplementsKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
     public void visit(ImportKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
+    public void visit(InstanceofKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
     }
 
@@ -258,6 +297,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     }
 
     @Override
+    public void visit(StaticFieldAccess fieldAccess, CodeCompletionRequest request) {
+        insertTree(fieldAccess, request);
+    }
+
+    @Override
     public void visit(StaticMethodInvocation methodInvocation, CodeCompletionRequest request) {
         insertTree(methodInvocation, request);
     }
@@ -283,7 +327,17 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     }
 
     @Override
+    public void visit(ThisKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
     public void visit(ThrowKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
+    }
+
+    @Override
+    public void visit(ThrowsKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
     }
 

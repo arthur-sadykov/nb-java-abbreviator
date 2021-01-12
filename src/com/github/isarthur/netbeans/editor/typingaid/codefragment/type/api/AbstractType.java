@@ -136,6 +136,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                                 request);
                     }
                 }
+                break;
             case VARIABLE:
                 tokensSequence = copy.getTokenHierarchy().tokenSequence();
                 tokensSequence.move(abbreviation.getStartOffset());

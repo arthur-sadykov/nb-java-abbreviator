@@ -16,6 +16,8 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.api.AbstractFieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import javax.lang.model.element.Element;
 
 /**
@@ -31,5 +33,10 @@ public class ChainedFieldAccess extends AbstractFieldAccess {
     @Override
     public Kind getKind() {
         return Kind.CHAINED_FIELD_ACCESS;
+    }
+
+    @Override
+    public void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request) {
+        visitor.visit(this, request);
     }
 }

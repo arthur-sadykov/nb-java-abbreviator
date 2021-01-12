@@ -15,7 +15,8 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api;
 
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.api.FieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.StaticFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.ExternalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
@@ -102,6 +103,9 @@ public interface CodeFragmentInsertVisitor {
     default void visit(CatchKeyword keyword, CodeCompletionRequest request) {
     }
 
+    default void visit(ChainedFieldAccess fieldAccess, CodeCompletionRequest request) {
+    }
+
     default void visit(ChainedMethodInvocation methodInvocation, CodeCompletionRequest request) {
     }
 
@@ -136,9 +140,6 @@ public interface CodeFragmentInsertVisitor {
     }
 
     default void visit(FalseLiteral literal, CodeCompletionRequest request) {
-    }
-
-    default void visit(FieldAccess fieldAccess, CodeCompletionRequest request) {
     }
 
     default void visit(FinalModifier modifier, CodeCompletionRequest request) {
@@ -208,6 +209,9 @@ public interface CodeFragmentInsertVisitor {
     }
 
     default void visit(ShortPrimitiveType primitiveType, CodeCompletionRequest request) {
+    }
+
+    default void visit(StaticFieldAccess fieldAccess, CodeCompletionRequest request) {
     }
 
     default void visit(StaticMethodInvocation methodInvocation, CodeCompletionRequest request) {

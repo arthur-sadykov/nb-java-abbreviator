@@ -16,6 +16,7 @@
 package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.ChainedMethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
@@ -27,7 +28,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.TokenSequence;
 import org.openide.util.Exceptions;
@@ -42,17 +42,16 @@ public class MemberSelectCodeFragmentInsertVisitor implements CodeFragmentInsert
     public void visit(ChainedMethodInvocation methodInvocation, CodeCompletionRequest request) {
         MemberSelectTree memberSelectTree = (MemberSelectTree) request.getCurrentTree();
         WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         ExpressionTree methodInvocationTree =
                 JavaSourceMaker.makeMethodInvocationExpressionTree(methodInvocation, request);
-        MemberSelectTree newMemberSelectTree =
-                make.MemberSelect(memberSelectTree.getExpression(), methodInvocationTree.toString());
+        MemberSelectTree newMemberSelectTree = JavaSourceMaker.makeMemberSelectTree(
+                memberSelectTree.getExpression(), methodInvocationTree.toString(), request);
         SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
         long startPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), memberSelectTree);
         long endPosition = sourcePositions.getEndPosition(copy.getCompilationUnit(), memberSelectTree);
         long dotCount = memberSelectTree.toString().chars().filter(ch -> ch == '.').count();
         String next = ""; //NOI18N
-        if (dotCount > 1) {
+        if (dotCount > 0) {
             TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
             Abbreviation abbreviation = request.getAbbreviation();
             sequence.move(abbreviation.getStartOffset());
@@ -70,6 +69,25 @@ public class MemberSelectCodeFragmentInsertVisitor implements CodeFragmentInsert
                 document.insertString((int) startPosition, newMemberSelectTree.toString() + next, null);
                 component.setCaretPosition(component.getCaretPosition() - 1);
             }
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+
+    @Override
+    public void visit(ChainedFieldAccess fieldAccess, CodeCompletionRequest request) {
+        MemberSelectTree memberSelectTree = (MemberSelectTree) request.getCurrentTree();
+        WorkingCopy copy = request.getWorkingCopy();
+        MemberSelectTree newMemberSelectTree =
+                JavaSourceMaker.makeMemberSelectTree(memberSelectTree.getExpression(), fieldAccess.toString(), request);
+        SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
+        long startPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), memberSelectTree);
+        long endPosition = sourcePositions.getEndPosition(copy.getCompilationUnit(), memberSelectTree);
+        try {
+            JTextComponent component = request.getComponent();
+            Document document = component.getDocument();
+            document.remove((int) startPosition, (int) (endPosition - startPosition));
+            document.insertString((int) startPosition, newMemberSelectTree.toString(), null);
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
         }

@@ -16,7 +16,11 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.api.AbstractFieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.Tree;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -47,6 +51,19 @@ public class StaticFieldAccess extends AbstractFieldAccess {
         String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getSimpleName().toString());
         String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString());
         return abbreviation.equals(scopeAbbreviation + "." + identifierAbbreviation); //NOI18N
+    }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        return JavaSourceMaker.makeMemberSelectTree(
+                JavaSourceMaker.makeQualIdentTree(scope, request),
+                identifier,
+                request);
+    }
+
+    @Override
+    public void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request) {
+        visitor.visit(this, request);
     }
 
     @Override

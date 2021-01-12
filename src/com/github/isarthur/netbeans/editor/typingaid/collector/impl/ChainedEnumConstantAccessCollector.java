@@ -17,7 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.localelement.impl.LocalElementImpl;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.CodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.context.impl.CodeCompletionContextFactory;
@@ -61,7 +61,7 @@ public class ChainedEnumConstantAccessCollector extends AbstractCodeFragmentColl
         enumConstants = getEnumConstantsByAbbreviation(enumConstants, request.getAbbreviation());
         List<CodeFragment> codeFragments = request.getCodeFragments();
         enumConstants.forEach(enumConstant ->
-                codeFragments.add(new LocalElementImpl(enumConstant)));
+                codeFragments.add(new ChainedFieldAccess(enumConstant)));
         super.collect(request);
     }
 
