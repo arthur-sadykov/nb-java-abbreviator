@@ -35,6 +35,8 @@ public class RightShiftCodeCompletionContext extends AbstractCodeCompletionConte
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
         if (!request.getAbbreviation().isSimple()) {
             return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkExternalInnerTypeCollector()
+                    .linkGlobalInnerTypeCollector()
                     .linkMethodInvocationCollector()
                     .linkStaticFieldAccessCollector()
                     .linkStaticMethodInvocationCollector()

@@ -42,6 +42,8 @@ public class MethodInvocationCodeCompletionContext extends AbstractCodeCompletio
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
         if (!request.getAbbreviation().isSimple()) {
             return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkExternalInnerTypeCollector()
+                    .linkGlobalInnerTypeCollector()
                     .linkMethodInvocationCollector()
                     .linkStaticFieldAccessCollector()
                     .linkStaticMethodInvocationCollector()
