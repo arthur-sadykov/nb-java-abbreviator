@@ -146,7 +146,7 @@ public class Preferences {
     }
 
     public static boolean getExternalTypeFlag() {
-        return NbPreferences.forModule(Preferences.class).getBoolean(EXTERNAL_TYPE, true);
+        return NbPreferences.forModule(Preferences.class).getBoolean(EXTERNAL_TYPE, false);
     }
 
     public static void setExternalTypeFlag(boolean type) {
