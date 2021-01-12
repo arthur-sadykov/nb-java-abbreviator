@@ -16,12 +16,20 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl;
 
 import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.BREAK_KEYWORD;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.api.AbstractKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.KeywordCollectVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.BREAK;
+import static com.sun.source.tree.Tree.Kind.DO_WHILE_LOOP;
+import static com.sun.source.tree.Tree.Kind.ENHANCED_FOR_LOOP;
+import static com.sun.source.tree.Tree.Kind.FOR_LOOP;
+import static com.sun.source.tree.Tree.Kind.SWITCH;
+import static com.sun.source.tree.Tree.Kind.WHILE_LOOP;
+import java.util.EnumSet;
 
 /**
  *
@@ -47,6 +55,15 @@ public class BreakKeyword extends AbstractKeyword {
     @Override
     public Tree.Kind getTreeKind() {
         return BREAK;
+    }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        if (!JavaSourceUtilities.getParentTreeOfKind(EnumSet.of(DO_WHILE_LOOP, ENHANCED_FOR_LOOP,
+                FOR_LOOP, SWITCH, WHILE_LOOP), request)) {
+            return null;
+        }
+        return JavaSourceMaker.makeBreakTree(request);
     }
 
     @Override

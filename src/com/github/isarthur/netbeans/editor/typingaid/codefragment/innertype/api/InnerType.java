@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Arthur Sadykov.
+ * Copyright 2021 Arthur Sadykov.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api;
+package com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import javax.lang.model.element.TypeElement;
@@ -22,7 +22,9 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Arthur Sadykov
  */
-public interface Type extends CodeFragment {
+public interface InnerType extends CodeFragment {
+
+    TypeElement getScope();
 
     TypeElement getIdentifier();
 }

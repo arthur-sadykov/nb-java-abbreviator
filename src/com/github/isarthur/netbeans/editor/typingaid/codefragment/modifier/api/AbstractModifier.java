@@ -15,7 +15,11 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.api;
 
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.Tree;
+import java.util.Collections;
 
 /**
  *
@@ -26,6 +30,11 @@ public abstract class AbstractModifier implements Modifier {
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
         return StringUtilities.getElementAbbreviation(toString()).equals(abbreviation);
+    }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        return JavaSourceMaker.makeModifiersTree(Collections.singleton(getIdentifier()), request);
     }
 
     @Override

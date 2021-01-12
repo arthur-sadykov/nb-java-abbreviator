@@ -16,10 +16,18 @@
 package com.github.isarthur.netbeans.editor.typingaid.collector.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -44,5 +52,20 @@ public abstract class AbstractCodeFragmentCollector implements CodeFragmentColle
     protected <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    }
+
+    protected List<TypeElement> filterThrowableTypes(
+            Iterable<? extends TypeElement> globalTypes, CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        Elements elements = copy.getElements();
+        Types types = copy.getTypes();
+        TypeMirror throwableTypeMirror = elements.getTypeElement("java.lang.Throwable").asType(); //NOI18N
+        List<TypeElement> throwableTypes = new ArrayList<>();
+        for (TypeElement globalType : globalTypes) {
+            if (types.isAssignable(globalType.asType(), throwableTypeMirror)) {
+                throwableTypes.add(globalType);
+            }
+        }
+        return Collections.unmodifiableList(throwableTypes);
     }
 }

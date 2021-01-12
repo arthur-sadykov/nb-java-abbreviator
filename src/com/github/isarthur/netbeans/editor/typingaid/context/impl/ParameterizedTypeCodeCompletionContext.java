@@ -15,6 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.context.impl;
 
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
@@ -30,6 +31,13 @@ public class ParameterizedTypeCodeCompletionContext extends AbstractCodeCompleti
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
+        Abbreviation abbreviation = request.getAbbreviation();
+        if (!abbreviation.isSimple()) {
+            return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkExternalInnerTypeCollector()
+                    .linkGlobalInnerTypeCollector()
+                    .build();
+        }
         return CodeFragmentCollectorLinkerImpl.builder()
                 .linkExternalTypeCollector()
                 .linkGlobalTypeCollector()

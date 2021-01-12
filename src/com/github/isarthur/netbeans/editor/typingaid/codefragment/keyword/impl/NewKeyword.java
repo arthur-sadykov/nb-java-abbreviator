@@ -16,12 +16,19 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl;
 
 import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.NEW_KEYWORD;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.api.AbstractKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.KeywordCollectVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.NEW_CLASS;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import org.netbeans.api.java.source.ElementUtilities;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -47,6 +54,25 @@ public class NewKeyword extends AbstractKeyword {
     @Override
     public Tree.Kind getTreeKind() {
         return NEW_CLASS;
+    }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        TypeMirror typeInContext = JavaSourceUtilities.getTypeInContext(request);
+        if (typeInContext == null) {
+            return null;
+        }
+        WorkingCopy copy = request.getWorkingCopy();
+        Element element = copy.getTypes().asElement(typeInContext);
+        if (element == null) {
+            return null;
+        }
+        ElementUtilities elementUtilities = copy.getElementUtilities();
+        TypeElement enclosingTypeElement = elementUtilities.enclosingTypeElement(element);
+        if (enclosingTypeElement == null) {
+            return JavaSourceMaker.makeNewClassTree((TypeElement) element, request);
+        }
+        return JavaSourceMaker.makeNewClassOrEnumAccessTree(enclosingTypeElement, (TypeElement) element, request);
     }
 
     @Override

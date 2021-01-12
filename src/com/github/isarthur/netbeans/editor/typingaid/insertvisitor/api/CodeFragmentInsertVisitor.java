@@ -16,6 +16,8 @@
 package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.api.FieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.ExternalInnerType;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.BreakKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.CaseKeyword;
@@ -130,6 +132,9 @@ public interface CodeFragmentInsertVisitor {
     default void visit(ExtendsKeyword keyword, CodeCompletionRequest request) {
     }
 
+    default void visit(ExternalInnerType innerType, CodeCompletionRequest request) {
+    }
+
     default void visit(FalseLiteral literal, CodeCompletionRequest request) {
     }
 
@@ -146,6 +151,9 @@ public interface CodeFragmentInsertVisitor {
     }
 
     default void visit(ForKeyword keyword, CodeCompletionRequest request) {
+    }
+
+    default void visit(GlobalInnerType innerType, CodeCompletionRequest request) {
     }
 
     default void visit(IfKeyword keyword, CodeCompletionRequest request) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Arthur Sadykov.
+ * Copyright 2021 Arthur Sadykov.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.GlobalType;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import java.util.List;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -33,13 +35,44 @@ import org.netbeans.api.java.source.WorkingCopy;
  *
  * @author Arthur Sadykov
  */
-public class GlobalTypeCollector extends AbstractCodeFragmentCollector {
+public class GlobalInnerTypeCollector extends AbstractCodeFragmentCollector {
 
     @Override
     public void collect(CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
         Iterable<? extends TypeElement> globalTypes = collectGlobalTypeElements(request);
+        Elements elements = copy.getElements();
+        ElementUtilities elementUtilities = copy.getElementUtilities();
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        globalTypes.forEach(globalType -> codeFragments.add(new GlobalType(globalType)));
+        Abbreviation abbreviation = request.getAbbreviation();
+        for (TypeElement globalType : globalTypes) {
+            Iterable<? extends Element> innerTypeElements =
+                    elementUtilities.getMembers(globalType.asType(), (element, type) -> {
+                        if (elements.isDeprecated(element)) {
+                            return false;
+                        }
+                        if (element.getKind() != ElementKind.ENUM && element.getKind() != ElementKind.CLASS) {
+                            return false;
+                        }
+                        String innerTypeAbbreviation =
+                                StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+                        if (!innerTypeAbbreviation.equals(abbreviation.getIdentifier())) {
+                            return false;
+                        }
+                        if (element.getModifiers().contains(Modifier.PUBLIC)) {
+                            return true;
+                        } else if (element.getModifiers().contains(Modifier.PRIVATE)) {
+                            return false;
+                        } else {
+                            if (JavaSourceUtilities.inSamePackageAsCurrentFile(globalType, request)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+            innerTypeElements.forEach(innerType ->
+                    codeFragments.add(new GlobalInnerType(globalType, (TypeElement) innerType)));
+        }
         super.collect(request);
     }
 
@@ -53,7 +86,7 @@ public class GlobalTypeCollector extends AbstractCodeFragmentCollector {
                 return false;
             }
             String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-            if (!typeAbbreviation.equals(abbreviation.getContent())) {
+            if (!typeAbbreviation.equals(abbreviation.getScope())) {
                 return false;
             }
             if (element.getModifiers().contains(Modifier.PUBLIC)) {

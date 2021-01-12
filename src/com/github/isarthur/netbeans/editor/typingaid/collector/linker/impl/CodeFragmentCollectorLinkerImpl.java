@@ -21,9 +21,11 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedField
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedMethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.EnumConstantCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExceptionParameterCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalInnerTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.FieldCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalInnerTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalThrowableTypeCollector;
@@ -76,37 +78,27 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
 
         private List<CodeFragmentCollector> collectors = new ArrayList<>();
 
-        public CodeFragmentCollectorLinkerBuilder linkExternalTypeCollector() {
-            if (Preferences.getExternalTypeFlag()) {
-                collectors.add(new ExternalTypeCollector());
+        public CodeFragmentCollectorLinkerImpl build() {
+            return new CodeFragmentCollectorLinkerImpl(this);
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkChainedEnumConstantCollector() {
+            if (Preferences.getChainedEnumConstantAccessFlag()) {
+                collectors.add(new ChainedEnumConstantAccessCollector());
             }
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkExternalThrowableTypeCollector() {
-            if (Preferences.getExternalTypeFlag()) {
-                collectors.add(new ExternalThrowableTypeCollector());
+        public CodeFragmentCollectorLinkerBuilder linkChainedFieldAccessCollector() {
+            if (Preferences.getChainedFieldAccessFlag()) {
+                collectors.add(new ChainedFieldAccessCollector());
             }
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkLocalVariableCollector() {
-            if (Preferences.getLocalVariableFlag()) {
-                collectors.add(new LocalVariableCollector());
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkFieldCollector() {
-            if (Preferences.getFieldFlag()) {
-                collectors.add(new FieldCollector());
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkParameterCollector() {
-            if (Preferences.getParameterFlag()) {
-                collectors.add(new ParameterCollector());
+        public CodeFragmentCollectorLinkerBuilder linkChainedMethodInvocationCollector() {
+            if (Preferences.getChainedMethodInvocationFlag()) {
+                collectors.add(new ChainedMethodInvocationCollector());
             }
             return this;
         }
@@ -125,30 +117,37 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkResourceVariableCollector() {
-            if (Preferences.getResourceVariableFlag()) {
-                collectors.add(new ResourceVariableCollector());
+        public CodeFragmentCollectorLinkerBuilder linkExternalInnerTypeCollector() {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalInnerTypeCollector());
             }
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkInternalTypeCollector() {
-            if (Preferences.getInternalTypeFlag()) {
-                collectors.add(new InternalTypeCollector());
+        public CodeFragmentCollectorLinkerBuilder linkExternalThrowableTypeCollector() {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalThrowableTypeCollector());
             }
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkInternalThrowableTypeCollector() {
-            if (Preferences.getInternalTypeFlag()) {
-                collectors.add(new InternalThrowableTypeCollector());
+        public CodeFragmentCollectorLinkerBuilder linkExternalTypeCollector() {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalTypeCollector());
             }
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkGlobalTypeCollector() {
+        public CodeFragmentCollectorLinkerBuilder linkFieldCollector() {
+            if (Preferences.getFieldFlag()) {
+                collectors.add(new FieldCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkGlobalInnerTypeCollector() {
             if (Preferences.getGlobalTypeFlag()) {
-                collectors.add(new GlobalTypeCollector());
+                collectors.add(new GlobalInnerTypeCollector());
             }
             return this;
         }
@@ -160,9 +159,23 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkLiteralCollector() {
-            if (Preferences.getLiteralFlag()) {
-                collectors.add(new LiteralCollector());
+        public CodeFragmentCollectorLinkerBuilder linkGlobalTypeCollector() {
+            if (Preferences.getGlobalTypeFlag()) {
+                collectors.add(new GlobalTypeCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkInternalThrowableTypeCollector() {
+            if (Preferences.getInternalTypeFlag()) {
+                collectors.add(new InternalThrowableTypeCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkInternalTypeCollector() {
+            if (Preferences.getInternalTypeFlag()) {
+                collectors.add(new InternalTypeCollector());
             }
             return this;
         }
@@ -174,16 +187,9 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkModifierCollector(Tree.Kind kind) {
-            if (Preferences.getModifierFlag()) {
-                collectors.add(ModifierCollectorFactory.getModifierCollector(kind));
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkPrimitiveTypeCollector() {
-            if (Preferences.getPrimitiveTypeFlag()) {
-                collectors.add(new PrimitiveTypeCollector());
+        public CodeFragmentCollectorLinkerBuilder linkLiteralCollector() {
+            if (Preferences.getLiteralFlag()) {
+                collectors.add(new LiteralCollector());
             }
             return this;
         }
@@ -195,23 +201,9 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkChainedMethodInvocationCollector() {
-            if (Preferences.getChainedMethodInvocationFlag()) {
-                collectors.add(new ChainedMethodInvocationCollector());
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkChainedFieldAccessCollector() {
-            if (Preferences.getChainedFieldAccessFlag()) {
-                collectors.add(new ChainedFieldAccessCollector());
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkChainedEnumConstantCollector() {
-            if (Preferences.getChainedEnumConstantAccessFlag()) {
-                collectors.add(new ChainedEnumConstantAccessCollector());
+        public CodeFragmentCollectorLinkerBuilder linkLocalVariableCollector() {
+            if (Preferences.getLocalVariableFlag()) {
+                collectors.add(new LocalVariableCollector());
             }
             return this;
         }
@@ -223,13 +215,30 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkStaticMethodInvocationCollector() {
-            if (Preferences.getStaticMethodInvocationFlag()) {
-                if (Preferences.getStaticMethodInvocationGlobalTypesFlag()) {
-                    collectors.add(new StaticMethodInvocationForGlobalTypesCollector());
-                } else {
-                    collectors.add(new StaticMethodInvocationCollector());
-                }
+        public CodeFragmentCollectorLinkerBuilder linkModifierCollector(Tree.Kind kind) {
+            if (Preferences.getModifierFlag()) {
+                collectors.add(ModifierCollectorFactory.getModifierCollector(kind));
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkParameterCollector() {
+            if (Preferences.getParameterFlag()) {
+                collectors.add(new ParameterCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkPrimitiveTypeCollector() {
+            if (Preferences.getPrimitiveTypeFlag()) {
+                collectors.add(new PrimitiveTypeCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkResourceVariableCollector() {
+            if (Preferences.getResourceVariableFlag()) {
+                collectors.add(new ResourceVariableCollector());
             }
             return this;
         }
@@ -245,8 +254,15 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerImpl build() {
-            return new CodeFragmentCollectorLinkerImpl(this);
+        public CodeFragmentCollectorLinkerBuilder linkStaticMethodInvocationCollector() {
+            if (Preferences.getStaticMethodInvocationFlag()) {
+                if (Preferences.getStaticMethodInvocationGlobalTypesFlag()) {
+                    collectors.add(new StaticMethodInvocationForGlobalTypesCollector());
+                } else {
+                    collectors.add(new StaticMethodInvocationCollector());
+                }
+            }
+            return this;
         }
     }
 }

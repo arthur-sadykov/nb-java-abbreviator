@@ -48,11 +48,16 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
             tokenSequence.move(abbreviation.getStartOffset());
             tokenSequence.moveNext();
             if (tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
-                builder.linkExternalTypeCollector()
-                        .linkGlobalTypeCollector()
-                        .linkInternalTypeCollector()
-                        .linkKeywordCollector()
-                        .linkPrimitiveTypeCollector();
+                if (!abbreviation.isSimple()) {
+                    builder.linkExternalInnerTypeCollector()
+                            .linkGlobalInnerTypeCollector();
+                } else {
+                    builder.linkExternalTypeCollector()
+                            .linkGlobalTypeCollector()
+                            .linkInternalTypeCollector()
+                            .linkKeywordCollector()
+                            .linkPrimitiveTypeCollector();
+                }
             } else {
                 builder.linkModifierCollector(CLASS);
             }

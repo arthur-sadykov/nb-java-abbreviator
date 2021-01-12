@@ -58,6 +58,8 @@ public class CaseCodeCompletionContext extends AbstractCodeCompletionContext {
         if (afterColon) {
             if (!request.getAbbreviation().isSimple()) {
                 return CodeFragmentCollectorLinkerImpl.builder()
+                        .linkExternalInnerTypeCollector()
+                        .linkGlobalInnerTypeCollector()
                         .linkMethodInvocationCollector()
                         .linkStaticMethodInvocationCollector()
                         .build();

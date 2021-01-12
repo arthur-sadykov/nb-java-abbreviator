@@ -30,7 +30,6 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ParameterizedTypeTree;
-import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Scope;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.SwitchTree;
@@ -903,13 +902,6 @@ public class JavaSourceUtilities {
         });
     }
 
-    public static ReturnTree makeReturnTree(CodeCompletionRequest request) {
-        String returnVar = JavaSourceUtilities.returnVar(request);
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
-        return make.Return(returnVar != null ? make.Identifier(returnVar) : null);
-    }
-
     public static boolean isModifier(TokenId tokenId) {
         return tokenId == JavaTokenId.ABSTRACT
                 || tokenId == JavaTokenId.FINAL
@@ -922,5 +914,21 @@ public class JavaSourceUtilities {
                 || tokenId == JavaTokenId.SYNCHRONIZED
                 || tokenId == JavaTokenId.TRANSIENT
                 || tokenId == JavaTokenId.VOLATILE;
+    }
+
+    public static boolean inSamePackageAsCurrentFile(Element element, CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        ExpressionTree expressionTree = copy.getCompilationUnit().getPackageName();
+        if (expressionTree == null) {
+            return false;
+        }
+        String packageName = expressionTree.toString();
+        Elements elements = copy.getElements();
+        PackageElement currentPackageElement = elements.getPackageElement(packageName);
+        PackageElement packageElement = elements.getPackageOf(element);
+        if (currentPackageElement == null || packageElement == null) {
+            return false;
+        }
+        return packageElement.equals(currentPackageElement);
     }
 }

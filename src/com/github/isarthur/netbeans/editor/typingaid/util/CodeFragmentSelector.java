@@ -23,7 +23,9 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.ModificationResult;
+import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
+import org.netbeans.api.lexer.TokenId;
 import org.netbeans.api.lexer.TokenSequence;
 import org.openide.filesystems.FileObject;
 
@@ -66,8 +68,10 @@ public class CodeFragmentSelector {
                 case BYTE_PRIMITIVE_TYPE:
                 case CHAR_PRIMITIVE_TYPE:
                 case DOUBLE_PRIMITIVE_TYPE:
+                case EXTERNAL_INNER_TYPE:
                 case EXTERNAL_TYPE:
                 case FLOAT_PRIMITIVE_TYPE:
+                case GLOBAL_INNER_TYPE:
                 case GLOBAL_TYPE:
                 case INT_PRIMITIVE_TYPE:
                 case INTERNAL_TYPE:
@@ -131,6 +135,7 @@ public class CodeFragmentSelector {
                     && tokenSequence.token().id() != JavaTokenId.LPAREN
                     && tokenSequence.token().id() != JavaTokenId.COMMA
                     && tokenSequence.token().id() != JavaTokenId.RPAREN
+                    && tokenSequence.token().id() != JavaTokenId.GT
                     && tokenSequence.token().id() != JavaTokenId.SEMICOLON) {
                 if (tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                     whitespaceFound = true;
@@ -177,8 +182,30 @@ public class CodeFragmentSelector {
                         }
                     }
                 }
-            } else if (tokenSequence.token().id() == JavaTokenId.COMMA
-                    || tokenSequence.token().id() == JavaTokenId.RPAREN) {
+            } else if (tokenSequence.token().id() == JavaTokenId.COMMA) {
+                int originalPosition = tokenSequence.offset();
+                boolean insideTypeParameterTree = false;
+                while (tokenSequence.movePrevious() && tokenSequence.token().id() != JavaTokenId.SEMICOLON) {
+                    if (tokenSequence.token().id() == JavaTokenId.GT) {
+                        insideTypeParameterTree = false;
+                        break;
+                    } else if (tokenSequence.token().id() == JavaTokenId.LT) {
+                        insideTypeParameterTree = true;
+                        break;
+                    }
+                }
+                if (insideTypeParameterTree) {
+                    return;
+                }
+                tokenSequence.move(originalPosition);
+                while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+                }
+                if (tokenSequence.token().id() == JavaTokenId.IDENTIFIER) {
+                    int startPosition = tokenSequence.offset();
+                    int endPosition = tokenSequence.offset() + tokenSequence.token().length();
+                    component.select(startPosition, endPosition);
+                }
+            } else if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
                 while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }
                 if (tokenSequence.token().id() == JavaTokenId.IDENTIFIER) {
@@ -227,17 +254,23 @@ public class CodeFragmentSelector {
             }
             AtomicInteger startPosition = new AtomicInteger();
             AtomicInteger endPosition = new AtomicInteger();
-            if (tokenSequence.token().id() != JavaTokenId.WHITESPACE) {
-                startPosition.set(tokenSequence.offset());
-                while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.SEMICOLON) {
+            Token<?> token = tokenSequence.token();
+            if (token == null) {
+                return;
+            }
+            TokenId tokenId = token.id();
+            if (tokenId == JavaTokenId.SEMICOLON || tokenId == JavaTokenId.WHITESPACE) {
+                return;
+            }
+            startPosition.set(tokenSequence.offset());
+            while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.SEMICOLON) {
+            }
+            if (tokenSequence.token().id() == JavaTokenId.SEMICOLON) {
+                while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }
-                if (tokenSequence.token().id() == JavaTokenId.SEMICOLON) {
-                    while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
-                    }
-                    if (tokenSequence.token().id() != JavaTokenId.WHITESPACE) {
-                        endPosition.set(tokenSequence.offset() + tokenSequence.token().length());
-                        SwingUtilities.invokeLater(() -> component.select(startPosition.get(), endPosition.get()));
-                    }
+                if (tokenSequence.token().id() != JavaTokenId.WHITESPACE) {
+                    endPosition.set(tokenSequence.offset() + tokenSequence.token().length());
+                    SwingUtilities.invokeLater(() -> component.select(startPosition.get(), endPosition.get()));
                 }
             }
         });

@@ -15,7 +15,10 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.literal.api;
 
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.Tree;
 
 /**
  *
@@ -27,4 +30,10 @@ public abstract class AbstractLiteral implements Literal {
     public boolean isAbbreviationEqualTo(String abbreviation) {
         return StringUtilities.getElementAbbreviation(toString()).equals(abbreviation);
     }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        return JavaSourceMaker.makeLiteralTree(getIdentifier(), request);
+    }
+
 }

@@ -85,20 +85,34 @@ public class MethodCodeCompletionContext extends AbstractCodeCompletionContext {
                     .linkModifierCollector(METHOD)
                     .build();
         } else if (beforeRightParenthesis) {
-            return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkExternalTypeCollector()
-                    .linkGlobalTypeCollector()
-                    .linkInternalTypeCollector()
-                    .linkPrimitiveTypeCollector()
-                    .build();
+            if (!abbreviation.isSimple()) {
+                return CodeFragmentCollectorLinkerImpl.builder()
+                        .linkExternalInnerTypeCollector()
+                        .linkGlobalInnerTypeCollector()
+                        .build();
+            } else {
+                return CodeFragmentCollectorLinkerImpl.builder()
+                        .linkExternalTypeCollector()
+                        .linkGlobalTypeCollector()
+                        .linkInternalTypeCollector()
+                        .linkPrimitiveTypeCollector()
+                        .build();
+            }
         } else if (afterLeftBrace) {
-            return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkExternalTypeCollector()
-                    .linkGlobalTypeCollector()
-                    .linkInternalTypeCollector()
-                    .linkModifierCollector(METHOD)
-                    .linkPrimitiveTypeCollector()
-                    .build();
+            if (!abbreviation.isSimple()) {
+                return CodeFragmentCollectorLinkerImpl.builder()
+                        .linkExternalInnerTypeCollector()
+                        .linkGlobalInnerTypeCollector()
+                        .build();
+            } else {
+                return CodeFragmentCollectorLinkerImpl.builder()
+                        .linkExternalTypeCollector()
+                        .linkGlobalTypeCollector()
+                        .linkInternalTypeCollector()
+                        .linkModifierCollector(METHOD)
+                        .linkPrimitiveTypeCollector()
+                        .build();
+            }
         } else {
             return CodeFragmentCollectorLinkerImpl.builder()
                     .build();

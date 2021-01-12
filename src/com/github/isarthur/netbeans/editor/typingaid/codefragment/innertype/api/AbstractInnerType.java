@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Arthur Sadykov.
+ * Copyright 2021 Arthur Sadykov.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api;
+package com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import java.util.Collections;
-import java.util.List;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Types;
 import org.netbeans.api.java.lexer.JavaTokenId;
@@ -43,12 +38,19 @@ import org.netbeans.api.lexer.TokenSequence;
  *
  * @author Arthur Sadykov
  */
-public abstract class AbstractType implements Type, Comparable<AbstractType> {
+public abstract class AbstractInnerType implements InnerType {
 
-    protected TypeElement identifier;
+    private TypeElement scope;
+    private TypeElement identifier;
 
-    protected AbstractType(TypeElement identifier) {
+    protected AbstractInnerType(TypeElement scope, TypeElement identifier) {
+        this.scope = scope;
         this.identifier = identifier;
+    }
+
+    @Override
+    public TypeElement getScope() {
+        return scope;
     }
 
     @Override
@@ -58,17 +60,9 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        return StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString()).equals(abbreviation);
-    }
-
-    @Override
-    public int compareTo(AbstractType other) {
-        return toString().compareTo(other.toString());
-    }
-
-    @Override
-    public void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request) {
-        visitor.visit(this, request);
+        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getSimpleName().toString());
+        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString());
+        return abbreviation.equals(scopeAbbreviation + "." + identifierAbbreviation); //NOI18N
     }
 
     @Override
@@ -78,23 +72,14 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
         DeclaredType declaredType = types.getDeclaredType(getIdentifier());
         Abbreviation abbreviation = request.getAbbreviation();
         TokenSequence<?> tokensSequence;
-        ExpressionTree initializer;
         switch (request.getCurrentKind()) {
             case BLOCK:
-                NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
-                if (newClassTree != null) {
-                    initializer = newClassTree;
-                } else {
-                    initializer = JavaSourceMaker.makeLiteralTree(null, request);
-                }
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
                         JavaSourceUtilities.getVariableName(declaredType, request),
                         JavaSourceMaker.makeTypeTree(toString(), request),
-                        initializer,
+                        JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request),
                         request);
-            case CATCH:
-                return JavaSourceMaker.makeTypeTree(declaredType, request);
             case CLASS:
             case ENUM:
             case INTERFACE:
@@ -127,7 +112,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                         continue;
                     }
                     if (token.id() == JavaTokenId.SEMICOLON) {
-                        return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+                        return JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request);
                     } else {
                         ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
                         return JavaSourceMaker.makeTypeCastTree(
@@ -136,6 +121,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                                 request);
                     }
                 }
+                break;
             case VARIABLE:
                 tokensSequence = copy.getTokenHierarchy().tokenSequence();
                 tokensSequence.move(abbreviation.getStartOffset());
@@ -145,7 +131,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                         continue;
                     }
                     if (token.id() == JavaTokenId.SEMICOLON) {
-                        return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+                        return JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request);
                     } else {
                         VariableTree variableTree = (VariableTree) request.getCurrentTree();
                         return JavaSourceMaker.makeTypeCastTree(
@@ -156,21 +142,13 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 }
                 break;
             default:
-                return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+                return JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request);
         }
         return null;
     }
 
     @Override
     public String toString() {
-        List<? extends TypeParameterElement> typeParameters = identifier.getTypeParameters();
-        if (typeParameters.isEmpty()) {
-            return identifier.getQualifiedName().toString();
-        } else {
-            StringBuilder stringBuilder = new StringBuilder();
-            typeParameters.forEach(typeParameter -> stringBuilder.append("String, ")); //NOI18N
-            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
-            return identifier.getQualifiedName().toString() + "<" + stringBuilder.toString() + ">"; //NOI18N
-        }
+        return scope.getSimpleName() + "." + identifier.getSimpleName(); //NOI18N
     }
 }

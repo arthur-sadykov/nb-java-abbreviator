@@ -18,6 +18,7 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.a
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.Tree;
 import javax.lang.model.element.Element;
 
 /**
@@ -51,6 +52,11 @@ public abstract class AbstractFieldAccess implements FieldAccess, Comparable<Abs
     @Override
     public String toString() {
         return identifier.getSimpleName().toString();
+    }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        return null;
     }
 
     @Override

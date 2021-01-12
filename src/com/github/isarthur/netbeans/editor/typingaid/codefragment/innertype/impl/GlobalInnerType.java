@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl;
+package com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl;
 
-import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.ABSTRACT_MODIFIER;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.api.AbstractModifier;
+import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.GLOBAL_INNER_TYPE;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api.AbstractInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
-import javax.lang.model.element.Modifier;
-import static javax.lang.model.element.Modifier.ABSTRACT;
+import javax.lang.model.element.TypeElement;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class AbstractAbstractModifier extends AbstractModifier {
+public class GlobalInnerType extends AbstractInnerType {
 
-    @Override
-    public void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request) {
-        visitor.visit(this, request);
-    }
-
-    @Override
-    public Modifier getIdentifier() {
-        return ABSTRACT;
+    public GlobalInnerType(TypeElement scope, TypeElement identifier) {
+        super(scope, identifier);
     }
 
     @Override
     public Kind getKind() {
-        return ABSTRACT_MODIFIER;
+        return GLOBAL_INNER_TYPE;
+    }
+
+    @Override
+    public void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request) {
+        visitor.visit(this, request);
     }
 }

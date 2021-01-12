@@ -15,8 +15,12 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.api;
 
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.Tree;
 import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
@@ -60,6 +64,22 @@ public abstract class AbstractMethodInvocation implements MethodInvocation, Comp
     @Override
     public int compareTo(AbstractMethodInvocation other) {
         return toString().compareTo(other.toString());
+    }
+
+    @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        switch (request.getCurrentKind()) {
+            case BLOCK:
+            case CASE:
+            case SWITCH:
+                if (JavaSourceUtilities.isMethodReturnVoid(getMethod())) {
+                    return JavaSourceMaker.makeVoidMethodInvocationStatementTree(this, request);
+                } else {
+                    return JavaSourceMaker.makeMethodInvocationStatementTree(this, request);
+                }
+            default:
+                return JavaSourceMaker.makeMethodInvocationExpressionTree(this, request);
+        }
     }
 
     @Override

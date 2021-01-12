@@ -16,10 +16,11 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl;
 
 import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.IMPORT_KEYWORD;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.api.AbstractKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.KeywordCollectVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.IMPORT;
 
@@ -50,7 +51,13 @@ public class ImportKeyword extends AbstractKeyword {
     }
 
     @Override
+    public Tree getTreeToInsert(CodeCompletionRequest request) {
+        return JavaSourceMaker.makeImportTree(request);
+    }
+
+    @Override
     public String toString() {
         return "import"; //NOI18N
     }
+
 }

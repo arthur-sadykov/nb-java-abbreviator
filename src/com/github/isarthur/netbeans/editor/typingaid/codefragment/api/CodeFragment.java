@@ -17,6 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.sun.source.tree.Tree;
 
 /**
  *
@@ -27,6 +28,8 @@ public interface CodeFragment {
     Kind getKind();
 
     boolean isAbbreviationEqualTo(String abbreviation);
+
+    Tree getTreeToInsert(CodeCompletionRequest request);
 
     public enum Kind {
         ABSTRACT_MODIFIER,
@@ -47,6 +50,7 @@ public interface CodeFragment {
         ELSE_KEYWORD,
         ENUM_KEYWORD,
         EXTENDS_KEYWORD,
+        EXTERNAL_INNER_TYPE,
         EXTERNAL_TYPE,
         FALSE_LITERAL,
         FIELD_ACCESS,
@@ -54,6 +58,7 @@ public interface CodeFragment {
         FINALLY_KEYWORD,
         FLOAT_PRIMITIVE_TYPE,
         FOR_KEYWORD,
+        GLOBAL_INNER_TYPE,
         GLOBAL_TYPE,
         IF_KEYWORD,
         IMPLEMENTS_KEYWORD,
