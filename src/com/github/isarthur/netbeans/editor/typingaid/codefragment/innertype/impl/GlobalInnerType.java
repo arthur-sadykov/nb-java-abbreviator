@@ -20,6 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api.
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -27,7 +28,7 @@ import javax.lang.model.element.TypeElement;
  */
 public class GlobalInnerType extends AbstractInnerType {
 
-    public GlobalInnerType(TypeElement scope, TypeElement identifier) {
+    public GlobalInnerType(ElementHandle<TypeElement> scope, ElementHandle<TypeElement> identifier) {
         super(scope, identifier);
     }
 

@@ -24,6 +24,7 @@ import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.Tree;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
@@ -50,10 +51,10 @@ public class LocalMethodInvocationCollector extends AbstractCodeFragmentCollecto
                 String typeName = typeUtilities.getTypeName(method.getReturnType()).toString();
                 if (!typeName.equals("void")) { //NOI18N
                     LocalMethodInvocation methodInvocation = new LocalMethodInvocation(
-                            method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                            ElementHandle.create(method), JavaSourceUtilities.evaluateMethodArguments(method, request));
                     if (JavaSourceUtilities.isMethodReturnVoid(method)) {
-                        methodInvocation.setText(
-                                JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
+                        methodInvocation.setText(JavaSourceMaker.makeVoidMethodInvocationStatementTree(
+                                methodInvocation, request).toString());
                     } else {
                         methodInvocation.setText(JavaSourceMaker.makeMethodInvocationExpressionTree(
                                 methodInvocation, request).toString());
@@ -62,10 +63,10 @@ public class LocalMethodInvocationCollector extends AbstractCodeFragmentCollecto
                 }
             } else {
                 LocalMethodInvocation methodInvocation = new LocalMethodInvocation(
-                        method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                        ElementHandle.create(method), JavaSourceUtilities.evaluateMethodArguments(method, request));
                 if (JavaSourceUtilities.isMethodReturnVoid(method)) {
-                    methodInvocation.setText(
-                            JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
+                    methodInvocation.setText(JavaSourceMaker.makeVoidMethodInvocationStatementTree(
+                            methodInvocation, request).toString());
                 } else {
                     methodInvocation.setText(JavaSourceMaker.makeMethodInvocationStatementTree(
                             methodInvocation, request) + ";"); //NOI18N

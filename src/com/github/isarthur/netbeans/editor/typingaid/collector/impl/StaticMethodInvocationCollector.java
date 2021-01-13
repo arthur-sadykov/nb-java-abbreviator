@@ -25,6 +25,7 @@ import com.sun.source.tree.Tree;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
@@ -50,15 +51,18 @@ public class StaticMethodInvocationCollector extends AbstractCodeFragmentCollect
         if (currentContext == Tree.Kind.PARAMETERIZED_TYPE) {
             return;
         }
-        methods = JavaSourceUtilities.getMethodsByAbbreviation(methods, request.getAbbreviation());
+        List<ExecutableElement> targetMethods =
+                JavaSourceUtilities.getMethodsByAbbreviation(methods, request.getAbbreviation());
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        methods.forEach(method -> {
+        targetMethods.forEach(method -> {
             if (currentContext != Tree.Kind.BLOCK) {
                 TypeUtilities typeUtilities = copy.getTypeUtilities();
                 String typeName = typeUtilities.getTypeName(method.getReturnType()).toString();
                 if (!typeName.equals("void")) { //NOI18N
                     StaticMethodInvocation methodInvocation = new StaticMethodInvocation(
-                            scope, method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                            ElementHandle.create(scope),
+                            ElementHandle.create(method),
+                            JavaSourceUtilities.evaluateMethodArguments(method, request));
                     if (JavaSourceUtilities.isMethodReturnVoid(method)) {
                         methodInvocation.setText(
                                 JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());
@@ -70,7 +74,9 @@ public class StaticMethodInvocationCollector extends AbstractCodeFragmentCollect
                 }
             } else {
                 StaticMethodInvocation methodInvocation = new StaticMethodInvocation(
-                        scope, method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                        ElementHandle.create(scope),
+                        ElementHandle.create(method),
+                        JavaSourceUtilities.evaluateMethodArguments(method, request));
                 if (JavaSourceUtilities.isMethodReturnVoid(method)) {
                     methodInvocation.setText(
                             JavaSourceMaker.makeVoidMethodInvocationStatementTree(methodInvocation, request).toString());

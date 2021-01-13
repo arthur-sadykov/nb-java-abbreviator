@@ -60,8 +60,7 @@ public class ChainedEnumConstantAccessCollector extends AbstractCodeFragmentColl
         List<VariableElement> enumConstants = getEnumConstants(typeElement, copy);
         enumConstants = getEnumConstantsByAbbreviation(enumConstants, request.getAbbreviation());
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        enumConstants.forEach(enumConstant ->
-                codeFragments.add(new ChainedFieldAccess(enumConstant)));
+        enumConstants.forEach(enumConstant -> codeFragments.add(new ChainedFieldAccess(enumConstant)));
         super.collect(request);
     }
 

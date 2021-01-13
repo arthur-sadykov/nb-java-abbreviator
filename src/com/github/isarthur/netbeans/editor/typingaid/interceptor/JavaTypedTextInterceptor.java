@@ -15,11 +15,11 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.interceptor;
 
-import com.github.isarthur.netbeans.editor.typingaid.abbreviation.impl.JavaAbbreviation;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.JavaCodeFragmentCollectAndInsertHandler;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.impl.JavaAbbreviation;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.impl.JavaCodeFragmentCollectAndInsertHandler;
+import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.text.BadLocationException;
@@ -137,7 +137,7 @@ public class JavaTypedTextInterceptor implements TypedTextInterceptor {
 
     @Override
     public void afterInsert(Context context) throws BadLocationException {
-        if (!codeFragments.isEmpty()) {
+        if (codeFragments != null && !codeFragments.isEmpty()) {
             if (context.getText().isEmpty()) {
                 JTextComponent component = context.getComponent();
                 component.setCaretPosition(caretPosition);

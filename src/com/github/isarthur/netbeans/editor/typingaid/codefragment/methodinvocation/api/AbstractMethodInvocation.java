@@ -24,6 +24,7 @@ import com.sun.source.tree.Tree;
 import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -31,17 +32,17 @@ import javax.lang.model.element.ExecutableElement;
  */
 public abstract class AbstractMethodInvocation implements MethodInvocation, Comparable<AbstractMethodInvocation> {
 
-    protected final ExecutableElement method;
+    protected final ElementHandle<ExecutableElement> method;
     protected final List<ExpressionTree> arguments;
     protected String text;
 
-    public AbstractMethodInvocation(ExecutableElement method, List<ExpressionTree> arguments) {
+    public AbstractMethodInvocation(ElementHandle<ExecutableElement> method, List<ExpressionTree> arguments) {
         this.method = method;
         this.arguments = arguments;
     }
 
     @Override
-    public ExecutableElement getMethod() {
+    public ElementHandle<ExecutableElement> getMethod() {
         return method;
     }
 
@@ -57,7 +58,7 @@ public abstract class AbstractMethodInvocation implements MethodInvocation, Comp
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        String methodAbbreviation = StringUtilities.getMethodAbbreviation(method.getSimpleName().toString());
+        String methodAbbreviation = StringUtilities.getMethodAbbreviation(method.getBinaryName());
         return methodAbbreviation.equals(abbreviation);
     }
 
@@ -72,7 +73,7 @@ public abstract class AbstractMethodInvocation implements MethodInvocation, Comp
             case BLOCK:
             case CASE:
             case SWITCH:
-                if (JavaSourceUtilities.isMethodReturnVoid(getMethod())) {
+                if (JavaSourceUtilities.isMethodReturnVoid(method.resolve(request.getWorkingCopy()))) {
                     return JavaSourceMaker.makeVoidMethodInvocationStatementTree(this, request);
                 } else {
                     return JavaSourceMaker.makeMethodInvocationStatementTree(this, request);

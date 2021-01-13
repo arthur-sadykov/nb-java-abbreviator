@@ -77,8 +77,8 @@ public class ExternalInnerTypeCollector extends AbstractCodeFragmentCollector {
                         }
                         return false;
                     });
-            innerTypeElements.forEach(innerType ->
-                    codeFragments.add(new GlobalInnerType(globalType, (TypeElement) innerType)));
+            innerTypeElements.forEach(innerType -> codeFragments.add(
+                    new GlobalInnerType(ElementHandle.create(globalType), ElementHandle.create((TypeElement) innerType))));
         }
         super.collect(request);
     }

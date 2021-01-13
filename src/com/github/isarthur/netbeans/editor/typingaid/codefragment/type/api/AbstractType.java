@@ -31,13 +31,12 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import java.util.Collections;
-import java.util.List;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Types;
 import org.netbeans.api.java.lexer.JavaTokenId;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
@@ -48,20 +47,22 @@ import org.netbeans.api.lexer.TokenSequence;
  */
 public abstract class AbstractType implements Type, Comparable<AbstractType> {
 
-    protected TypeElement identifier;
+    protected ElementHandle<TypeElement> identifier;
+    private final int typeParametersCount;
 
-    protected AbstractType(TypeElement identifier) {
+    protected AbstractType(ElementHandle<TypeElement> identifier, int typeParametersCount) {
         this.identifier = identifier;
+        this.typeParametersCount = typeParametersCount;
     }
 
     @Override
-    public TypeElement getIdentifier() {
+    public ElementHandle<TypeElement> getIdentifier() {
         return identifier;
     }
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        return StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString()).equals(abbreviation);
+        return StringUtilities.getElementAbbreviation(toString()).equals(abbreviation);
     }
 
     @Override
@@ -78,7 +79,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
     public Tree getTreeToInsert(CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
         Types types = copy.getTypes();
-        DeclaredType declaredType = types.getDeclaredType(getIdentifier());
+        DeclaredType declaredType = types.getDeclaredType(identifier.resolve(copy));
         ExpressionTree initializer;
         switch (request.getCurrentKind()) {
             case AND:
@@ -126,7 +127,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 UnaryTree unaryTree = (UnaryTree) request.getCurrentTree();
                 return getNewClassOrTypeCastTree(unaryTree.getExpression(), request);
             case BLOCK:
-                NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+                NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(identifier.resolve(copy), request);
                 if (newClassTree != null) {
                     initializer = newClassTree;
                 } else {
@@ -170,7 +171,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 VariableTree variableTree = (VariableTree) request.getCurrentTree();
                 return getNewClassOrTypeCastTree(variableTree.getInitializer(), request);
             default:
-                return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+                return JavaSourceMaker.makeNewClassTree(identifier.resolve(copy), request);
         }
     }
 
@@ -185,7 +186,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 continue;
             }
             if (token.id() == JavaTokenId.SEMICOLON) {
-                return JavaSourceMaker.makeNewClassTree(getIdentifier(), request);
+                return JavaSourceMaker.makeNewClassTree(identifier.resolve(copy), request);
             } else {
                 return JavaSourceMaker.makeTypeCastTree(
                         JavaSourceMaker.makeQualIdentTree(toString(), request),
@@ -198,14 +199,15 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
 
     @Override
     public String toString() {
-        List<? extends TypeParameterElement> typeParameters = identifier.getTypeParameters();
-        if (typeParameters.isEmpty()) {
-            return identifier.getQualifiedName().toString();
+        if (typeParametersCount == 0) {
+            return identifier.getQualifiedName();
         } else {
             StringBuilder stringBuilder = new StringBuilder();
-            typeParameters.forEach(typeParameter -> stringBuilder.append("String, ")); //NOI18N
+            for (int i = 0; i < typeParametersCount; i++) {
+                stringBuilder.append("String, "); //NOI18N
+            }
             stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
-            return identifier.getQualifiedName().toString() + "<" + stringBuilder.toString() + ">"; //NOI18N
+            return identifier.getQualifiedName() + "<" + stringBuilder.toString() + ">"; //NOI18N
         }
     }
 }

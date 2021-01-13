@@ -29,6 +29,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -57,7 +58,7 @@ public class ChainedMethodInvocationCollector extends AbstractCodeFragmentCollec
         List<CodeFragment> codeFragments = request.getCodeFragments();
         methods.forEach(method -> {
             ChainedMethodInvocation methodInvocation = new ChainedMethodInvocation(
-                    method, JavaSourceUtilities.evaluateMethodArguments(method, request));
+                    ElementHandle.create(method), JavaSourceUtilities.evaluateMethodArguments(method, request));
             methodInvocation.setText(JavaSourceMaker.makeMethodInvocationExpressionTree(
                     methodInvocation, request).toString());
             codeFragments.add(methodInvocation);

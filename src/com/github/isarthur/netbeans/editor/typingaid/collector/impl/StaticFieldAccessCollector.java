@@ -59,7 +59,7 @@ public class StaticFieldAccessCollector extends AbstractCodeFragmentCollector {
                     String elementName = element.getSimpleName().toString();
                     String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
                     if (abbreviation.getIdentifier().equals(elementAbbreviation)) {
-                        codeFragments.add(new StaticFieldAccess(typeElement, element));
+                        codeFragments.add(new StaticFieldAccess(ElementHandle.create(typeElement), element));
                     }
                 });
             } catch (AssertionError ex) {

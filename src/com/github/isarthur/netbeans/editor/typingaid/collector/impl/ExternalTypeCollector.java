@@ -48,7 +48,8 @@ public class ExternalTypeCollector extends AbstractCodeFragmentCollector {
         codeFragments.addAll(
                 types.stream()
                         .filter(distinctByKey(element -> element.getSimpleName().toString()))
-                        .map(ExternalType::new)
+                        .map(element -> new ExternalType(
+                                ElementHandle.create(element), element.getTypeParameters().size()))
                         .sorted()
                         .collect(Collectors.toList()));
         super.collect(request);

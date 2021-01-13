@@ -15,14 +15,15 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.api.AbstractMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.ExpressionTree;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -32,7 +33,8 @@ public class NormalMethodInvocation extends AbstractMethodInvocation {
 
     private final Element scope;
 
-    public NormalMethodInvocation(Element scope, ExecutableElement method, List<ExpressionTree> arguments) {
+    public NormalMethodInvocation(
+            Element scope, ElementHandle<ExecutableElement> method, List<ExpressionTree> arguments) {
         super(method, arguments);
         this.scope = scope;
     }
@@ -49,7 +51,7 @@ public class NormalMethodInvocation extends AbstractMethodInvocation {
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
         String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getSimpleName().toString());
-        String methodAbbreviation = StringUtilities.getMethodAbbreviation(method.getSimpleName().toString());
+        String methodAbbreviation = StringUtilities.getMethodAbbreviation(method.getBinaryName());
         return (scopeAbbreviation + "." + methodAbbreviation).equals(abbreviation);
     }
 

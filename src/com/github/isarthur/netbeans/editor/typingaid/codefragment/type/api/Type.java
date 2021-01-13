@@ -17,6 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -24,5 +25,5 @@ import javax.lang.model.element.TypeElement;
  */
 public interface Type extends CodeFragment {
 
-    TypeElement getIdentifier();
+    ElementHandle<TypeElement> getIdentifier();
 }

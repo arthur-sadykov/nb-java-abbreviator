@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -38,7 +39,8 @@ public class ExternalThrowableTypeCollector extends ExternalTypeCollector {
         codeFragments.addAll(
                 types.stream()
                         .filter(distinctByKey(element -> element.getSimpleName().toString()))
-                        .map(ExternalType::new)
+                        .map(element -> new ExternalType(
+                                ElementHandle.create(element), element.getTypeParameters().size()))
                         .sorted()
                         .collect(Collectors.toList()));
         super.collect(request);

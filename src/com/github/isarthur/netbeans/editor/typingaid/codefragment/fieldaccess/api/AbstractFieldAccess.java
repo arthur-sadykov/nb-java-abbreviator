@@ -40,7 +40,7 @@ public abstract class AbstractFieldAccess implements FieldAccess, Comparable<Abs
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString());
+        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.toString());
         return abbreviation.equals(identifierAbbreviation);
     }
 

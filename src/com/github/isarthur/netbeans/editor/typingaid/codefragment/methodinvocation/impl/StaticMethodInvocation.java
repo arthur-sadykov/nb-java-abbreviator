@@ -15,14 +15,15 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.api.AbstractMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.ExpressionTree;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -30,9 +31,10 @@ import javax.lang.model.element.TypeElement;
  */
 public class StaticMethodInvocation extends AbstractMethodInvocation {
 
-    private final TypeElement scope;
+    private final ElementHandle<TypeElement> scope;
 
-    public StaticMethodInvocation(TypeElement scope, ExecutableElement method, List<ExpressionTree> arguments) {
+    public StaticMethodInvocation(
+            ElementHandle<TypeElement> scope, ElementHandle<ExecutableElement> method, List<ExpressionTree> arguments) {
         super(method, arguments);
         this.scope = scope;
     }
@@ -42,7 +44,7 @@ public class StaticMethodInvocation extends AbstractMethodInvocation {
         visitor.visit(this, request);
     }
 
-    public TypeElement getScope() {
+    public ElementHandle<TypeElement> getScope() {
         return scope;
     }
 
@@ -53,8 +55,8 @@ public class StaticMethodInvocation extends AbstractMethodInvocation {
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getSimpleName().toString());
-        String methodAbbreviation = StringUtilities.getMethodAbbreviation(method.getSimpleName().toString());
+        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getBinaryName());
+        String methodAbbreviation = StringUtilities.getMethodAbbreviation(method.getBinaryName());
         return (scopeAbbreviation + "." + methodAbbreviation).equals(abbreviation);
     }
 }

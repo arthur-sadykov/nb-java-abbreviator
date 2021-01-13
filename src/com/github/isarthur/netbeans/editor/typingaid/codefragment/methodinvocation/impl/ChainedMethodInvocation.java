@@ -15,12 +15,13 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.api.AbstractMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.sun.source.tree.ExpressionTree;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -28,7 +29,7 @@ import javax.lang.model.element.ExecutableElement;
  */
 public class ChainedMethodInvocation extends AbstractMethodInvocation {
 
-    public ChainedMethodInvocation(ExecutableElement method, List<ExpressionTree> arguments) {
+    public ChainedMethodInvocation(ElementHandle<ExecutableElement> method, List<ExpressionTree> arguments) {
         super(method, arguments);
     }
 

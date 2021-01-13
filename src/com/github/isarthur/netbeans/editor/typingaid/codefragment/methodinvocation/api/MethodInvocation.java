@@ -19,6 +19,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragme
 import com.sun.source.tree.ExpressionTree;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -26,7 +27,7 @@ import javax.lang.model.element.ExecutableElement;
  */
 public interface MethodInvocation extends CodeFragment {
 
-    ExecutableElement getMethod();
+    ElementHandle<ExecutableElement> getMethod();
 
     List<ExpressionTree> getArguments();
 

@@ -23,6 +23,7 @@ import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.Tree;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -30,9 +31,9 @@ import javax.lang.model.element.TypeElement;
  */
 public class StaticFieldAccess extends AbstractFieldAccess {
 
-    private final TypeElement scope;
+    private final ElementHandle<TypeElement> scope;
 
-    public StaticFieldAccess(TypeElement scope, Element identifier) {
+    public StaticFieldAccess(ElementHandle<TypeElement> scope, Element identifier) {
         super(identifier);
         this.scope = scope;
     }
@@ -42,21 +43,21 @@ public class StaticFieldAccess extends AbstractFieldAccess {
         return Kind.STATIC_FIELD_ACCESS;
     }
 
-    public Element getScope() {
+    public ElementHandle<TypeElement> getScope() {
         return scope;
     }
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getSimpleName().toString());
-        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString());
+        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.toString());
+        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.toString());
         return abbreviation.equals(scopeAbbreviation + "." + identifierAbbreviation); //NOI18N
     }
 
     @Override
     public Tree getTreeToInsert(CodeCompletionRequest request) {
         return JavaSourceMaker.makeMemberSelectTree(
-                JavaSourceMaker.makeQualIdentTree(scope, request),
+                JavaSourceMaker.makeQualIdentTree(scope.resolve(request.getWorkingCopy()), request),
                 identifier,
                 request);
     }
@@ -68,6 +69,6 @@ public class StaticFieldAccess extends AbstractFieldAccess {
 
     @Override
     public String toString() {
-        return scope.getQualifiedName() + "." + identifier.getSimpleName(); //NOI18N
+        return scope.getQualifiedName() + "." + identifier.getSimpleName().toString(); //NOI18N
     }
 }

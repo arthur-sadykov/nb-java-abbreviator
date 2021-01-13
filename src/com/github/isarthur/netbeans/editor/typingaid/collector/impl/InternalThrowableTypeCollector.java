@@ -29,9 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
@@ -72,7 +74,9 @@ public class InternalThrowableTypeCollector extends AbstractCodeFragmentCollecto
                 .filter(element -> StringUtilities.getElementAbbreviation(
                         element.getSimpleName().toString()).equals(abbreviation.getIdentifier()))
                 .filter(distinctByKey(Element::getSimpleName))
-                .forEach(element -> codeFragments.add(new InternalType(elements.getTypeElement(element.toString()))));
+                .forEach(element -> codeFragments.add(new InternalType(
+                        ElementHandle.create(elements.getTypeElement(element.toString())),
+                        ((TypeElement) element).getTypeParameters().size())));
         super.collect(request);
     }
 }

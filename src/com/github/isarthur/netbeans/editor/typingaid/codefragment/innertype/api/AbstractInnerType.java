@@ -30,6 +30,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Types;
 import org.netbeans.api.java.lexer.JavaTokenId;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
@@ -40,28 +41,28 @@ import org.netbeans.api.lexer.TokenSequence;
  */
 public abstract class AbstractInnerType implements InnerType {
 
-    private TypeElement scope;
-    private TypeElement identifier;
+    private final ElementHandle<TypeElement> scope;
+    private final ElementHandle<TypeElement> identifier;
 
-    protected AbstractInnerType(TypeElement scope, TypeElement identifier) {
+    protected AbstractInnerType(ElementHandle<TypeElement> scope, ElementHandle<TypeElement> identifier) {
         this.scope = scope;
         this.identifier = identifier;
     }
 
     @Override
-    public TypeElement getScope() {
+    public ElementHandle<TypeElement> getScope() {
         return scope;
     }
 
     @Override
-    public TypeElement getIdentifier() {
+    public ElementHandle<TypeElement> getIdentifier() {
         return identifier;
     }
 
     @Override
     public boolean isAbbreviationEqualTo(String abbreviation) {
-        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getSimpleName().toString());
-        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.getSimpleName().toString());
+        String scopeAbbreviation = StringUtilities.getElementAbbreviation(scope.getBinaryName());
+        String identifierAbbreviation = StringUtilities.getElementAbbreviation(identifier.getBinaryName());
         return abbreviation.equals(scopeAbbreviation + "." + identifierAbbreviation); //NOI18N
     }
 
@@ -69,7 +70,7 @@ public abstract class AbstractInnerType implements InnerType {
     public Tree getTreeToInsert(CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
         Types types = copy.getTypes();
-        DeclaredType declaredType = types.getDeclaredType(getIdentifier());
+        DeclaredType declaredType = types.getDeclaredType(identifier.resolve(copy));
         Abbreviation abbreviation = request.getAbbreviation();
         TokenSequence<?> tokensSequence;
         switch (request.getCurrentKind()) {
@@ -78,7 +79,8 @@ public abstract class AbstractInnerType implements InnerType {
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
                         JavaSourceUtilities.getVariableName(declaredType, request),
                         JavaSourceMaker.makeTypeTree(toString(), request),
-                        JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request),
+                        JavaSourceMaker.makeNewClassOrEnumAccessTree(
+                                scope.resolve(copy), identifier.resolve(copy), request),
                         request);
             case CLASS:
             case ENUM:
@@ -112,7 +114,8 @@ public abstract class AbstractInnerType implements InnerType {
                         continue;
                     }
                     if (token.id() == JavaTokenId.SEMICOLON) {
-                        return JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request);
+                        return JavaSourceMaker.makeNewClassOrEnumAccessTree(
+                                scope.resolve(copy), identifier.resolve(copy), request);
                     } else {
                         ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
                         return JavaSourceMaker.makeTypeCastTree(
@@ -131,7 +134,8 @@ public abstract class AbstractInnerType implements InnerType {
                         continue;
                     }
                     if (token.id() == JavaTokenId.SEMICOLON) {
-                        return JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request);
+                        return JavaSourceMaker.makeNewClassOrEnumAccessTree(
+                                scope.resolve(copy), identifier.resolve(copy), request);
                     } else {
                         VariableTree variableTree = (VariableTree) request.getCurrentTree();
                         return JavaSourceMaker.makeTypeCastTree(
@@ -142,13 +146,14 @@ public abstract class AbstractInnerType implements InnerType {
                 }
                 break;
             default:
-                return JavaSourceMaker.makeNewClassOrEnumAccessTree(scope, identifier, request);
+                return JavaSourceMaker.makeNewClassOrEnumAccessTree(
+                        scope.resolve(copy), identifier.resolve(copy), request);
         }
         return null;
     }
 
     @Override
     public String toString() {
-        return scope.getSimpleName() + "." + identifier.getSimpleName(); //NOI18N
+        return scope.getQualifiedName() + "." + identifier.getBinaryName(); //NOI18N
     }
 }

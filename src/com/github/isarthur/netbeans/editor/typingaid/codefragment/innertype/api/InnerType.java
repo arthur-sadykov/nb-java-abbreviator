@@ -17,6 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -24,7 +25,7 @@ import javax.lang.model.element.TypeElement;
  */
 public interface InnerType extends CodeFragment {
 
-    TypeElement getScope();
+    ElementHandle<TypeElement> getScope();
 
-    TypeElement getIdentifier();
+    ElementHandle<TypeElement> getIdentifier();
 }

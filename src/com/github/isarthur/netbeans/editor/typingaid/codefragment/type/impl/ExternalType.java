@@ -17,6 +17,7 @@ package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api.AbstractType;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -24,8 +25,8 @@ import javax.lang.model.element.TypeElement;
  */
 public class ExternalType extends AbstractType {
 
-    public ExternalType(TypeElement type) {
-        super(type);
+    public ExternalType(ElementHandle<TypeElement> identifier, int typeParametersCount) {
+        super(identifier, typeParametersCount);
     }
 
     @Override

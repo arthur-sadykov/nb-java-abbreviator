@@ -26,6 +26,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
@@ -52,7 +53,7 @@ public class StaticFieldAccessForGlobalTypesCollector extends AbstractCodeFragme
                     String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
                     if (abbreviation.getIdentifier().equals(elementAbbreviation)) {
                         List<CodeFragment> codeFragments = request.getCodeFragments();
-                        codeFragments.add(new StaticFieldAccess(typeElement, element));
+                        codeFragments.add(new StaticFieldAccess(ElementHandle.create(typeElement), element));
                     }
                 });
             } catch (AssertionError ex) {

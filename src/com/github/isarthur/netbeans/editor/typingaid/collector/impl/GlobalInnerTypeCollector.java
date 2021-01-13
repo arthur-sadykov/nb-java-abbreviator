@@ -28,6 +28,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
@@ -70,8 +71,8 @@ public class GlobalInnerTypeCollector extends AbstractCodeFragmentCollector {
                         }
                         return false;
                     });
-            innerTypeElements.forEach(innerType ->
-                    codeFragments.add(new GlobalInnerType(globalType, (TypeElement) innerType)));
+            innerTypeElements.forEach(innerType -> codeFragments.add(
+                    new GlobalInnerType(ElementHandle.create(globalType), ElementHandle.create((TypeElement) innerType))));
         }
         super.collect(request);
     }

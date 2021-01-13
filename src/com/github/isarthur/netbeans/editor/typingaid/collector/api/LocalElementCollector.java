@@ -18,7 +18,6 @@ package com.github.isarthur.netbeans.editor.typingaid.collector.api;
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.localelement.impl.LocalElementImpl;
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;

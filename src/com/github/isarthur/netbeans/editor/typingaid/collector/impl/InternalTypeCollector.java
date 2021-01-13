@@ -29,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
@@ -69,7 +71,9 @@ public class InternalTypeCollector extends AbstractCodeFragmentCollector {
                 .filter(element -> StringUtilities.getElementAbbreviation(
                         element.getSimpleName().toString()).equals(abbreviation.getContent()))
                 .filter(distinctByKey(Element::getSimpleName))
-                .forEach(element -> codeFragments.add(new InternalType(elements.getTypeElement(element.toString()))));
+                .forEach(element -> codeFragments.add(new InternalType(
+                        ElementHandle.create(elements.getTypeElement(element.toString())),
+                        ((TypeElement) element).getTypeParameters().size())));
         super.collect(request);
     }
 }

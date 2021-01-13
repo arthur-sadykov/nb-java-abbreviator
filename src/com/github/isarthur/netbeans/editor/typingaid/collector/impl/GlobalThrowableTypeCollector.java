@@ -20,6 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.Glob
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import java.util.List;
 import javax.lang.model.element.TypeElement;
+import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
@@ -32,7 +33,8 @@ public class GlobalThrowableTypeCollector extends GlobalTypeCollector {
         Iterable<? extends TypeElement> globalTypes = collectGlobalTypeElements(request);
         List<TypeElement> globalThrowableTypes = filterThrowableTypes(globalTypes, request);
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        globalThrowableTypes.forEach(globalType -> codeFragments.add(new GlobalType(globalType)));
+        globalThrowableTypes.forEach(globalType -> codeFragments.add(
+                new GlobalType(ElementHandle.create(globalType), globalType.getTypeParameters().size())));
         super.collect(request);
     }
 }

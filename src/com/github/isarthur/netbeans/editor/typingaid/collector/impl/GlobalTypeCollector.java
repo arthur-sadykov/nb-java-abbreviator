@@ -26,6 +26,7 @@ import java.util.List;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
@@ -39,7 +40,8 @@ public class GlobalTypeCollector extends AbstractCodeFragmentCollector {
     public void collect(CodeCompletionRequest request) {
         Iterable<? extends TypeElement> globalTypes = collectGlobalTypeElements(request);
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        globalTypes.forEach(globalType -> codeFragments.add(new GlobalType(globalType)));
+        globalTypes.forEach(globalType -> codeFragments.add(
+                new GlobalType(ElementHandle.create(globalType), globalType.getTypeParameters().size())));
         super.collect(request);
     }
 

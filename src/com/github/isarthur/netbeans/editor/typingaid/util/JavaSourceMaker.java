@@ -276,16 +276,19 @@ public class JavaSourceMaker {
         MethodInvocationTree methodInvocationTree =
                 make.MethodInvocation(
                         Collections.emptyList(),
-                        make.Identifier(methodInvocation.getMethod()),
+                        make.Identifier(methodInvocation.getMethod().resolve(request.getWorkingCopy())),
                         methodInvocation.getArguments());
         if (methodInvocation.getKind() == CodeFragment.Kind.CHAINED_METHOD_INVOCATION
                 || methodInvocation.getKind() == CodeFragment.Kind.LOCAL_METHOD_INVOCATION) {
             return methodInvocationTree;
         } else {
             if (methodInvocation.getKind() == CodeFragment.Kind.STATIC_METHOD_INVOCATION) {
-                return make.MemberSelect(
-                        make.QualIdent(((StaticMethodInvocation) methodInvocation).getScope().toString()),
-                        methodInvocationTree.toString());
+                TypeElement scope =
+                        ((StaticMethodInvocation) methodInvocation).getScope().resolve(request.getWorkingCopy());
+                if (scope == null) {
+                    throw new RuntimeException("Cannot resolve a type."); //NOI18N
+                }
+                return make.MemberSelect(make.QualIdent(scope), methodInvocationTree.toString());
             } else {
                 return make.MemberSelect(
                         make.Identifier(((NormalMethodInvocation) methodInvocation).getScope().toString()),
@@ -300,13 +303,17 @@ public class JavaSourceMaker {
         TypeUtilities typeUtilities = copy.getTypeUtilities();
         TreeMaker make = copy.getTreeMaker();
         ModifiersTree modifiers = make.Modifiers(Collections.emptySet());
-        TypeMirror returnType = methodInvocation.getMethod().getReturnType();
+        ExecutableElement method = methodInvocation.getMethod().resolve(copy);
+        if (method == null) {
+            return null;
+        }
+        TypeMirror returnType = method.getReturnType();
         CharSequence returnTypeName = typeUtilities.getTypeName(returnType, TypeUtilities.TypeNameOptions.PRINT_FQN);
         Tree type = make.QualIdent(returnTypeName.toString());
         MethodInvocationTree methodInvocationTree =
                 make.MethodInvocation(
                         Collections.emptyList(),
-                        make.Identifier(methodInvocation.getMethod()),
+                        make.Identifier(method),
                         methodInvocation.getArguments());
         ExpressionTree initializer;
         if (methodInvocation.getKind() == CodeFragment.Kind.CHAINED_METHOD_INVOCATION
@@ -314,7 +321,11 @@ public class JavaSourceMaker {
             initializer = methodInvocationTree;
         } else {
             if (methodInvocation.getKind() == CodeFragment.Kind.STATIC_METHOD_INVOCATION) {
-                TypeElement scope = ((StaticMethodInvocation) methodInvocation).getScope();
+                TypeElement scope =
+                        ((StaticMethodInvocation) methodInvocation).getScope().resolve(request.getWorkingCopy());
+                if (scope == null) {
+                    throw new RuntimeException("Cannot resolve a type."); //NOI18N
+                }
                 initializer = make.MemberSelect(make.QualIdent(scope), methodInvocationTree.toString());
             } else {
                 Element scope = ((NormalMethodInvocation) methodInvocation).getScope();
@@ -323,7 +334,7 @@ public class JavaSourceMaker {
         }
         String variableName =
                 JavaSourceUtilities.getVariableName(
-                        methodInvocation.getMethod().getReturnType(),
+                        method.getReturnType(),
                         request);
         return make.Variable(modifiers, variableName, type, initializer);
     }
@@ -508,14 +519,18 @@ public class JavaSourceMaker {
         MethodInvocationTree methodInvocationTree =
                 make.MethodInvocation(
                         Collections.emptyList(),
-                        make.Identifier(methodInvocation.getMethod()),
+                        make.Identifier(methodInvocation.getMethod().resolve(request.getWorkingCopy())),
                         methodInvocation.getArguments());
         if (methodInvocation.getKind() == CodeFragment.Kind.CHAINED_METHOD_INVOCATION
                 || methodInvocation.getKind() == CodeFragment.Kind.LOCAL_METHOD_INVOCATION) {
             return make.ExpressionStatement(methodInvocationTree);
         } else {
             if (methodInvocation.getKind() == CodeFragment.Kind.STATIC_METHOD_INVOCATION) {
-                TypeElement scope = ((StaticMethodInvocation) methodInvocation).getScope();
+                TypeElement scope =
+                        ((StaticMethodInvocation) methodInvocation).getScope().resolve(request.getWorkingCopy());
+                if (scope == null) {
+                    return null;
+                }
                 return make.ExpressionStatement(
                         make.MemberSelect(
                                 make.QualIdent(scope),
