@@ -63,30 +63,31 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
 
     @Override
     protected Tree getOriginalTree(CodeFragment codeFragment, CodeCompletionRequest request) {
+        WorkingCopy copy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = copy.getTreeUtilities();
+        TokenSequence<?> tokenSequence = copy.getTokenHierarchy().tokenSequence();
+        Abbreviation abbreviation = request.getAbbreviation();
+        Token<?> token;
         switch (codeFragment.getKind()) {
             case ABSTRACT_MODIFIER:
             case FINAL_MODIFIER:
             case STRICTFP_MODIFIER:
-                WorkingCopy copy = request.getWorkingCopy();
-                TokenSequence<?> tokens = copy.getTokenHierarchy().tokenSequence();
-                Abbreviation abbreviation = request.getAbbreviation();
-                tokens.move(abbreviation.getStartOffset());
-                while (tokens.movePrevious() && tokens.token().id() == JavaTokenId.WHITESPACE) {
+                tokenSequence.move(abbreviation.getStartOffset());
+                while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }
-                Token<?> token = tokens.token();
+                token = tokenSequence.token();
                 if (token != null && JavaSourceUtilities.isModifier(token.id())) {
                     ClassTree originalTree = (ClassTree) request.getCurrentTree();
                     return originalTree.getModifiers();
                 }
-                tokens.move(abbreviation.getStartOffset());
-                while (tokens.moveNext() && tokens.token().id() == JavaTokenId.WHITESPACE) {
+                tokenSequence.move(abbreviation.getStartOffset());
+                while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }
-                while (tokens.moveNext() && tokens.token().id() == JavaTokenId.WHITESPACE) {
+                while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }
-                TreeUtilities treeUtilities = copy.getTreeUtilities();
                 TreePath path = treeUtilities.getPathElementOfKind(
                         EnumSet.of(CLASS, ENUM, INTERFACE, METHOD, VARIABLE),
-                        treeUtilities.pathFor(tokens.offset()));
+                        treeUtilities.pathFor(tokenSequence.offset()));
                 if (path == null) {
                     return null;
                 }
@@ -104,6 +105,31 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                         return variableTree.getModifiers();
                 }
                 return request.getCurrentTree();
+            case EXTERNAL_TYPE:
+            case GLOBAL_TYPE:
+            case INTERNAL_TYPE:
+                tokenSequence.move(abbreviation.getStartOffset());
+                while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+                }
+                token = tokenSequence.token();
+                if (token != null && token.id() == JavaTokenId.EQ) {
+                    while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.SEMICOLON) {
+                    }
+                    token = tokenSequence.token();
+                    if (token != null && token.id() == JavaTokenId.SEMICOLON) {
+                        TreePath treePath = treeUtilities.pathFor(tokenSequence.offset());
+                        treePath = treePath.getParentPath();
+                        if (treePath == null) {
+                            return null;
+                        }
+                        Tree tree = treePath.getLeaf();
+                        if (tree.getKind() != Tree.Kind.EXPRESSION_STATEMENT) {
+                            return null;
+                        }
+                        return tree;
+                    }
+                }
+                return request.getCurrentTree();
             default:
                 return request.getCurrentTree();
         }
@@ -111,23 +137,41 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
+        if (tree == null) {
+            return null;
+        }
         WorkingCopy copy = request.getWorkingCopy();
         TreeMaker make = copy.getTreeMaker();
         switch (tree.getKind()) {
+            case VARIABLE:
+                Tree originalTree = getOriginalTree(codeFragment, request);
+                if (originalTree == null) {
+                    return null;
+                }
+                if (originalTree.getKind() == Tree.Kind.BLOCK) {
+                    return getBlockTree(codeFragment, tree, request);
+                }
+                return tree;
             case MODIFIERS:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
                 return make.addModifiersModifier(originalModifiersTree, modifiersTree.getFlags().iterator().next());
             default:
-                BlockTree originalTree = (BlockTree) getOriginalTree(codeFragment, request);
-                Abbreviation abbreviation = request.getAbbreviation();
-                int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
-                        abbreviation.getStartOffset(), originalTree.getStatements(), copy);
-                if (insertIndex == -1) {
-                    return null;
-                }
-                return make.insertBlockStatement(originalTree, insertIndex, (StatementTree) tree);
+                return getBlockTree(codeFragment, tree, request);
         }
+    }
+
+    private BlockTree getBlockTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
+        BlockTree blockTree = (BlockTree) getOriginalTree(codeFragment, request);
+        Abbreviation abbreviation = request.getAbbreviation();
+        WorkingCopy copy = request.getWorkingCopy();
+        int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
+                abbreviation.getStartOffset(), blockTree.getStatements(), copy);
+        if (insertIndex == -1) {
+            return null;
+        }
+        TreeMaker make = copy.getTreeMaker();
+        return make.insertBlockStatement(blockTree, insertIndex, (StatementTree) tree);
     }
 
     @Override

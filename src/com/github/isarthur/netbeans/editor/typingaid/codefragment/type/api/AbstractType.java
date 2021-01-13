@@ -21,6 +21,7 @@ import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionR
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
+import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompoundAssignmentTree;
@@ -30,15 +31,20 @@ import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
+import com.sun.source.util.TreePath;
+import com.sun.source.util.Trees;
 import java.util.Collections;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
+import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 
 /**
@@ -127,18 +133,53 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 UnaryTree unaryTree = (UnaryTree) request.getCurrentTree();
                 return getNewClassOrTypeCastTree(unaryTree.getExpression(), request);
             case BLOCK:
-                NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(identifier.resolve(copy), request);
-                if (newClassTree != null) {
-                    initializer = newClassTree;
-                } else {
-                    initializer = JavaSourceMaker.makeLiteralTree(null, request);
+                TokenHierarchy< ?> tokenHierarchy = copy.getTokenHierarchy();
+                TokenSequence<?> tokenSequence = tokenHierarchy.tokenSequence();
+                Abbreviation abbreviation = request.getAbbreviation();
+                tokenSequence.move(abbreviation.getStartOffset());
+                while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }
-                return JavaSourceMaker.makeVariableTree(
-                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
-                        JavaSourceUtilities.getVariableName(declaredType, request),
-                        JavaSourceMaker.makeTypeTree(toString(), request),
-                        initializer,
-                        request);
+                Token<?> token = tokenSequence.token();
+                if (token != null && token.id() == JavaTokenId.EQ) {
+                    while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.SEMICOLON) {
+                    }
+                    token = tokenSequence.token();
+                    if (token != null && token.id() == JavaTokenId.SEMICOLON) {
+                        TreeUtilities treeUtilities = copy.getTreeUtilities();
+                        TreePath treePath = treeUtilities.pathFor(tokenSequence.offset());
+                        AssignmentTree assignmentTree = (AssignmentTree) treePath.getLeaf();
+                        treePath = TreePath.getPath(treePath, assignmentTree.getExpression());
+                        Trees trees = copy.getTrees();
+                        TypeMirror typeMirror = trees.getTypeMirror(treePath);
+                        TypeElement typeElement = identifier.resolve(copy);
+                        if (typeElement == null) {
+                            return null;
+                        }
+                        TypeMirror currentTypeMirror = typeElement.asType();
+                        if (typeMirror != null && types.isAssignable(typeMirror, currentTypeMirror)) {
+                            return JavaSourceMaker.makeVariableTree(
+                                    JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                                    JavaSourceUtilities.getVariableName(currentTypeMirror, request),
+                                    JavaSourceMaker.makeTypeTree(toString(), request),
+                                    assignmentTree.getExpression(),
+                                    request);
+                        }
+                    }
+                } else {
+                    NewClassTree newClassTree = JavaSourceMaker.makeNewClassTree(identifier.resolve(copy), request);
+                    if (newClassTree != null) {
+                        initializer = newClassTree;
+                    } else {
+                        initializer = JavaSourceMaker.makeLiteralTree(null, request);
+                    }
+                    return JavaSourceMaker.makeVariableTree(
+                            JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                            JavaSourceUtilities.getVariableName(declaredType, request),
+                            JavaSourceMaker.makeTypeTree(toString(), request),
+                            initializer,
+                            request);
+                }
+                break;
             case CATCH:
                 return JavaSourceMaker.makeTypeTree(declaredType, request);
             case CLASS:
@@ -173,6 +214,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
             default:
                 return JavaSourceMaker.makeNewClassTree(identifier.resolve(copy), request);
         }
+        return null;
     }
 
     private Tree getNewClassOrTypeCastTree(ExpressionTree expression, CodeCompletionRequest request) {

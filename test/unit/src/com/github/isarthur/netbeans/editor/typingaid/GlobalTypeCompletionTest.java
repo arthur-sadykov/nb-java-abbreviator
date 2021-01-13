@@ -540,7 +540,25 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "interface Test {\n"
                 + "    public void test();\n"
                 + "}",
-                Arrays.asList("public"));
+                Collections.singletonList("public"));
+    }
+
+    public void testGlobalTypeCompletionOnLeftSideOfAssignmentOperatorInBlock() throws IOException {
+        doAbbreviationInsert(
+                "al",
+                "import java.util.ArrayList;\n"
+                + "class Test {\n"
+                + "    public void test() {\n"
+                + "        | = new ArrayList();\n"
+                + "    }\n"
+                + "}",
+                "import java.util.ArrayList;\n"
+                + "class Test {\n"
+                + "    public void test() {\n"
+                + "        ArrayList<String> arrayList = new ArrayList();\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.util.ArrayList<String>"));
     }
 
     @Override

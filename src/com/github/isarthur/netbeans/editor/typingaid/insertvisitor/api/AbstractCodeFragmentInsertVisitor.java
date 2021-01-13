@@ -379,6 +379,9 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     private void insertTree(CodeFragment codeFragment, CodeCompletionRequest request) {
         Tree originalTree = getOriginalTree(codeFragment, request);
         Tree newTree = getNewTree(codeFragment, codeFragment.getTreeToInsert(request), request);
+        if (originalTree == null || newTree == null) {
+            return;
+        }
         WorkingCopy copy = request.getWorkingCopy();
         copy.rewrite(originalTree, newTree);
     }
