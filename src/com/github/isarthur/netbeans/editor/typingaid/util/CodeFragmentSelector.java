@@ -203,7 +203,7 @@ public class CodeFragmentSelector {
                 if (tokenSequence.token().id() == JavaTokenId.IDENTIFIER) {
                     int startPosition = tokenSequence.offset();
                     int endPosition = tokenSequence.offset() + tokenSequence.token().length();
-                    component.select(startPosition, endPosition);
+                    SwingUtilities.invokeLater(() -> component.select(startPosition, endPosition));
                 }
             } else if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
                 while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
@@ -211,7 +211,7 @@ public class CodeFragmentSelector {
                 if (tokenSequence.token().id() == JavaTokenId.IDENTIFIER) {
                     int startPosition = tokenSequence.offset();
                     int endPosition = tokenSequence.offset() + tokenSequence.token().length();
-                    component.select(startPosition, endPosition);
+                    SwingUtilities.invokeLater(() -> component.select(startPosition, endPosition));
                 }
             } else if (tokenSequence.token().id() == JavaTokenId.SEMICOLON) {
                 while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
