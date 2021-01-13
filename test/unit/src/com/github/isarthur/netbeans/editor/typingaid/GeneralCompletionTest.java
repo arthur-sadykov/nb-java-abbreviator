@@ -27,7 +27,6 @@ import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import javax.swing.JEditorPane;
-import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import junit.framework.Test;
@@ -99,7 +98,7 @@ public class GeneralCompletionTest extends NbTestCase {
         testFile = FileUtil.toFileObject(getWorkDir()).createData(TEST_FILE);
         EditorKit kit = new NbEditorKit();
         editor = new JEditorPane();
-        SwingUtilities.invokeAndWait(() -> editor.setEditorKit(kit));
+        editor.setEditorKit(kit);
         document = editor.getDocument();
         document.putProperty(Document.StreamDescriptionProperty, testFile);
         document.putProperty(MIME_TYPE, JAVA_MIME_TYPE);
@@ -207,5 +206,10 @@ public class GeneralCompletionTest extends NbTestCase {
         Preferences.setLiteralFlag(literal);
         Preferences.setModifierFlag(modifier);
         Preferences.setPrimitiveTypeFlag(primitiveType);
+    }
+
+    @Override
+    protected boolean runInEQ() {
+        return true;
     }
 }
