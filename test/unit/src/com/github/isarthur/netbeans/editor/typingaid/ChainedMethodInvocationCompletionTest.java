@@ -44,7 +44,7 @@ public class ChainedMethodInvocationCompletionTest extends GeneralCompletionTest
         Preferences.setChainedMethodInvocationFlag(true);
     }
 
-    public void testShouldSuggestCompletionForChainedMethodInvocation() throws IOException {
+    public void testChainedMethodInvocationCompletionThatIsPartOfExpressionStatement() throws IOException {
         doAbbreviationInsert(
                 "ie",
                 "public class Test {\n"
@@ -56,13 +56,33 @@ public class ChainedMethodInvocationCompletionTest extends GeneralCompletionTest
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        branchName.;\n"
+                + "        branchName.isEmpty();\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("isEmpty()"));
     }
 
-    public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsMethodArgument() throws IOException {
+    public void testChainedMethodInvocationCompletionThatIsPartOfIfCondition() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        if (branchName.|) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        if (branchName.intern()) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("intern()"));
+    }
+
+    public void testChainedMethodInvocationCompletionThatIsPartOfMethodArgument() throws IOException {
         doAbbreviationInsert(
                 "ie",
                 "public class Test {\n"
@@ -74,13 +94,14 @@ public class ChainedMethodInvocationCompletionTest extends GeneralCompletionTest
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        System.out.println(branchName.);\n"
+                + "        System.out.println(branchName.isEmpty());\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("isEmpty()"));
     }
 
-    public void testShouldSuggestCompletionForChainedMethodInvocationUsedAsVariableInitializer() throws IOException {
+    public void testChainedMethodInvocationCompletionThatIsPartOfVariableInitializer() throws
+            IOException {
         doAbbreviationInsert(
                 "ie",
                 "public class Test {\n"
@@ -92,10 +113,48 @@ public class ChainedMethodInvocationCompletionTest extends GeneralCompletionTest
                 "public class Test {\n"
                 + "    public void test(int numberOfSpaces) {\n"
                 + "        String branchName = \"\";\n"
-                + "        boolean empty = branchName.;\n"
+                + "        boolean empty = branchName.isEmpty();\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("isEmpty()"));
+    }
+
+    public void testMultipleChainedMethodInvocationsThatArePartOfVariableInitializer() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean empty = branchName.intern().|;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean empty = branchName.intern().intern();\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("intern()"));
+    }
+
+    public void testMultipleChainedMethodInvocationsThatArePartOfIfCondition() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        if (branchName.intern().|) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        if (branchName.intern().intern()) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("intern()"));
     }
 
     @Override

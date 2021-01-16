@@ -16,80 +16,50 @@
 package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.ChainedMethodInvocation;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
-import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.util.SourcePositions;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
+import com.sun.source.tree.Tree;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.java.source.WorkingCopy;
+import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
-import org.openide.util.Exceptions;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class MemberSelectCodeFragmentInsertVisitor implements CodeFragmentInsertVisitor {
+public class MemberSelectCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVisitor {
 
     @Override
-    public void visit(ChainedMethodInvocation methodInvocation, CodeCompletionRequest request) {
-        MemberSelectTree memberSelectTree = (MemberSelectTree) request.getCurrentTree();
+    protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
+        MemberSelectTree originalTree = (MemberSelectTree) request.getCurrentTree();
+        MemberSelectTree memberSelectTree = JavaSourceMaker.makeMemberSelectTree(
+                originalTree.getExpression(), tree.toString(), request);
+        String identifier = memberSelectTree.toString();
+        long dotCount = identifier.chars().filter(ch -> ch == '.').count();
         WorkingCopy copy = request.getWorkingCopy();
-        ExpressionTree methodInvocationTree =
-                JavaSourceMaker.makeMethodInvocationExpressionTree(methodInvocation, request);
-        MemberSelectTree newMemberSelectTree = JavaSourceMaker.makeMemberSelectTree(
-                memberSelectTree.getExpression(), methodInvocationTree.toString(), request);
-        SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
-        long startPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), memberSelectTree);
-        long endPosition = sourcePositions.getEndPosition(copy.getCompilationUnit(), memberSelectTree);
-        long dotCount = memberSelectTree.toString().chars().filter(ch -> ch == '.').count();
-        String next = ""; //NOI18N
-        if (dotCount > 0) {
-            TokenSequence<?> sequence = copy.getTokenHierarchy().tokenSequence();
-            Abbreviation abbreviation = request.getAbbreviation();
-            sequence.move(abbreviation.getStartOffset());
-            while (sequence.moveNext() && sequence.token().id() == JavaTokenId.WHITESPACE) {
+        Abbreviation abbreviation = request.getAbbreviation();
+        TokenSequence<?> tokenSequence = copy.getTokenHierarchy().tokenSequence();
+        tokenSequence.move(abbreviation.getStartOffset());
+        while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+        }
+        Token<?> token = tokenSequence.token();
+        if (token != null) {
+            if (dotCount > 1) {
+                if (token.id() == JavaTokenId.COMMA) {
+                    identifier += ","; //NOI18N
+                } else if (token.id() == JavaTokenId.RBRACKET) {
+                    identifier += "]"; //NOI18N
+                } else if (token.id() == JavaTokenId.RPAREN) {
+                    identifier += ")"; //NOI18N
+                } else if (token.id() == JavaTokenId.SEMICOLON) {
+                    identifier += ";"; //NOI18N
+                }
             }
-            next = Character.toString(sequence.token().text().charAt(0));
         }
-        try {
-            JTextComponent component = request.getComponent();
-            Document document = component.getDocument();
-            document.remove((int) startPosition, (int) (endPosition - startPosition));
-            if (next.isEmpty()) {
-                document.insertString((int) startPosition, newMemberSelectTree.toString(), null);
-            } else {
-                document.insertString((int) startPosition, newMemberSelectTree.toString() + next, null);
-                component.setCaretPosition(component.getCaretPosition() - 1);
-            }
-        } catch (BadLocationException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
-    @Override
-    public void visit(ChainedFieldAccess fieldAccess, CodeCompletionRequest request) {
-        MemberSelectTree memberSelectTree = (MemberSelectTree) request.getCurrentTree();
-        WorkingCopy copy = request.getWorkingCopy();
-        MemberSelectTree newMemberSelectTree =
-                JavaSourceMaker.makeMemberSelectTree(memberSelectTree.getExpression(), fieldAccess.toString(), request);
-        SourcePositions sourcePositions = copy.getTrees().getSourcePositions();
-        long startPosition = sourcePositions.getStartPosition(copy.getCompilationUnit(), memberSelectTree);
-        long endPosition = sourcePositions.getEndPosition(copy.getCompilationUnit(), memberSelectTree);
-        try {
-            JTextComponent component = request.getComponent();
-            Document document = component.getDocument();
-            document.remove((int) startPosition, (int) (endPosition - startPosition));
-            document.insertString((int) startPosition, newMemberSelectTree.toString(), null);
-        } catch (BadLocationException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        return JavaSourceMaker.makeIdentifierTree(identifier, request);
     }
 }
