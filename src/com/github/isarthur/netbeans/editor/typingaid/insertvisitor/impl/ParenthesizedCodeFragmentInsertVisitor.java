@@ -18,10 +18,9 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -31,8 +30,6 @@ public class ParenthesizedCodeFragmentInsertVisitor extends AbstractCodeFragment
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
-        return make.Parenthesized((ExpressionTree) tree);
+        return JavaSourceMaker.makeParenthesizedTree((ExpressionTree) tree, request);
     }
 }

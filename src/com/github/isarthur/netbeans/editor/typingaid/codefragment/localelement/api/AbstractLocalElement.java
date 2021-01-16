@@ -133,6 +133,7 @@ public abstract class AbstractLocalElement implements LocalElement {
                         JavaSourceMaker.makeIdentifierTree(toString(), request),
                         JavaSourceMaker.makeIdentifierTree(expression, request),
                         request);
+                copy.tag(assignmentTree, ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG);
                 return JavaSourceMaker.makeExpressionStatementTree(assignmentTree, request);
         }
     }

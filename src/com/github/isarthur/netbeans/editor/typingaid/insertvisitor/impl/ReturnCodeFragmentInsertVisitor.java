@@ -18,11 +18,10 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -32,11 +31,9 @@ public class ReturnCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertV
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         if (ExpressionStatementTree.class.isInstance(tree)) {
-            return make.Return(make.Identifier(tree.toString()));
+            return JavaSourceMaker.makeReturnTree(JavaSourceMaker.makeIdentifierTree(tree.toString(), request), request);
         }
-        return make.Return((ExpressionTree) tree);
+        return JavaSourceMaker.makeReturnTree((ExpressionTree) tree, request);
     }
 }

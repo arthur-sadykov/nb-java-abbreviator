@@ -18,13 +18,12 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -34,31 +33,33 @@ public class VariableCodeFragmentInsertVisitor extends AbstractCodeFragmentInser
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         VariableTree originalTree = (VariableTree) getOriginalTree(codeFragment, request);
         switch (tree.getKind()) {
             case MODIFIERS:
                 ModifiersTree modifiersTree = originalTree.getModifiers();
-                ModifiersTree newModifiersTree = make.addModifiersModifier(
-                        modifiersTree, ((ModifiersTree) tree).getFlags().iterator().next());
-                return make.Variable(
+                ModifiersTree newModifiersTree = JavaSourceMaker.makeModifiersTree(
+                        modifiersTree, ((ModifiersTree) tree).getFlags().iterator().next(), request);
+                return JavaSourceMaker.makeVariableTree(
                         newModifiersTree,
-                        originalTree.getName(),
+                        originalTree.getName().toString(),
                         originalTree.getType(),
-                        originalTree.getInitializer());
+                        originalTree.getInitializer(),
+                        request);
             default:
                 if (ExpressionStatementTree.class.isInstance(tree)) {
-                    return make.Variable(originalTree.getModifiers(),
-                            originalTree.getName(),
+                    return JavaSourceMaker.makeVariableTree(
+                            originalTree.getModifiers(),
+                            originalTree.getName().toString(),
                             originalTree.getType(),
-                            make.Identifier(tree.toString()));
+                            JavaSourceMaker.makeIdentifierTree(tree.toString(), request),
+                            request);
                 }
-                return make.Variable(
+                return JavaSourceMaker.makeVariableTree(
                         originalTree.getModifiers(),
-                        originalTree.getName(),
+                        originalTree.getName().toString(),
                         originalTree.getType(),
-                        (ExpressionTree) tree);
+                        (ExpressionTree) tree,
+                        request);
         }
     }
 }

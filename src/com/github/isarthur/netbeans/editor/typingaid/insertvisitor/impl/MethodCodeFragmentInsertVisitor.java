@@ -19,13 +19,13 @@ import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenSequence;
@@ -67,17 +67,16 @@ public class MethodCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertV
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         switch (tree.getKind()) {
             case MODIFIERS:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
-                return make.addModifiersModifier(originalModifiersTree, modifiersTree.getFlags().iterator().next());
+                return JavaSourceMaker.makeModifiersTree(
+                        originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
             default:
                 MethodTree originalTree = (MethodTree) getOriginalTree(codeFragment, request);
                 int insertIndex = JavaSourceUtilities.findInsertIndexForMethodParameter(originalTree);
-                return make.insertMethodParameter(originalTree, insertIndex, (VariableTree) tree);
+                return JavaSourceMaker.makeMethodTree(originalTree, insertIndex, (VariableTree) tree, request);
         }
     }
 }

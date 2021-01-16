@@ -18,12 +18,11 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -39,12 +38,14 @@ public class BinaryExpressionCodeFragmentInsertVisitor extends AbstractCodeFragm
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         BinaryTree binaryTree = (BinaryTree) getOriginalTree(codeFragment, request);
         if (ExpressionStatementTree.class.isInstance(tree)) {
-            return make.Binary(kind, binaryTree.getLeftOperand(), make.Identifier(tree.toString()));
+            return JavaSourceMaker.makeBinaryTree(
+                    kind,
+                    binaryTree.getLeftOperand(),
+                    JavaSourceMaker.makeIdentifierTree(tree.toString(), request),
+                    request);
         }
-        return make.Binary(kind, binaryTree.getLeftOperand(), (ExpressionTree) tree);
+        return JavaSourceMaker.makeBinaryTree(kind, binaryTree.getLeftOperand(), (ExpressionTree) tree, request);
     }
 }

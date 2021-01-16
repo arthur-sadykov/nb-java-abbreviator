@@ -18,11 +18,11 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.CatchTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.TokenSequence;
@@ -40,7 +40,6 @@ public class CatchCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
             case GLOBAL_TYPE:
             case INTERNAL_TYPE:
                 WorkingCopy copy = request.getWorkingCopy();
-                TreeMaker make = copy.getTreeMaker();
                 CatchTree originalTree = (CatchTree) request.getCurrentTree();
                 VariableTree parameter = originalTree.getParameter();
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
@@ -48,25 +47,27 @@ public class CatchCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                 tokenSequence.moveStart();
                 boolean afterLeftParenthesis = false;
                 String identifier = null;
+                OUTER:
                 while (tokenSequence.moveNext()) {
-                    if (tokenSequence.token().id() == JavaTokenId.LPAREN) {
-                        afterLeftParenthesis = true;
-                    } else if (tokenSequence.token().id() == JavaTokenId.IDENTIFIER) {
-                        if (afterLeftParenthesis) {
-                            identifier = tokenSequence.token().text().toString();
+                    switch (tokenSequence.token().id()) {
+                        case LPAREN:
+                            afterLeftParenthesis = true;
                             break;
-                        }
-                    } else if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
-                        break;
+                        case IDENTIFIER:
+                            if (afterLeftParenthesis) {
+                                identifier = tokenSequence.token().text().toString();
+                                break OUTER;
+                            }
+                            break;
+                        case RPAREN:
+                            break OUTER;
                     }
                 }
-                VariableTree newParameter =
-                        make.Variable(
-                                parameter.getModifiers(),
-                                identifier != null ? identifier : "e", //NOI18N
-                                make.Type(codeFragment.toString()),
-                                parameter.getInitializer());
-                return make.Catch(newParameter, originalTree.getBlock());
+                VariableTree newParameter = JavaSourceMaker.makeVariableTree(parameter.getModifiers(),
+                        identifier != null ? identifier : "e", //NOI18N
+                        JavaSourceMaker.makeTypeTree(codeFragment.toString(), request),
+                        parameter.getInitializer(), request);
+                return JavaSourceMaker.makeCatchTree(newParameter, originalTree.getBlock(), request);
             default:
                 return null;
         }

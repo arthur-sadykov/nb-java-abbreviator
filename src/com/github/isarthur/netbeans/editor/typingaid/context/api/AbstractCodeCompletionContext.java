@@ -20,6 +20,10 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentC
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.selector.api.CodeFragmentSelector;
+import com.github.isarthur.netbeans.editor.typingaid.selector.impl.CodeFragmentSelectorFactory;
+import javax.swing.text.JTextComponent;
+import org.netbeans.api.java.source.ModificationResult;
 
 /**
  *
@@ -38,6 +42,13 @@ public abstract class AbstractCodeCompletionContext implements CodeCompletionCon
     public void insert(CodeFragment codeFragment, CodeCompletionRequest request) {
         CodeFragmentInsertVisitor visitor = getCodeFragmentInsertVisitor();
         codeFragment.accept(visitor, request);
+    }
+
+    @Override
+    public void select(CodeFragment codeFragment, ModificationResult modificationResult, JTextComponent component) {
+        CodeFragmentSelector selector =
+                CodeFragmentSelectorFactory.getCodeFragmentSelector(codeFragment);
+        selector.select(modificationResult, component);
     }
 
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {

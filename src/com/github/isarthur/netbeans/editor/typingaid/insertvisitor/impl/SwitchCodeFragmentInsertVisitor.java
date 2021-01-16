@@ -19,6 +19,7 @@ import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.StatementTree;
@@ -26,7 +27,6 @@ import com.sun.source.tree.SwitchTree;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.CASE;
 import java.util.List;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -54,8 +54,6 @@ public class SwitchCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertV
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         Tree originalTree = getOriginalTree(codeFragment, request);
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         Abbreviation abbreviation = request.getAbbreviation();
         if (originalTree.getKind() == CASE) {
             CaseTree caseTree = (CaseTree) originalTree;
@@ -64,10 +62,10 @@ public class SwitchCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertV
             if (insertIndex == -1) {
                 return null;
             }
-            return make.insertCaseStatement(caseTree, insertIndex, (StatementTree) tree);
+            return JavaSourceMaker.makeCaseTree(caseTree, insertIndex, (StatementTree) tree, request);
         } else {
             SwitchTree switchTree = (SwitchTree) originalTree;
-            return make.insertSwitchCase(switchTree, 0, (CaseTree) tree);
+            return JavaSourceMaker.makeSwitchTree(switchTree, 0, (CaseTree) tree, request);
         }
     }
 }

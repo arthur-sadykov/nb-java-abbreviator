@@ -16,8 +16,8 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.literal.impl;
 
 import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.TRUE_LITERAL;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.literal.api.AbstractLiteral;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 
 /**

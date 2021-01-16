@@ -18,6 +18,8 @@ package com.github.isarthur.netbeans.editor.typingaid.context.api;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import javax.lang.model.type.TypeMirror;
+import javax.swing.text.JTextComponent;
+import org.netbeans.api.java.source.ModificationResult;
 
 /**
  *
@@ -30,4 +32,6 @@ public interface CodeCompletionContext {
     void collect(CodeCompletionRequest request);
 
     void insert(CodeFragment codeFragment, CodeCompletionRequest request);
+
+    void select(CodeFragment codeFragment, ModificationResult modificationResult, JTextComponent component);
 }

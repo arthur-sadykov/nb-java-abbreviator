@@ -18,12 +18,11 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -33,13 +32,11 @@ public class MethodInvocationCodeFragmentInsertVisitor extends AbstractCodeFragm
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         MethodInvocationTree originalTree = (MethodInvocationTree) getOriginalTree(codeFragment, request);
         int insertIndex = JavaSourceUtilities.findInsertIndexForInvocationArgument(originalTree);
         if (insertIndex == -1) {
             return null;
         }
-        return make.insertMethodInvocationArgument(originalTree, insertIndex, (ExpressionTree) tree);
+        return JavaSourceMaker.makeMethodInvocationTree(originalTree, insertIndex, (ExpressionTree) tree, request);
     }
 }

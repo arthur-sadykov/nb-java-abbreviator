@@ -16,18 +16,18 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.api;
 
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import java.util.Collections;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -49,47 +49,62 @@ public abstract class AbstractPrimitiveType implements PrimitiveType, Comparable
     @Override
     public Tree getTreeToInsert(CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         Types types = copy.getTypes();
         TypeMirror type = types.getPrimitiveType(getTypeKind());
         switch (request.getCurrentKind()) {
             case BLOCK:
-                LiteralTree initializer = make.Literal(getDefaultValue());
-                return make.Variable(make.Modifiers(Collections.emptySet()),
+                return JavaSourceMaker.makeVariableTree(
+                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
                         JavaSourceUtilities.getVariableName(type, request),
-                        make.Identifier(toString()),
-                        initializer);
+                        JavaSourceMaker.makePrimitiveTypeTree(TypeKind.valueOf(toString().toUpperCase()), request),
+                        JavaSourceMaker.makeLiteralTree(getDefaultValue(), request),
+                        request);
             case CLASS:
             case ENUM:
                 ClassTree classTree = (ClassTree) request.getCurrentTree();
                 if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
-                    return make.Variable(make.Modifiers(Collections.singleton(Modifier.PRIVATE)),
+                    return JavaSourceMaker.makeVariableTree(
+                            JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
                             JavaSourceUtilities.getVariableName(type, request),
-                            make.Identifier(toString()),
-                            null);
+                            JavaSourceMaker.makePrimitiveTypeTree(TypeKind.valueOf(toString().toUpperCase()), request),
+                            null,
+                            request);
                 } else {
-                    return make.Method(
-                            make.Modifiers(Collections.emptySet()),
+                    return JavaSourceMaker.makeMethodTree(
+                            JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
                             "method", //NOI18N
-                            make.Identifier(toString()),
+                            JavaSourceMaker.makePrimitiveTypeTree(TypeKind.valueOf(toString().toUpperCase()), request),
                             Collections.emptyList(),
                             Collections.emptyList(),
                             Collections.emptyList(),
-                            make.Block(Collections.singletonList(
-                                    make.Return(make.Literal(getDefaultValue()))), false),
-                            null);
+                            JavaSourceMaker.makeBlockTree(
+                                    Collections.singletonList(JavaSourceMaker.makeReturnTree(
+                                            JavaSourceMaker.makeLiteralTree(getDefaultValue(), request),
+                                            request)),
+                                    false,
+                                    request),
+                            null,
+                            request);
                 }
             case METHOD:
-                return make.Variable(make.Modifiers(Collections.emptySet()),
+                return JavaSourceMaker.makeVariableTree(
+                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
                         JavaSourceUtilities.getVariableName(type, request),
-                        make.Identifier(toString()),
-                        null);
+                        JavaSourceMaker.makePrimitiveTypeTree(TypeKind.valueOf(toString().toUpperCase()), request),
+                        null,
+                        request);
             case RETURN:
                 ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
-                return make.TypeCast(make.PrimitiveType(getTypeKind()), returnTree.getExpression());
+                return JavaSourceMaker.makeTypeCastTree(
+                        JavaSourceMaker.makePrimitiveTypeTree(getTypeKind(), request),
+                        returnTree.getExpression(),
+                        request);
             case VARIABLE:
                 VariableTree variableTree = (VariableTree) request.getCurrentTree();
-                return make.TypeCast(make.PrimitiveType(getTypeKind()), variableTree.getInitializer());
+                return JavaSourceMaker.makeTypeCastTree(
+                        JavaSourceMaker.makePrimitiveTypeTree(getTypeKind(), request),
+                        variableTree.getInitializer(),
+                        request);
             default:
                 return null;
         }

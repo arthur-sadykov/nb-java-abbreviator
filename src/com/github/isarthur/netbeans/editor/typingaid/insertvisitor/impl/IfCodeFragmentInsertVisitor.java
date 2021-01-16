@@ -18,11 +18,10 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -32,9 +31,11 @@ public class IfCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVisit
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         IfTree originalTree = (IfTree) getOriginalTree(codeFragment, request);
-        return make.If(originalTree.getCondition(), originalTree.getThenStatement(), (StatementTree) tree);
+        return JavaSourceMaker.makeIfTree(
+                originalTree.getCondition(),
+                originalTree.getThenStatement(),
+                (StatementTree) tree,
+                request);
     }
 }

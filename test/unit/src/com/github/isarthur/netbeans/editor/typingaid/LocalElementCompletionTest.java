@@ -477,14 +477,14 @@ public class LocalElementCompletionTest extends GeneralCompletionTest {
                 + "public class Test {\n"
                 + "    public void test() {\n"
                 + "        String branchName = \"\";\n"
-                + "        File file = new File<>(branchName, |);\n"
+                + "        File file = new File(branchName, |);\n"
                 + "    }\n"
                 + "}",
                 "import java.io.File;\n"
                 + "public class Test {\n"
                 + "    public void test() {\n"
                 + "        String branchName = \"\";\n"
-                + "        File file = new File<>(branchName, branchName, );\n"
+                + "        File file = new File(branchName, branchName, );\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("branchName"));

@@ -19,13 +19,13 @@ import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.CatchTree;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.CATCH;
 import com.sun.source.tree.TryTree;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -37,7 +37,6 @@ public class TryCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVisi
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         TryTree originalTree = (TryTree) getOriginalTree(codeFragment, request);
         Abbreviation abbreviation = request.getAbbreviation();
         int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
@@ -46,9 +45,10 @@ public class TryCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVisi
             return null;
         }
         if (tree.getKind() == CATCH) {
-            return make.insertTryCatch(originalTree, insertIndex, (CatchTree) tree);
+            return JavaSourceMaker.makeTryTree(originalTree, insertIndex, (CatchTree) tree, request);
         } else {
-            return make.Try(originalTree.getBlock(), originalTree.getCatches(), (BlockTree) tree);
+            return JavaSourceMaker.makeTryTree(
+                    originalTree.getBlock(), originalTree.getCatches(), (BlockTree) tree, request);
         }
     }
 }

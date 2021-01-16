@@ -20,6 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragme
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BlockTree;
@@ -49,7 +50,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
@@ -140,8 +140,6 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
         if (tree == null) {
             return null;
         }
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         switch (tree.getKind()) {
             case VARIABLE:
                 Tree originalTree = getOriginalTree(codeFragment, request);
@@ -155,7 +153,8 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
             case MODIFIERS:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
-                return make.addModifiersModifier(originalModifiersTree, modifiersTree.getFlags().iterator().next());
+                return JavaSourceMaker.makeModifiersTree(
+                        originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
             default:
                 return getBlockTree(codeFragment, tree, request);
         }
@@ -170,8 +169,7 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
         if (insertIndex == -1) {
             return null;
         }
-        TreeMaker make = copy.getTreeMaker();
-        return make.insertBlockStatement(blockTree, insertIndex, (StatementTree) tree);
+        return JavaSourceMaker.makeBlockTree(blockTree, insertIndex, (StatementTree) tree, request);
     }
 
     @Override
@@ -184,7 +182,6 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
         if (insertIndex == -1) {
             return;
         }
-        TreeMaker make = copy.getTreeMaker();
         TreePath methodPath = JavaSourceUtilities.getParentPathOfKind(Collections.singleton(METHOD), request);
         if (methodPath == null) {
             return;
@@ -216,12 +213,13 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
             return;
         }
         for (VariableElement field : parametersByFields.keySet()) {
-            AssignmentTree assignmentTree =
-                    make.Assignment(
-                            make.MemberSelect(make.Identifier("this"), field), //NOI18N
-                            make.Identifier(parametersByFields.get(field)));
-            BlockTree newBlockTree = make.insertBlockStatement(
-                    blockTree, insertIndex, make.ExpressionStatement(assignmentTree));
+            AssignmentTree assignmentTree = JavaSourceMaker.makeAssignmentTree(
+                    JavaSourceMaker.makeMemberSelectTree(
+                            JavaSourceMaker.makeIdentifierTree("this", request), field, request), //NOI18N
+                    JavaSourceMaker.makeIdentifierTree(parametersByFields.get(field), request),
+                    request);
+            BlockTree newBlockTree = JavaSourceMaker.makeBlockTree(
+                    blockTree, insertIndex, JavaSourceMaker.makeExpressionStatementTree(assignmentTree, request), request);
             copy.rewrite(blockTree, newBlockTree);
             blockTree = newBlockTree;
         }

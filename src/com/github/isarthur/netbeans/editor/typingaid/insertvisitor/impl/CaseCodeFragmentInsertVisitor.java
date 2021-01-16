@@ -19,12 +19,12 @@ import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.TokenSequence;
@@ -52,16 +52,18 @@ public class CaseCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVis
                 }
             }
         }
-        TreeMaker make = copy.getTreeMaker();
         if (afterColon) {
             int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
                     abbreviation.getStartOffset(), originalTree.getStatements(), request.getWorkingCopy());
             if (insertIndex == -1) {
                 return null;
             }
-            return make.insertCaseStatement(originalTree, insertIndex, (StatementTree) tree);
+            return JavaSourceMaker.makeCaseTree(originalTree, insertIndex, (StatementTree) tree, request);
         } else {
-            return make.Case(make.Identifier(codeFragment.toString()), originalTree.getStatements());
+            return JavaSourceMaker.makeCaseTree(
+                    JavaSourceMaker.makeIdentifierTree(codeFragment.toString(), request),
+                    originalTree.getStatements(),
+                    request);
         }
     }
 }

@@ -18,12 +18,11 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -33,12 +32,16 @@ public class AssignmentCodeFragmentInsertVisitor extends AbstractCodeFragmentIns
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         AssignmentTree originalTree = (AssignmentTree) getOriginalTree(codeFragment, request);
         if (ExpressionStatementTree.class.isInstance(tree)) {
-            return make.Assignment(originalTree.getVariable(), make.Identifier(tree.toString()));
+            return JavaSourceMaker.makeAssignmentTree(
+                    originalTree.getVariable(),
+                    JavaSourceMaker.makeIdentifierTree(tree.toString(), request),
+                    request);
         }
-        return make.Assignment(originalTree.getVariable(), (ExpressionTree) tree);
+        return JavaSourceMaker.makeAssignmentTree(
+                originalTree.getVariable(),
+                (ExpressionTree) tree,
+                request);
     }
 }

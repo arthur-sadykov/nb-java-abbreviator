@@ -19,6 +19,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragme
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.api.MethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.NormalMethodInvocation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.methodinvocation.impl.StaticMethodInvocation;
+import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.sun.source.tree.AssertTree;
 import com.sun.source.tree.AssignmentTree;
@@ -28,6 +29,7 @@ import com.sun.source.tree.BreakTree;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.CatchTree;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
 import com.sun.source.tree.ContinueTree;
 import com.sun.source.tree.DoWhileLoopTree;
@@ -43,6 +45,7 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.ParameterizedTypeTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.PrimitiveTypeTree;
 import com.sun.source.tree.ReturnTree;
@@ -60,6 +63,7 @@ import static com.sun.source.tree.Tree.Kind.POSTFIX_INCREMENT;
 import static com.sun.source.tree.Tree.Kind.WHILE_LOOP;
 import com.sun.source.tree.TryTree;
 import com.sun.source.tree.TypeCastTree;
+import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.tree.WhileLoopTree;
@@ -75,7 +79,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -88,12 +91,14 @@ public class JavaSourceMaker {
     }
 
     private static TreeMaker getTreeMaker(CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        return copy.getTreeMaker();
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        return workingCopy.getTreeMaker();
     }
 
     public static AssertTree makeAssertTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Assert(makeLiteralTree(true, request), makeLiteralTree("", request)); //NOI18N;
+        LiteralTree condition = makeLiteralTree(true, request);
+        tag(condition, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).Assert(condition, makeLiteralTree("", request)); //NOI18N;
     }
 
     public static AssignmentTree makeAssignmentTree(
@@ -121,8 +126,9 @@ public class JavaSourceMaker {
     }
 
     public static CaseTree makeCaseTree(CodeCompletionRequest request) {
-        return getTreeMaker(request)
-                .Case(makeIdentifierTree("", request), Collections.singletonList(makeBreakTree(request))); //NOI18N
+        IdentifierTree expression = makeIdentifierTree("", request); //NOI18N
+        tag(expression, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).Case(expression, Collections.singletonList(makeBreakTree(request)));
     }
 
     public static CaseTree makeCaseTree(ExpressionTree expression, List<? extends StatementTree> statements,
@@ -130,25 +136,48 @@ public class JavaSourceMaker {
         return getTreeMaker(request).Case(expression, statements);
     }
 
+    public static CaseTree makeCaseTree(CaseTree caseTree, int insertIndex, StatementTree statement,
+            CodeCompletionRequest request) {
+        return getTreeMaker(request).insertCaseStatement(caseTree, insertIndex, statement);
+    }
+
     public static CatchTree makeCatchTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Catch(
+        VariableTree variableTree =
                 makeVariableTree(
                         makeModifiersTree(Collections.emptySet(), request),
                         "e", //NOI18N
                         makeIdentifierTree("Exception", request), //NOI18N
                         null,
-                        request),
+                        request);
+        tag(variableTree, ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG, request);
+        return getTreeMaker(request).Catch(
+                variableTree,
                 makeBlockTree(Collections.emptyList(), false, request));
     }
 
+    public static CatchTree makeCatchTree(VariableTree parameter, BlockTree block, CodeCompletionRequest request) {
+        return getTreeMaker(request).Catch(parameter, block);
+    }
+
     public static ClassTree makeClassTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Class(
+        ClassTree classTree = getTreeMaker(request).Class(
                 makeModifiersTree(Collections.emptySet(), request),
                 "Class", //NOI18N
                 Collections.emptyList(),
                 null,
                 Collections.emptyList(),
                 Collections.emptyList());
+        tag(classTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+        return classTree;
+    }
+
+    public static ClassTree makeClassTree(ClassTree clazz, int index, Tree member, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertClassMember(clazz, index, member);
+    }
+
+    public static CompilationUnitTree makeCompilationUnitTree(
+            CompilationUnitTree compilationUnit, int index, Tree typeDeclaration, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertCompUnitTypeDecl(compilationUnit, index, typeDeclaration);
     }
 
     public static CompoundAssignmentTree makeCompoundAssignmentTree(
@@ -165,9 +194,9 @@ public class JavaSourceMaker {
     }
 
     public static DoWhileLoopTree makeDoWhileLoopTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).DoWhileLoop(
-                makeLiteralTree(true, request),
-                makeBlockTree(Collections.emptyList(), false, request));
+        LiteralTree condition = makeLiteralTree(true, request);
+        tag(condition, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).DoWhileLoop(condition, makeBlockTree(Collections.emptyList(), false, request));
     }
 
     public static StatementTree makeElseTree(CodeCompletionRequest request) {
@@ -176,8 +205,10 @@ public class JavaSourceMaker {
         if (elseTree == null) {
             return makeBlockTree(Collections.emptyList(), false, request);
         } else {
+            LiteralTree condition = makeLiteralTree(true, request);
+            tag(condition, ConstantDataManager.EXPRESSION_TAG, request);
             return makeIfTree(
-                    makeParenthesizedTree(makeLiteralTree(true, request), request),
+                    makeParenthesizedTree(condition, request),
                     makeBlockTree(Collections.emptyList(), false, request),
                     elseTree,
                     request);
@@ -185,11 +216,13 @@ public class JavaSourceMaker {
     }
 
     public static ClassTree makeEnumTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Enum(
+        ClassTree enumTree = getTreeMaker(request).Enum(
                 makeModifiersTree(Collections.emptySet(), request),
                 "Enum", //NOI18N
                 Collections.emptyList(),
                 Collections.emptyList());
+        tag(enumTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+        return enumTree;
     }
 
     public static ExpressionStatementTree makeExpressionStatementTree(
@@ -198,25 +231,31 @@ public class JavaSourceMaker {
     }
 
     public static ForLoopTree makeForLoopTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).ForLoop(
-                Collections.singletonList(
-                        makeVariableTree(
-                                makeModifiersTree(Collections.emptySet(), request),
-                                "i", //NOI18N,
-                                makePrimitiveTypeTree(TypeKind.INT, request),
-                                makeLiteralTree(0, request),
-                                request)),
-                makeBinaryTree(
-                        LESS_THAN,
-                        makeIdentifierTree("i", request),
-                        makeLiteralTree(10,
+        ForLoopTree forLoopTree =
+                getTreeMaker(request).ForLoop(
+                        Collections.singletonList(
+                                makeVariableTree(
+                                        makeModifiersTree(Collections.emptySet(), request),
+                                        "i", //NOI18N,
+                                        makePrimitiveTypeTree(TypeKind.INT, request),
+                                        makeLiteralTree(0, request),
+                                        request)),
+                        makeBinaryTree(
+                                LESS_THAN,
+                                makeIdentifierTree("i", request),
+                                makeLiteralTree(10, request),
                                 request),
-                        request),
-                Collections.singletonList(
-                        makeExpressionStatementTree(
-                                makeUnaryTree(POSTFIX_INCREMENT, makeIdentifierTree("i", request), request),
-                                request)),
-                makeBlockTree(Collections.emptyList(), false, request));
+                        Collections.singletonList(
+                                makeExpressionStatementTree(
+                                        makeUnaryTree(POSTFIX_INCREMENT, makeIdentifierTree("i", request), request),
+                                        request)),
+                        makeBlockTree(Collections.emptyList(), false, request));
+        tag(forLoopTree, ConstantDataManager.SECOND_INT_LITERAL_TAG, request);
+        return forLoopTree;
+    }
+
+    public static IdentifierTree makeIdentifierTree(Element element, CodeCompletionRequest request) {
+        return getTreeMaker(request).Identifier(element);
     }
 
     public static IdentifierTree makeIdentifierTree(String identifier, CodeCompletionRequest request) {
@@ -224,8 +263,10 @@ public class JavaSourceMaker {
     }
 
     public static IfTree makeIfTree(CodeCompletionRequest request) {
+        LiteralTree condition = makeLiteralTree(true, request);
+        tag(condition, ConstantDataManager.EXPRESSION_TAG, request);
         return getTreeMaker(request).If(
-                makeLiteralTree(true, request),
+                condition,
                 makeBlockTree(Collections.emptyList(), false, request),
                 null);
     }
@@ -236,16 +277,25 @@ public class JavaSourceMaker {
     }
 
     public static ImportTree makeImportTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Import(makeIdentifierTree("", request), false); //NOI18N
+        IdentifierTree qualifiedIdentifier = makeIdentifierTree("", request); //NOI18N
+        tag(qualifiedIdentifier, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).Import(qualifiedIdentifier, false);
+    }
+
+    public static CompilationUnitTree makeCompilationUnitTree(
+            CompilationUnitTree compilationUnit, int index, ImportTree importt, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertCompUnitImport(compilationUnit, index, importt);
     }
 
     public static ClassTree makeInterfaceTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Interface(
+        ClassTree interfaceTree = getTreeMaker(request).Interface(
                 makeModifiersTree(Collections.emptySet(), request),
                 "Interface", //NOI18N
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList());
+        tag(interfaceTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+        return interfaceTree;
     }
 
     public static LiteralTree makeLiteralTree(Object literal, CodeCompletionRequest request) {
@@ -259,15 +309,50 @@ public class JavaSourceMaker {
                         ? JavaSourceMaker.makeIdentifierTree(returnVar, request)
                         : null,
                 request);
-        return getTreeMaker(request).Method(
-                makeModifiersTree(Collections.emptySet(), request),
-                "method", //NOI18N
-                JavaSourceMaker.makeQualIdentTree(type, request),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                JavaSourceMaker.makeBlockTree(Collections.singletonList(returnTree), false, request),
-                null);
+        ExpressionTree methodType = JavaSourceMaker.makeQualIdentTree(type, request);
+        MethodTree methodTree =
+                getTreeMaker(request).Method(
+                        makeModifiersTree(Collections.emptySet(), request),
+                        "method", //NOI18N
+                        methodType,
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        JavaSourceMaker.makeBlockTree(Collections.singletonList(returnTree), false, request),
+                        null);
+        boolean primitiveType = methodType.getKind() == Tree.Kind.PRIMITIVE_TYPE;
+        tag(
+                methodTree,
+                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
+                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
+                request);
+        return methodTree;
+    }
+
+    public static MethodTree makeMethodTree(
+            ModifiersTree modifiers,
+            CharSequence name,
+            Tree returnType,
+            List<? extends TypeParameterTree> typeParameters,
+            List<? extends VariableTree> parameters,
+            List<? extends ExpressionTree> throwsList,
+            BlockTree body,
+            ExpressionTree defaultValue,
+            CodeCompletionRequest request) {
+        MethodTree methodTree = getTreeMaker(request).Method(
+                modifiers, name, returnType, typeParameters, parameters, throwsList, body, defaultValue);
+        boolean primitiveType = returnType.getKind() == Tree.Kind.PRIMITIVE_TYPE;
+        tag(
+                methodTree,
+                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
+                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
+                request);
+        return methodTree;
+    }
+
+    public static MethodTree makeMethodTree(
+            MethodTree method, int index, VariableTree parameter, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertMethodParameter(method, index, parameter);
     }
 
     public static ExpressionTree makeMethodInvocationExpressionTree(
@@ -280,27 +365,31 @@ public class JavaSourceMaker {
                         methodInvocation.getArguments());
         if (methodInvocation.getKind() == CodeFragment.Kind.CHAINED_METHOD_INVOCATION
                 || methodInvocation.getKind() == CodeFragment.Kind.LOCAL_METHOD_INVOCATION) {
+            tag(methodInvocationTree, ConstantDataManager.ARGUMENT_TAG, request);
             return methodInvocationTree;
         } else {
+            MemberSelectTree memberSelectTree;
             if (methodInvocation.getKind() == CodeFragment.Kind.STATIC_METHOD_INVOCATION) {
                 TypeElement scope =
                         ((StaticMethodInvocation) methodInvocation).getScope().resolve(request.getWorkingCopy());
                 if (scope == null) {
                     throw new RuntimeException("Cannot resolve a type."); //NOI18N
                 }
-                return make.MemberSelect(make.QualIdent(scope), methodInvocationTree.toString());
+                memberSelectTree = make.MemberSelect(make.QualIdent(scope), methodInvocationTree.toString());
             } else {
-                return make.MemberSelect(
-                        make.Identifier(((NormalMethodInvocation) methodInvocation).getScope().toString()),
-                        methodInvocationTree.toString());
+                memberSelectTree =
+                        make.MemberSelect(
+                                make.Identifier(((NormalMethodInvocation) methodInvocation).getScope().toString()),
+                                methodInvocationTree.toString());
             }
+            tag(memberSelectTree, ConstantDataManager.ARGUMENT_TAG, request);
+            return memberSelectTree;
         }
     }
 
     public static StatementTree makeMethodInvocationStatementTree(
             MethodInvocation methodInvocation, CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
-        TypeUtilities typeUtilities = copy.getTypeUtilities();
         TreeMaker make = copy.getTreeMaker();
         ModifiersTree modifiers = make.Modifiers(Collections.emptySet());
         ExecutableElement method = methodInvocation.getMethod().resolve(copy);
@@ -308,8 +397,7 @@ public class JavaSourceMaker {
             return null;
         }
         TypeMirror returnType = method.getReturnType();
-        CharSequence returnTypeName = typeUtilities.getTypeName(returnType, TypeUtilities.TypeNameOptions.PRINT_FQN);
-        Tree type = make.QualIdent(returnTypeName.toString());
+        Tree type = make.Type(returnType);
         MethodInvocationTree methodInvocationTree =
                 make.MethodInvocation(
                         Collections.emptyList(),
@@ -336,11 +424,21 @@ public class JavaSourceMaker {
                 JavaSourceUtilities.getVariableName(
                         method.getReturnType(),
                         request);
-        return make.Variable(modifiers, variableName, type, initializer);
+        return makeVariableTree(modifiers, variableName, type, initializer, request);
+    }
+
+    public static MethodInvocationTree makeMethodInvocationTree(
+            MethodInvocationTree methodInvocation, int index, ExpressionTree argument, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertMethodInvocationArgument(methodInvocation, index, argument);
     }
 
     public static ModifiersTree makeModifiersTree(Set<Modifier> modifiers, CodeCompletionRequest request) {
         return getTreeMaker(request).Modifiers(modifiers);
+    }
+
+    public static ModifiersTree makeModifiersTree(
+            ModifiersTree modifiers, Modifier modifier, CodeCompletionRequest request) {
+        return getTreeMaker(request).addModifiersModifier(modifiers, modifier);
     }
 
     public static ExpressionTree makeNewClassOrEnumAccessTree(TypeElement scope, TypeElement identifier,
@@ -372,6 +470,16 @@ public class JavaSourceMaker {
         return newClassTree == null
                 ? makeLiteralTree(null, request)
                 : newClassTree;
+    }
+
+    public static NewClassTree makeNewClassTree(List<? extends ExpressionTree> typeArguments, ExpressionTree identifier,
+            List<? extends ExpressionTree> arguments, ClassTree classBody, CodeCompletionRequest request) {
+        return getTreeMaker(request).NewClass(null, typeArguments, identifier, arguments, classBody);
+    }
+
+    public static NewClassTree makeNewClassTree(
+            NewClassTree newClass, int index, ExpressionTree typeArgument, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertNewClassArgument(newClass, index, typeArgument);
     }
 
     public static NewClassTree makeNewClassTree(TypeElement type, CodeCompletionRequest request) {
@@ -435,6 +543,11 @@ public class JavaSourceMaker {
         return getTreeMaker(request).MemberSelect(expression, element);
     }
 
+    public static ParameterizedTypeTree makeParameterizedTypeTree(
+            Tree type, List<? extends Tree> typeArguments, CodeCompletionRequest request) {
+        return getTreeMaker(request).ParameterizedType(type, typeArguments);
+    }
+
     public static ParenthesizedTree makeParenthesizedTree(ExpressionTree expression, CodeCompletionRequest request) {
         return getTreeMaker(request).Parenthesized(expression);
     }
@@ -458,12 +571,20 @@ public class JavaSourceMaker {
     public static ReturnTree makeReturnTree(CodeCompletionRequest request) {
         String returnVar = JavaSourceUtilities.returnVar(request);
         TreeMaker make = getTreeMaker(request);
-        return make.Return(returnVar != null ? make.Identifier(returnVar) : null);
+        if (returnVar == null) {
+            return make.Return(null);
+        }
+        IdentifierTree identifier = make.Identifier(returnVar);
+        tag(identifier, ConstantDataManager.EXPRESSION_TAG, request);
+        ReturnTree returnTree = make.Return(identifier);
+        return returnTree;
     }
 
     public static SwitchTree makeSwitchTree(CodeCompletionRequest request) {
+        IdentifierTree expression = makeIdentifierTree("", request); //NOI18N
+        tag(expression, ConstantDataManager.EXPRESSION_TAG, request);
         return getTreeMaker(request).Switch(
-                makeIdentifierTree("", request), //NOI18N
+                expression,
                 Collections.singletonList(
                         makeCaseTree(
                                 makeIdentifierTree("", request), //NOI18N
@@ -471,8 +592,20 @@ public class JavaSourceMaker {
                                 request)));
     }
 
+    public static SwitchTree makeSwitchTree(
+            SwitchTree switchTree, int index, CaseTree caseTree, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertSwitchCase(switchTree, index, caseTree);
+    }
+
     public static ThrowTree makeThrowTree(CodeCompletionRequest request) {
-        return getTreeMaker(request).Throw(makeIdentifierTree("new IllegalArgumentException()", request)); //NOI18N
+        IdentifierTree identifier = makeIdentifierTree("IllegalArgumentException", request); //NOI18N
+        tag(identifier, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).Throw(makeNewClassTree(
+                Collections.emptyList(),
+                identifier,
+                Collections.emptyList(),
+                null,
+                request));
     }
 
     public static TryTree makeTryTree(CodeCompletionRequest request) {
@@ -480,6 +613,15 @@ public class JavaSourceMaker {
                 makeBlockTree(Collections.emptyList(), false, request),
                 Collections.singletonList(makeCatchTree(request)),
                 null);
+    }
+
+    public static TryTree makeTryTree(TryTree tryTree, int index, CatchTree catchTree, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertTryCatch(tryTree, index, catchTree);
+    }
+
+    public static TryTree makeTryTree(
+            BlockTree tryBlock, List<? extends CatchTree> catches, BlockTree finallyBlock, CodeCompletionRequest request) {
+        return getTreeMaker(request).Try(tryBlock, catches, finallyBlock);
     }
 
     public static Tree makeTypeTree(String type, CodeCompletionRequest request) {
@@ -492,7 +634,9 @@ public class JavaSourceMaker {
 
     public static TypeCastTree makeTypeCastTree(
             Tree type, ExpressionTree expressionTree, CodeCompletionRequest request) {
-        return getTreeMaker(request).TypeCast(type, expressionTree);
+        TypeCastTree typeCastTree = getTreeMaker(request).TypeCast(type, expressionTree);
+        tag(typeCastTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+        return typeCastTree;
     }
 
     public static UnaryTree makeUnaryTree(Tree.Kind kind, ExpressionTree expressionTree, CodeCompletionRequest request) {
@@ -501,16 +645,30 @@ public class JavaSourceMaker {
 
     public static VariableTree makeVariableTree(
             ModifiersTree modifiers, String name, Tree type, ExpressionTree initializer, CodeCompletionRequest request) {
-        return getTreeMaker(request).Variable(modifiers, name, type, initializer);
+        VariableTree variableTree = getTreeMaker(request).Variable(modifiers, name, type, initializer);
+        boolean primitiveType = type.getKind() == Tree.Kind.PRIMITIVE_TYPE;
+        tag(
+                variableTree,
+                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
+                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
+                request);
+        return variableTree;
     }
 
     public static VariableTree makeVariableTree(
             VariableTree variableTree, ExpressionTree expressionTree, CodeCompletionRequest request) {
-        return getTreeMaker(request).Variable(
+        VariableTree newVariableTree = getTreeMaker(request).Variable(
                 variableTree.getModifiers(),
                 variableTree.getName(),
                 variableTree.getType(),
                 expressionTree);
+        boolean primitiveType = variableTree.getType().getKind() == Tree.Kind.PRIMITIVE_TYPE;
+        tag(
+                newVariableTree,
+                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
+                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
+                request);
+        return newVariableTree;
     }
 
     public static ExpressionStatementTree makeVoidMethodInvocationStatementTree(
@@ -523,7 +681,9 @@ public class JavaSourceMaker {
                         methodInvocation.getArguments());
         if (methodInvocation.getKind() == CodeFragment.Kind.CHAINED_METHOD_INVOCATION
                 || methodInvocation.getKind() == CodeFragment.Kind.LOCAL_METHOD_INVOCATION) {
-            return make.ExpressionStatement(methodInvocationTree);
+            ExpressionStatementTree expressionStatement = make.ExpressionStatement(methodInvocationTree);
+            tag(expressionStatement, ConstantDataManager.ARGUMENT_TAG, request);
+            return expressionStatement;
         } else {
             if (methodInvocation.getKind() == CodeFragment.Kind.STATIC_METHOD_INVOCATION) {
                 TypeElement scope =
@@ -531,16 +691,21 @@ public class JavaSourceMaker {
                 if (scope == null) {
                     return null;
                 }
-                return make.ExpressionStatement(
+                ExpressionStatementTree expressionStatement = make.ExpressionStatement(
                         make.MemberSelect(
                                 make.QualIdent(scope),
                                 methodInvocationTree.toString()));
+                tag(expressionStatement, ConstantDataManager.ARGUMENT_TAG, request);
+                return expressionStatement;
             } else {
                 Element scope = ((NormalMethodInvocation) methodInvocation).getScope();
-                return make.ExpressionStatement(
-                        make.MemberSelect(
-                                make.Identifier(scope),
-                                methodInvocationTree.toString()));
+                ExpressionStatementTree expressionStatement =
+                        make.ExpressionStatement(
+                                make.MemberSelect(
+                                        make.Identifier(scope),
+                                        methodInvocationTree.toString()));
+                tag(expressionStatement, ConstantDataManager.ARGUMENT_TAG, request);
+                return expressionStatement;
             }
         }
     }
@@ -548,22 +713,34 @@ public class JavaSourceMaker {
     public static Tree makeVoidTree(CodeCompletionRequest request) {
         if (request.getCurrentKind() == CLASS || request.getCurrentKind() == ENUM) {
             TreeMaker make = getTreeMaker(request);
-            return make.Method(
-                    make.Modifiers(Collections.emptySet()),
-                    "method", //NOI18N
-                    make.PrimitiveType(TypeKind.VOID),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    make.Block(Collections.emptyList(), false),
-                    null);
+            MethodTree methodTree =
+                    make.Method(
+                            make.Modifiers(Collections.emptySet()),
+                            "method", //NOI18N
+                            make.PrimitiveType(TypeKind.VOID),
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            make.Block(Collections.emptyList(), false),
+                            null);
+            tag(methodTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+            return methodTree;
         }
-        return makeIdentifierTree("void method();", request); //NOI18N
+        IdentifierTree identifierTree = makeIdentifierTree("void method();", request); //NOI18N
+        tag(identifierTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+        return identifierTree;
     }
 
     public static WhileLoopTree makeWhileLoopTree(CodeCompletionRequest request) {
+        LiteralTree condition = makeLiteralTree(true, request);
+        tag(condition, ConstantDataManager.EXPRESSION_TAG, request);
         return getTreeMaker(request).WhileLoop(
-                makeLiteralTree(true, request),
+                condition,
                 makeBlockTree(Collections.emptyList(), false, request));
+    }
+
+    private static void tag(Tree tree, String tag, CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        workingCopy.tag(tree, tag);
     }
 }

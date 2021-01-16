@@ -18,10 +18,9 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -31,10 +30,8 @@ public class ModifiersCodeFragmentInsertVisitor extends AbstractCodeFragmentInse
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         ModifiersTree originalTree = (ModifiersTree) getOriginalTree(codeFragment, request);
         ModifiersTree modifiersTree = (ModifiersTree) tree;
-        return make.addModifiersModifier(originalTree, modifiersTree.getFlags().iterator().next());
+        return JavaSourceMaker.makeModifiersTree(originalTree, modifiersTree.getFlags().iterator().next(), request);
     }
 }

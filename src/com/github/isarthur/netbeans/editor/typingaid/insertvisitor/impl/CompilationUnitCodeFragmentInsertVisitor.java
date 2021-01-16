@@ -19,6 +19,7 @@ import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
@@ -27,7 +28,6 @@ import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.TokenSequence;
@@ -70,7 +70,6 @@ public class CompilationUnitCodeFragmentInsertVisitor extends AbstractCodeFragme
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         Abbreviation abbreviation = request.getAbbreviation();
         int insertIndex;
         CompilationUnitTree originalTree;
@@ -78,7 +77,8 @@ public class CompilationUnitCodeFragmentInsertVisitor extends AbstractCodeFragme
             case MODIFIERS:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
-                return make.addModifiersModifier(originalModifiersTree, modifiersTree.getFlags().iterator().next());
+                return JavaSourceMaker.makeModifiersTree(
+                        originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
             case IMPORT:
                 originalTree = (CompilationUnitTree) getOriginalTree(codeFragment, request);
                 insertIndex = JavaSourceUtilities.findInsertIndexForTree(
@@ -86,7 +86,7 @@ public class CompilationUnitCodeFragmentInsertVisitor extends AbstractCodeFragme
                 if (insertIndex == -1) {
                     return null;
                 }
-                return make.insertCompUnitImport(originalTree, insertIndex, (ImportTree) tree);
+                return JavaSourceMaker.makeCompilationUnitTree(originalTree, insertIndex, (ImportTree) tree, request);
             default:
                 originalTree = (CompilationUnitTree) getOriginalTree(codeFragment, request);
                 insertIndex = JavaSourceUtilities.findInsertIndexForTree(
@@ -94,7 +94,7 @@ public class CompilationUnitCodeFragmentInsertVisitor extends AbstractCodeFragme
                 if (insertIndex == -1) {
                     return null;
                 }
-                return make.insertCompUnitTypeDecl(originalTree, insertIndex, tree);
+                return JavaSourceMaker.makeCompilationUnitTree(originalTree, insertIndex, tree, request);
         }
     }
 }

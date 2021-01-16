@@ -18,11 +18,10 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -38,11 +37,10 @@ public class UnaryExpressionCodeFragmentInsertVisitor extends AbstractCodeFragme
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         if (ExpressionStatementTree.class.isInstance(tree)) {
-            return make.Unary(kind, make.Identifier(tree.toString()));
+            return JavaSourceMaker.makeUnaryTree(
+                    kind, JavaSourceMaker.makeIdentifierTree(tree.toString(), request), request);
         }
-        return make.Unary(kind, (ExpressionTree) tree);
+        return JavaSourceMaker.makeUnaryTree(kind, (ExpressionTree) tree, request);
     }
 }

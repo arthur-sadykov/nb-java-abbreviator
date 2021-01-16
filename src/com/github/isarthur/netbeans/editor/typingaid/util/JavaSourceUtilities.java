@@ -73,7 +73,6 @@ import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CodeStyle;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
@@ -612,12 +611,9 @@ public class JavaSourceUtilities {
         return t2.getKind().isPrimitive() && types.isSameType(t1, types.boxedClass((PrimitiveType) t1).asType());
     }
 
-    public static List<ExpressionTree> evaluateMethodArguments(ExecutableElement method,
-            CodeCompletionRequest request) {
+    public static List<ExpressionTree> evaluateMethodArguments(ExecutableElement method, CodeCompletionRequest request) {
         List<ExpressionTree> arguments = new ArrayList<>();
         List<? extends VariableElement> parameters = method.getParameters();
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         parameters.stream()
                 .map(parameter -> parameter.asType())
                 .forEachOrdered(elementType -> {
@@ -625,29 +621,31 @@ public class JavaSourceUtilities {
                     VariableElement variableElement =
                             instanceOf(elementType.toString(), "", request); //NOI18N
                     if (variableElement != null) {
-                        identifierTree.set(make.Identifier(variableElement));
+                        identifierTree.set(JavaSourceMaker.makeIdentifierTree(variableElement, request));
                         arguments.add(identifierTree.get());
                     } else {
                         switch (elementType.getKind()) {
                             case BOOLEAN:
-                                identifierTree.set(make.Identifier(ConstantDataManager.FALSE));
+                                identifierTree.set(JavaSourceMaker.makeIdentifierTree(ConstantDataManager.FALSE, request));
                                 break;
                             case BYTE:
                             case SHORT:
                             case INT:
-                                identifierTree.set(make.Identifier(ConstantDataManager.ZERO));
+                                identifierTree.set(JavaSourceMaker.makeIdentifierTree(ConstantDataManager.ZERO, request));
                                 break;
                             case LONG:
-                                identifierTree.set(make.Identifier(ConstantDataManager.ZERO_L));
+                                identifierTree.set(JavaSourceMaker.makeIdentifierTree(ConstantDataManager.ZERO_L, request));
                                 break;
                             case FLOAT:
-                                identifierTree.set(make.Identifier(ConstantDataManager.ZERO_DOT_ZERO_F));
+                                identifierTree.set(JavaSourceMaker.makeIdentifierTree(
+                                        ConstantDataManager.ZERO_DOT_ZERO_F, request));
                                 break;
                             case DOUBLE:
-                                identifierTree.set(make.Identifier(ConstantDataManager.ZERO_DOT_ZERO));
+                                identifierTree.set(JavaSourceMaker.makeIdentifierTree(
+                                        ConstantDataManager.ZERO_DOT_ZERO, request));
                                 break;
                             default:
-                                identifierTree.set(make.Identifier(ConstantDataManager.NULL));
+                                identifierTree.set(JavaSourceMaker.makeIdentifierTree(ConstantDataManager.NULL, request));
                         }
                         arguments.add(identifierTree.get());
                     }

@@ -16,8 +16,8 @@
 package com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl;
 
 import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.LONG_PRIMITIVE_TYPE;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.api.AbstractPrimitiveType;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import javax.lang.model.type.TypeKind;
 import static javax.lang.model.type.TypeKind.LONG;

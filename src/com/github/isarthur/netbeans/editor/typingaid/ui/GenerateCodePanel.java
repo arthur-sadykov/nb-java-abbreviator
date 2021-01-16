@@ -18,7 +18,6 @@ package com.github.isarthur.netbeans.editor.typingaid.ui;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.CodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
-import com.github.isarthur.netbeans.editor.typingaid.util.CodeFragmentSelector;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceInitializeHandler;
 import java.awt.Color;
 import java.awt.Component;
@@ -36,7 +35,6 @@ import javax.swing.text.JTextComponent;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.ModificationResult;
 import org.netbeans.spi.editor.codegen.CodeGenerator;
-import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 
@@ -179,18 +177,18 @@ public class GenerateCodePanel extends javax.swing.JPanel {
             component.requestFocus();
         }
         CodeFragment codeFragment = codeFragmentsList.getSelectedValue();
-        AtomicReference<FileObject> fileObject = new AtomicReference<>();
         JavaSource javaSource = JavaSourceInitializeHandler.getJavaSourceForDocument(component.getDocument());
         try {
+            AtomicReference<CodeCompletionContext> atomicContext = new AtomicReference<>();
             ModificationResult modificationResult = javaSource.runModificationTask(copy -> {
                 JavaSourceInitializeHandler.moveStateToResolvedPhase(copy);
-                fileObject.set(copy.getFileObject());
                 request.update(copy);
                 CodeCompletionContext context = request.getContext();
+                atomicContext.set(context);
                 context.insert(codeFragment, request);
             });
             modificationResult.commit();
-            CodeFragmentSelector.select(codeFragment, modificationResult, fileObject.get(), component);
+            atomicContext.get().select(codeFragment, modificationResult, request.getComponent());
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

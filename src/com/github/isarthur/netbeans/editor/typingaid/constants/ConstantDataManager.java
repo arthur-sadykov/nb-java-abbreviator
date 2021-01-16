@@ -25,13 +25,16 @@ import java.util.List;
 public class ConstantDataManager {
 
     public static final String ANGLED_ERROR = "<error>"; //NOI18N
+    public static final String ARGUMENT_TAG = "argumentTag"; //NOI18N
     public static final String BOOLEAN = "boolean"; //NOI18N
     public static final String BYTE = "byte"; //NOI18N
     public static final String CHAR = "char"; //NOI18N
     public static final String DOUBLE = "double"; //NOI18N
     public static final String EMPTY_CHAR = "' '"; //NOI18N
     public static final String EMPTY_STRING = "\"\""; //NOI18N
+    public static final String EXPRESSION_TAG = "expressionTag"; //NOI18N
     public static final String FALSE = "false"; //NOI18N
+    public static final String FIRST_IDENTIFIER_OR_LITERAL_TAG = "firstIdentifierOrLiteralTag"; //NOI18N
     public static final String FLOAT = "float"; //NOI18N
     public static final List<Character> FORBIDDEN_FIRST_CHARS = Arrays.asList('~', '!', '@', '#', '$', '%', '^', '&',
             '*', '(', ')', '-', '+', '_', '=', '/', '{', '}', '[', ']', '|', '\\', ':', ';', '\'', '"', '<', '>', ',',
@@ -41,6 +44,8 @@ public class ConstantDataManager {
     public static final String LONG = "long"; //NOI18N
     public static final String NULL = "null"; //NOI18N
     public static final String PARENTHESIZED_ERROR = "(ERROR)"; //NOI18N
+    public static final String SECOND_IDENTIFIER_OR_LITERAL_TAG = "secondIdentifierOrLiteralTag"; //NOI18N
+    public static final String SECOND_INT_LITERAL_TAG = "secondIntLiteralTag"; //NOI18N
     public static final String SHORT = "short"; //NOI18N
     public static final String STRING = "java.lang.String"; //NOI18N
     public static final String STATE_IS_NOT_IN_PARSED_PHASE = "Cannot move state to Phase.PARSED!"; //NOI18N

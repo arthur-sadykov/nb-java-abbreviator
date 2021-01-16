@@ -19,6 +19,7 @@ import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviati
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
@@ -33,7 +34,6 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import java.util.EnumSet;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeMaker;
 import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 import org.netbeans.api.lexer.Token;
@@ -100,19 +100,19 @@ public class InterfaceCodeFragmentInsertVisitor extends AbstractCodeFragmentInse
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         switch (tree.getKind()) {
             case MODIFIERS:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
-                return make.addModifiersModifier(originalModifiersTree, modifiersTree.getFlags().iterator().next());
+                return JavaSourceMaker.makeModifiersTree(
+                        originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
             default:
                 ClassTree originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 Abbreviation abbreviation = request.getAbbreviation();
+                WorkingCopy copy = request.getWorkingCopy();
                 int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
                         abbreviation.getStartOffset(), originalTree.getMembers(), copy);
-                return make.insertClassMember(originalTree, insertIndex, tree);
+                return JavaSourceMaker.makeClassTree(originalTree, insertIndex, tree, request);
         }
     }
 }

@@ -19,14 +19,13 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragme
 import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ParameterizedTypeTree;
 import com.sun.source.tree.Tree;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.netbeans.api.java.source.TreeMaker;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -37,17 +36,16 @@ public class ParameterizedTypeCodeFragmentInsertVisitor extends AbstractCodeFrag
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         ParameterizedTypeTree originalTree = (ParameterizedTypeTree) getOriginalTree(codeFragment, request);
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeMaker make = copy.getTreeMaker();
         List<? extends Tree> originalTypeArguments = originalTree.getTypeArguments();
         if (originalTypeArguments.size() == 1) {
             if (originalTypeArguments.get(0).toString().equals(ConstantDataManager.PARENTHESIZED_ERROR)) {
-                return make.ParameterizedType(originalTree.getType(), Collections.singletonList(tree));
+                return JavaSourceMaker.makeParameterizedTypeTree(
+                        originalTree.getType(), Collections.singletonList(tree), request);
             }
         }
         List<Tree> newTypeArguments = new ArrayList<>(originalTypeArguments);
         int insertIndex = JavaSourceUtilities.findInsertIndexForParameterizedType(originalTree, request);
         newTypeArguments.add(insertIndex, tree);
-        return make.ParameterizedType(originalTree.getType(), newTypeArguments);
+        return JavaSourceMaker.makeParameterizedTypeTree(originalTree.getType(), newTypeArguments, request);
     }
 }
