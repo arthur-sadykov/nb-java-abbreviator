@@ -35,6 +35,8 @@ public class ConstantDataManager {
     public static final String EXPRESSION_TAG = "expressionTag"; //NOI18N
     public static final String FALSE = "false"; //NOI18N
     public static final String FIRST_IDENTIFIER_OR_LITERAL_TAG = "firstIdentifierOrLiteralTag"; //NOI18N
+    public static final String FIRST_IDENTIFIER_OR_LITERAL_IN_LAST_MEMBER_SELECT_TAG =
+            "firstIdentifierOrLiteralInLastMemberSelectTag"; //NOI18N
     public static final String FLOAT = "float"; //NOI18N
     public static final List<Character> FORBIDDEN_FIRST_CHARS = Arrays.asList('~', '!', '@', '#', '$', '%', '^', '&',
             '*', '(', ')', '-', '+', '_', '=', '/', '{', '}', '[', ']', '|', '\\', ':', ';', '\'', '"', '<', '>', ',',

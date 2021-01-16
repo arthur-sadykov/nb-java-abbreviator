@@ -43,7 +43,6 @@ public class CodeFragmentSelectorFactory {
             case BOOLEAN_PRIMITIVE_TYPE:
             case BYTE_PRIMITIVE_TYPE:
             case CATCH_KEYWORD:
-            case CHAINED_METHOD_INVOCATION:
             case CHAR_PRIMITIVE_TYPE:
             case CLASS_KEYWORD:
             case ENUM_KEYWORD:
@@ -66,6 +65,8 @@ public class CodeFragmentSelectorFactory {
             case TRY_KEYWORD:
             case VOID_KEYWORD:
                 return new IdentifierCodeFragmentSelector();
+            case CHAINED_METHOD_INVOCATION:
+                return new IdentifierOrLiteralInChainedMethodCodeFragmentSelector();
             case FOR_KEYWORD:
                 return new IntLiteralCodeFragmentSelector();
             default:
