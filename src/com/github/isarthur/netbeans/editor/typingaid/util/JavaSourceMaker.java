@@ -77,9 +77,13 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import org.netbeans.api.java.source.TreeMaker;
+import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -405,8 +409,8 @@ public class JavaSourceMaker {
         if (method == null) {
             return null;
         }
-        TypeMirror returnType = method.getReturnType();
-        Tree type = make.Type(returnType);
+        Types types = copy.getTypes();
+        Tree type;
         MethodInvocationTree methodInvocationTree =
                 make.MethodInvocation(
                         Collections.emptyList(),
@@ -416,6 +420,7 @@ public class JavaSourceMaker {
         if (methodInvocation.getKind() == CodeFragment.Kind.CHAINED_METHOD_INVOCATION
                 || methodInvocation.getKind() == CodeFragment.Kind.LOCAL_METHOD_INVOCATION) {
             initializer = methodInvocationTree;
+            type = make.Type(method.getReturnType());
         } else {
             if (methodInvocation.getKind() == CodeFragment.Kind.STATIC_METHOD_INVOCATION) {
                 TypeElement scope =
@@ -423,9 +428,41 @@ public class JavaSourceMaker {
                 if (scope == null) {
                     throw new RuntimeException("Cannot resolve a type."); //NOI18N
                 }
+                if (scope.getTypeParameters().isEmpty()) {
+                    type = make.Type(method.getReturnType());
+                } else {
+                    TypeMirror scopeType = scope.asType();
+                    TypeMirror variableTypeMirror =
+                            types.asMemberOf((DeclaredType) scopeType, methodInvocation.getMethod().resolve(copy));
+                    String variableType = variableTypeMirror.toString();
+                    if (variableType.contains(")")) { //NOI18N
+                        variableType = variableType.substring(variableType.indexOf(')') + 1).trim();
+                    }
+                    type = make.Type(variableType);
+                }
                 initializer = make.MemberSelect(make.QualIdent(scope), methodInvocationTree.toString());
             } else {
                 Element scope = ((NormalMethodInvocation) methodInvocation).getScope();
+                TypeMirror scopeType = scope.asType();
+                TypeUtilities typeUtilities = copy.getTypeUtilities();
+                CharSequence typeName =
+                        typeUtilities.getTypeName(types.erasure(scopeType), TypeUtilities.TypeNameOptions.PRINT_FQN);
+                Elements elements = copy.getElements();
+                TypeElement typeElement = elements.getTypeElement(typeName);
+                if (typeElement == null) {
+                    return null;
+                }
+                if (typeElement.getTypeParameters().isEmpty()) {
+                    type = make.Type(method.getReturnType());
+                } else {
+                    TypeMirror variableTypeMirror =
+                            types.asMemberOf((DeclaredType) scopeType, methodInvocation.getMethod().resolve(copy));
+                    String variableType = variableTypeMirror.toString();
+                    if (variableType.contains(")")) { //NOI18N
+                        variableType = variableType.substring(variableType.indexOf(')') + 1).trim();
+                    }
+                    type = make.Type(variableType);
+                }
                 initializer = make.MemberSelect(make.Identifier(scope), methodInvocationTree.toString());
             }
         }
