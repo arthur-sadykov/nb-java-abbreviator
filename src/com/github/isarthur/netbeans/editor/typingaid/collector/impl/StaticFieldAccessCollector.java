@@ -34,6 +34,7 @@ import javax.lang.model.util.Elements;
 import org.netbeans.api.java.source.ClassIndex;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.ElementHandle;
+import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
 /**
@@ -45,21 +46,25 @@ public class StaticFieldAccessCollector extends AbstractCodeFragmentCollector {
     @Override
     public void collect(CodeCompletionRequest request) {
         Abbreviation abbreviation = request.getAbbreviation();
-        List<TypeElement> typeElements = collectTypesByAbbreviation(request.getWorkingCopy(), abbreviation);
         List<CodeFragment> codeFragments = request.getCodeFragments();
+        List<TypeElement> typeElements = collectTypesByAbbreviation(request.getWorkingCopy(), abbreviation);
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        ElementUtilities elementUtilities = workingCopy.getElementUtilities();
         typeElements.forEach(typeElement -> {
             try {
-                List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-                enclosedElements.stream().filter(element ->
-                        ((element.getKind() == ElementKind.FIELD
-                        && element.getModifiers().contains(Modifier.PUBLIC)
-                        && element.getModifiers().contains(Modifier.STATIC)
-                        && element.getModifiers().contains(Modifier.FINAL))
-                        || element.getKind() == ElementKind.ENUM_CONSTANT)).forEachOrdered(element -> {
-                    String elementName = element.getSimpleName().toString();
+                Iterable<? extends Element> members =
+                        elementUtilities.getMembers(typeElement.asType(), (element, type) -> {
+                            return ((element.getKind() == ElementKind.FIELD
+                                    && element.getModifiers().contains(Modifier.PUBLIC)
+                                    && element.getModifiers().contains(Modifier.STATIC)
+                                    && element.getModifiers().contains(Modifier.FINAL))
+                                    || element.getKind() == ElementKind.ENUM_CONSTANT);
+                        });
+                members.forEach(member -> {
+                    String elementName = member.getSimpleName().toString();
                     String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
                     if (abbreviation.getIdentifier().equals(elementAbbreviation)) {
-                        codeFragments.add(new StaticFieldAccess(ElementHandle.create(typeElement), element));
+                        codeFragments.add(new StaticFieldAccess(ElementHandle.create(typeElement), member));
                     }
                 });
             } catch (AssertionError ex) {
