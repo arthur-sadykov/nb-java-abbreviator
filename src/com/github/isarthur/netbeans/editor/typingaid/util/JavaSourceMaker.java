@@ -31,6 +31,7 @@ import com.sun.source.tree.CatchTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.CompoundAssignmentTree;
+import com.sun.source.tree.ConditionalExpressionTree;
 import com.sun.source.tree.ContinueTree;
 import com.sun.source.tree.DoWhileLoopTree;
 import com.sun.source.tree.ExpressionStatementTree;
@@ -183,6 +184,14 @@ public class JavaSourceMaker {
     public static CompoundAssignmentTree makeCompoundAssignmentTree(
             Tree.Kind kind, ExpressionTree variableTree, ExpressionTree expressionTree, CodeCompletionRequest request) {
         return getTreeMaker(request).CompoundAssignment(kind, variableTree, expressionTree);
+    }
+
+    public static ConditionalExpressionTree makeConditionalExpressionTree(
+            ExpressionTree condition,
+            ExpressionTree trueExpression,
+            ExpressionTree falseExpression,
+            CodeCompletionRequest request) {
+        return getTreeMaker(request).ConditionalExpression(condition, trueExpression, falseExpression);
     }
 
     public static ContinueTree makeContinueTree(CodeCompletionRequest request) {

@@ -74,4 +74,10 @@ public class Test {
         String localVariable = "";
         
     }
+    
+    void test8() {
+        StringBuilder builder = new StringBuilder();
+        int index = 0;
+        builder = index == 0 ?  : builder.deleteCharAt(3);
+    }
 }

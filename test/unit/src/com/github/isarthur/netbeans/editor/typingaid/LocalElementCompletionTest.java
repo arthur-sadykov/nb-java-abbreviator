@@ -184,6 +184,38 @@ public class LocalElementCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("valid"));
     }
 
+    public void testLocalElementCompletionInTrueExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "public class Test {\n"
+                + "    public void test(boolean valid) {\n"
+                + "        boolean state = valid ? | : false;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(boolean valid) {\n"
+                + "        boolean state = valid ?  valid: false;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("valid"));
+    }
+
+    public void testLocalElementCompletionInFalseExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "v",
+                "public class Test {\n"
+                + "    public void test(boolean valid) {\n"
+                + "        boolean state = valid ? false : |;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(boolean valid) {\n"
+                + "        boolean state = valid ? false : valid;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("valid"));
+    }
+
     public void testLocalElementCompletionInDivideAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "noc",

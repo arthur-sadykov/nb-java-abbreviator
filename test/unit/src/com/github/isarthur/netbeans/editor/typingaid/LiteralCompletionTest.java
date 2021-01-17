@@ -184,6 +184,46 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("true"));
     }
 
+    public void testTrueLiteralInTrueExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ? | : false;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ?  true: false;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("true"));
+    }
+
+    public void testTrueLiteralInFalseExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ? false : |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ? false : true;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("true"));
+    }
+
     public void testFalseLiteralInAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "f",
@@ -324,6 +364,46 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("false"));
     }
 
+    public void testFalseLiteralInTrueExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ? | : true;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ?  false: true;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("false"));
+    }
+
+    public void testFalseLiteralInFalseExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "f",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ? true : |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        valid = another == null ? true : false;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("false"));
+    }
+
     public void testNullLiteralInAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "n",
@@ -459,6 +539,46 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 "class Test {\n"
                 + "    void test() {\n"
                 + "        String valid =null;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("null"));
+    }
+
+    public void testNullLiteralInTrueExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        String name = valid ? | : another;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        String name = valid ?  null: another;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("null"));
+    }
+
+    public void testNullLiteralInFalseExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "n",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        String name = valid ? another : |;\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        boolean valid = true;\n"
+                + "        String another = \"\";\n"
+                + "        String name = valid ? another : null;\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("null"));

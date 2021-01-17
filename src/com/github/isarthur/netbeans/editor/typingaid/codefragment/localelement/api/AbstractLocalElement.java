@@ -61,6 +61,7 @@ public abstract class AbstractLocalElement implements LocalElement {
             case ASSIGNMENT:
             case BITWISE_COMPLEMENT:
             case CONDITIONAL_AND:
+            case CONDITIONAL_EXPRESSION:
             case CONDITIONAL_OR:
             case DIVIDE:
             case DIVIDE_ASSIGNMENT:

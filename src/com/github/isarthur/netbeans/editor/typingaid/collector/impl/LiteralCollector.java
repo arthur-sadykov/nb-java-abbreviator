@@ -49,6 +49,7 @@ public class LiteralCollector extends AbstractCodeFragmentCollector {
     public void collect(CodeCompletionRequest request) {
         Abbreviation abbreviation = request.getAbbreviation();
         switch (request.getCurrentKind()) {
+            case CONDITIONAL_EXPRESSION:
             case EQUAL_TO:
             case METHOD_INVOCATION:
             case NEW_CLASS:

@@ -261,6 +261,12 @@ public class CodeFragmentSelectionTest extends JellyTestCase {
         doAbbreviationInsert(1438, new char[]{'l', 'v'}, "\"\"");
     }
 
+    public void testShouldSelectFirstArgumentOfMethodInvocationInConditionalExpression() {
+        Preferences.setLocalVariableFlag(true);
+        Preferences.setMethodInvocationFlag(true);
+        doAbbreviationInsert(1576, new char[]{'b', '.', 'd', 'c', 'a'}, "index");
+    }
+
     private void doAbbreviationInsert(int caretPosition, char[] chars, String expected) {
         typeAbbreviation(caretPosition, chars);
         new EventTool().waitNoEvent(1000);

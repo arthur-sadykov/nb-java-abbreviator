@@ -197,6 +197,42 @@ public class MethodInvocationCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("branchName.isEmpty()"));
     }
 
+    public void testMethodInvocationCompletionInTrueExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "bn.ie",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean valid = true ? | : false;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean valid = true ?  branchName.isEmpty(): false;\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("branchName.isEmpty()"));
+    }
+
+    public void testMethodInvocationCompletionInFalseExpressionOfConditionalExpressionTree() throws IOException {
+        doAbbreviationInsert(
+                "bn.ie",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean valid = true ? false : |;\n"
+                + "    }\n"
+                + "}",
+                "public class Test {\n"
+                + "    public void test(int numberOfSpaces) {\n"
+                + "        String branchName = \"\";\n"
+                + "        boolean valid = true ? false : branchName.isEmpty();\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("branchName.isEmpty()"));
+    }
+
     public void testMethodInvocationCompletionInDivideAssignmentTree() throws IOException {
         doAbbreviationInsert(
                 "bn.l",
