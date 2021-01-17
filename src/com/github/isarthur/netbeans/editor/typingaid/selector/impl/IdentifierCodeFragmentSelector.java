@@ -51,7 +51,7 @@ public class IdentifierCodeFragmentSelector extends AbstractCodeFragmentSelector
 
     @Override
     public String getTag() {
-        return ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG;
+        return ConstantDataManager.ARGUMENT_TAG;
     }
 
     @Override
@@ -62,35 +62,36 @@ public class IdentifierCodeFragmentSelector extends AbstractCodeFragmentSelector
                 JavaSourceInitializeHandler.moveStateToParsedPhase(controller);
                 TokenSequence<?> tokenSequence = controller.getTokenHierarchy().tokenSequence();
                 int[] span = modificationResult.getSpan(getTag());
-                boolean firstIdentifierOrLiteralSpanTagFound = true;
-                boolean secondIdentifierOrLiteralSpanTagFound = false;
+                boolean argumentSpanTagFound = true;
+                boolean firstIdentifierOrLiteralSpanTagFound = false;
                 if (span == null) {
-                    firstIdentifierOrLiteralSpanTagFound = false;
-                    span = modificationResult.getSpan(ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG);
+                    argumentSpanTagFound = false;
+                    span = modificationResult.getSpan(ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG);
                     if (span == null) {
-                        span = modificationResult.getSpan(ConstantDataManager.ARGUMENT_TAG);
+                        firstIdentifierOrLiteralSpanTagFound = false;
+                        span = modificationResult.getSpan(ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG);
                         if (span == null) {
                             return;
                         }
                     } else {
-                        secondIdentifierOrLiteralSpanTagFound = true;
+                        firstIdentifierOrLiteralSpanTagFound = true;
                     }
                 }
                 tokenSequence.move(span[0]);
                 Set<? extends TokenId> targetTokeIds = EnumSet.of(CHAR_LITERAL, DOUBLE_LITERAL, FALSE, FLOAT_LITERAL,
                         IDENTIFIER, INT_LITERAL, LONG_LITERAL, MULTILINE_STRING_LITERAL, NULL, STRING_LITERAL, THIS, TRUE);
-                if (firstIdentifierOrLiteralSpanTagFound) {
-                    while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
-                    }
-                } else if (secondIdentifierOrLiteralSpanTagFound) {
-                    while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
-                    }
-                    while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
-                    }
-                } else {
+                if (argumentSpanTagFound) {
                     while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.LPAREN) {
                     }
                     tokenSequence.moveNext();
+                } else if (firstIdentifierOrLiteralSpanTagFound) {
+                    while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
+                    }
+                } else {
+                    while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
+                    }
+                    while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
+                    }
                 }
                 Token<?> token = tokenSequence.token();
                 if (token != null && targetTokeIds.contains(token.id())) {
