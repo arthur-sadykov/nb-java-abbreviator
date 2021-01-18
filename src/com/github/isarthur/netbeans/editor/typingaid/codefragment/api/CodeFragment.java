@@ -83,6 +83,7 @@ public interface CodeFragment {
         SHORT_PRIMITIVE_TYPE,
         STATEMENT,
         STATIC_FIELD_ACCESS,
+        STATIC_KEYWORD,
         STATIC_METHOD_INVOCATION,
         STATIC_MODIFIER,
         STRICTFP_MODIFIER,

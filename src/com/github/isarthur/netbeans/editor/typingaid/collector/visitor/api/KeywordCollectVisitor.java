@@ -35,6 +35,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.I
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InterfaceKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.StaticKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SynchronizedKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
@@ -90,6 +91,8 @@ public interface KeywordCollectVisitor {
     void visit(NewKeyword keyword, CodeCompletionRequest request);
 
     void visit(ReturnKeyword keyword, CodeCompletionRequest request);
+
+    void visit(StaticKeyword keyword, CodeCompletionRequest request);
 
     void visit(SwitchKeyword keyword, CodeCompletionRequest request);
 

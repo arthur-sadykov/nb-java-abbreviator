@@ -938,6 +938,36 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("switch", "synchronized"));
     }
 
+    public void testStaticKeywordCompletionInClass() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "class Test {\n"
+                + "    |\n"
+                + "}",
+                "class Test {\n"
+                + "    static {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Arrays.asList("static"));
+    }
+
+    public void testStaticKeywordCompletionInEnum() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    |\n"
+                + "}",
+                "enum Test {\n"
+                + "    TEST;\n"
+                + "    static {\n"
+                + "    }\n"
+                + "    \n"
+                + "}",
+                Arrays.asList("static"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

@@ -40,6 +40,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.I
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InterfaceKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.StaticKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SynchronizedKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
@@ -306,6 +307,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     @Override
     public void visit(StaticFieldAccess fieldAccess, CodeCompletionRequest request) {
         insertTree(fieldAccess, request);
+    }
+
+    @Override
+    public void visit(StaticKeyword keyword, CodeCompletionRequest request) {
+        insertTree(keyword, request);
     }
 
     @Override

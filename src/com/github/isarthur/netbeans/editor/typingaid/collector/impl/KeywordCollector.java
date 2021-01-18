@@ -36,6 +36,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.I
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InterfaceKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.StaticKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SynchronizedKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
@@ -81,6 +82,7 @@ public class KeywordCollector extends AbstractCodeFragmentCollector {
                         new InterfaceKeyword(),
                         new NewKeyword(),
                         new ReturnKeyword(),
+                        new StaticKeyword(),
                         new SwitchKeyword(),
                         new SynchronizedKeyword(),
                         new ThisKeyword(),

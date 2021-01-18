@@ -634,6 +634,10 @@ public class JavaSourceMaker {
         return returnTree;
     }
 
+    public static BlockTree makeStaticBlockTree(CodeCompletionRequest request) {
+        return getTreeMaker(request).Block(Collections.emptyList(), true);
+    }
+
     public static SwitchTree makeSwitchTree(CodeCompletionRequest request) {
         IdentifierTree expression = makeIdentifierTree("", request); //NOI18N
         tag(expression, ConstantDataManager.EXPRESSION_TAG, request);

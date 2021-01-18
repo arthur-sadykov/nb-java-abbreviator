@@ -38,6 +38,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.I
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.InterfaceKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.StaticKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SynchronizedKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
@@ -379,6 +380,17 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
                 List<CodeFragment> codeFragments = request.getCodeFragments();
                 codeFragments.add(keyword);
             }
+        }
+    }
+
+    @Override
+    public void visit(StaticKeyword keyword, CodeCompletionRequest request) {
+        if (!keyword.isAbbreviationEqualTo(request.getAbbreviation().getContent())) {
+            return;
+        }
+        if (JavaSourceUtilities.getCurrentTreeOfKind(EnumSet.of(CLASS, ENUM), request)) {
+            List<CodeFragment> codeFragments = request.getCodeFragments();
+            codeFragments.add(keyword);
         }
     }
 
