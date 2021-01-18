@@ -37,6 +37,7 @@ public class CodeFragmentSelectorFactory {
             case IMPORT_KEYWORD:
             case RETURN_KEYWORD:
             case SWITCH_KEYWORD:
+            case SYNCHRONIZED_KEYWORD:
             case THROW_KEYWORD:
             case WHILE_KEYWORD:
                 return new ExpressionCodeFragmentSelector();

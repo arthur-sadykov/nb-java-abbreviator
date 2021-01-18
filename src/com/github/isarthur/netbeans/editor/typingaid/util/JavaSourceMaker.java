@@ -53,6 +53,7 @@ import com.sun.source.tree.PrimitiveTypeTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.SwitchTree;
+import com.sun.source.tree.SynchronizedTree;
 import com.sun.source.tree.ThrowTree;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.CLASS;
@@ -648,6 +649,14 @@ public class JavaSourceMaker {
     public static SwitchTree makeSwitchTree(
             SwitchTree switchTree, int index, CaseTree caseTree, CodeCompletionRequest request) {
         return getTreeMaker(request).insertSwitchCase(switchTree, index, caseTree);
+    }
+
+    public static SynchronizedTree makeSynchronizedTree(CodeCompletionRequest request) {
+        IdentifierTree expression = makeIdentifierTree("", request); //NOI18N
+        tag(expression, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).Synchronized(
+                expression,
+                makeBlockTree(Collections.emptyList(), false, request));
     }
 
     public static ThrowTree makeThrowTree(CodeCompletionRequest request) {

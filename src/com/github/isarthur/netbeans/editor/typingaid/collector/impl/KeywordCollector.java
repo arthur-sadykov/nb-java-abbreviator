@@ -37,15 +37,16 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.I
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.NewKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ReturnKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SwitchKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.SynchronizedKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThisKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThrowKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.ThrowsKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.TryKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.VoidKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.WhileKeyword;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.KeywordCollectVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.impl.KeywordCollectVisitorImpl;
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +82,7 @@ public class KeywordCollector extends AbstractCodeFragmentCollector {
                         new NewKeyword(),
                         new ReturnKeyword(),
                         new SwitchKeyword(),
+                        new SynchronizedKeyword(),
                         new ThisKeyword(),
                         new ThrowKeyword(),
                         new ThrowsKeyword(),

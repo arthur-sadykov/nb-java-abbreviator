@@ -922,6 +922,22 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Collections.emptyList());
     }
 
+    public void testSwitchAndSynchronizedKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "s",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        |\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() {\n"
+                + "        \n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("switch", "synchronized"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

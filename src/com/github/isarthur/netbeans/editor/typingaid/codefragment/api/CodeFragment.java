@@ -87,6 +87,7 @@ public interface CodeFragment {
         STATIC_MODIFIER,
         STRICTFP_MODIFIER,
         SWITCH_KEYWORD,
+        SYNCHRONIZED_KEYWORD,
         SYNCHRONIZED_MODIFIER,
         THIS_KEYWORD,
         THROW_KEYWORD,
