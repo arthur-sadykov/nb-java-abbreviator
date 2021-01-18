@@ -184,7 +184,6 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 return JavaSourceMaker.makeTypeTree(declaredType, request);
             case CLASS:
             case ENUM:
-            case INTERFACE:
                 ClassTree classTree = (ClassTree) request.getCurrentTree();
                 if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
                     return JavaSourceMaker.makeVariableTree(
@@ -199,6 +198,17 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
             case INSTANCE_OF:
             case PARAMETERIZED_TYPE:
                 return JavaSourceMaker.makeTypeTree(toString(), request);
+            case INTERFACE:
+                return JavaSourceMaker.makeMethodTree(
+                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                        "method", //NOI18N
+                        JavaSourceMaker.makeTypeTree(toString(), request),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        null,
+                        null,
+                        request);
             case METHOD:
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),

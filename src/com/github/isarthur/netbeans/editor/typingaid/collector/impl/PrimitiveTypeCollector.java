@@ -77,6 +77,7 @@ public class PrimitiveTypeCollector extends AbstractCodeFragmentCollector {
         switch (currentTree.getKind()) {
             case CLASS:
             case ENUM:
+            case INTERFACE:
                 Supplier<Boolean> abbreviationInsideBraces = () -> {
                     TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
                     tokenSequence.moveStart();
@@ -106,7 +107,7 @@ public class PrimitiveTypeCollector extends AbstractCodeFragmentCollector {
                 Supplier<Boolean> abbreviationInsideParetheses = () -> {
                     TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
                     tokenSequence.moveStart();
-                    TokenId tokenId = null;
+                    TokenId tokenId;
                     while (tokenSequence.moveNext()) {
                         tokenId = tokenSequence.token().id();
                         if (tokenId == JavaTokenId.LPAREN) {

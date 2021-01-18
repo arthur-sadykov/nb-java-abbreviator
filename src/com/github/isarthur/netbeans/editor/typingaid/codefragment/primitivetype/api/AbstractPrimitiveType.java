@@ -86,6 +86,17 @@ public abstract class AbstractPrimitiveType implements PrimitiveType, Comparable
                             null,
                             request);
                 }
+            case INTERFACE:
+                return JavaSourceMaker.makeMethodTree(
+                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                        "method", //NOI18N
+                        JavaSourceMaker.makeTypeTree(toString(), request),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        null,
+                        null,
+                        request);
             case METHOD:
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
