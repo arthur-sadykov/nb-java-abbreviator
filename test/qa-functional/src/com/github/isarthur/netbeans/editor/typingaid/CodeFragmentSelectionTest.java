@@ -266,6 +266,12 @@ public class CodeFragmentSelectionTest extends JellyTestCase {
         Preferences.setMethodInvocationFlag(true);
         doAbbreviationInsert(1576, new char[]{'b', '.', 'd', 'c', 'a'}, "index");
     }
+    
+    public void testShouldSelectTypeInInstanceofOperator() {
+        Preferences.setKeywordFlag(true);
+        doAbbreviationInsert(1683, new char[]{'i'}, null);
+        assertEquals(1695, editorOperator.txtEditorPane().getCaretPosition());
+    }
 
     private void doAbbreviationInsert(int caretPosition, char[] chars, String expected) {
         typeAbbreviation(caretPosition, chars);

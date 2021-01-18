@@ -561,6 +561,28 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("java.util.ArrayList<String>"));
     }
 
+    public void testGlobalTypeCompletionInInstanceofTree() throws IOException {
+        doAbbreviationInsert(
+                "ame",
+                "package test;\n"
+                + "class Test {\n"
+                + "    Object object = null;\n"
+                + "    void test() {\n"
+                + "        if (object instanceof |) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "class Test {\n"
+                + "    Object object = null;\n"
+                + "    void test() {\n"
+                + "        if (object instanceof AbstractMethodError) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("java.lang.AbstractMethodError"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

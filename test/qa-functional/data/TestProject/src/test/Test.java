@@ -80,4 +80,11 @@ public class Test {
         int index = 0;
         builder = index == 0 ?  : builder.deleteCharAt(3);
     }
+    
+    void test9() {
+        Object object = null;
+        if (object ) {
+            
+        }
+    }
 }

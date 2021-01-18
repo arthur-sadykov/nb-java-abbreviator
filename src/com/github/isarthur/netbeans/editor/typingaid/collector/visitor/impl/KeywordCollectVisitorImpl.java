@@ -15,6 +15,7 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.visitor.impl;
 
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.api.Keyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
@@ -63,6 +64,7 @@ import static com.sun.source.tree.Tree.Kind.INTERFACE;
 import static com.sun.source.tree.Tree.Kind.METHOD;
 import static com.sun.source.tree.Tree.Kind.METHOD_INVOCATION;
 import static com.sun.source.tree.Tree.Kind.NEW_CLASS;
+import static com.sun.source.tree.Tree.Kind.PARENTHESIZED;
 import static com.sun.source.tree.Tree.Kind.RETURN;
 import static com.sun.source.tree.Tree.Kind.SWITCH;
 import static com.sun.source.tree.Tree.Kind.TRY;
@@ -315,6 +317,22 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
 
     @Override
     public void visit(InstanceofKeyword keyword, CodeCompletionRequest request) {
+        if (!keyword.isAbbreviationEqualTo(request.getAbbreviation().getContent())) {
+            return;
+        }
+        if (JavaSourceUtilities.getCurrentTreeOfKind(EnumSet.of(PARENTHESIZED), request)) {
+            WorkingCopy workingCopy = request.getWorkingCopy();
+            TokenSequence<?> tokenSequence = workingCopy.getTokenHierarchy().tokenSequence();
+            Abbreviation abbreviation = request.getAbbreviation();
+            tokenSequence.move(abbreviation.getStartOffset());
+            while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+            }
+            Token<?> token = tokenSequence.token();
+            if (token != null && token.id() == JavaTokenId.IDENTIFIER) {
+                List<CodeFragment> codeFragments = request.getCodeFragments();
+                codeFragments.add(keyword);
+            }
+        }
     }
 
     @Override

@@ -52,6 +52,7 @@ public class CodeFragmentSelectorFactory {
             case FLOAT_PRIMITIVE_TYPE:
             case GLOBAL_INNER_TYPE:
             case GLOBAL_TYPE:
+            case INSTANCEOF_KEYWORD:
             case INT_PRIMITIVE_TYPE:
             case INTERFACE_KEYWORD:
             case INTERNAL_TYPE:

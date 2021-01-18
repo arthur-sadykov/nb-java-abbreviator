@@ -878,6 +878,50 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("new"));
     }
 
+    public void testInstanceofKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "package test;\n"
+                + "class Test {\n"
+                + "    Object object = null;\n"
+                + "    void test() {\n"
+                + "        if (object |) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "class Test {\n"
+                + "    Object object = null;\n"
+                + "    void test() {\n"
+                + "        if (object instanceof  ) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Arrays.asList("instanceof"));
+    }
+
+    public void testShouldOnlyInvokeCompletionForInstanceofKeywordIfIdentifierIsInFront() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "package test;\n"
+                + "class Test {\n"
+                + "    Object object = null;\n"
+                + "    void test() {\n"
+                + "        if (|) {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "class Test {\n"
+                + "    Object object = null;\n"
+                + "    void test() {\n"
+                + "        if () {\n"
+                + "        }\n"
+                + "    }\n"
+                + "}",
+                Collections.emptyList());
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

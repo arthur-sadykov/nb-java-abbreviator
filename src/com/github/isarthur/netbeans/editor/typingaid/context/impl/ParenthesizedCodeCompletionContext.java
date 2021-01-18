@@ -42,6 +42,7 @@ public class ParenthesizedCodeCompletionContext extends AbstractCodeCompletionCo
         return CodeFragmentCollectorLinkerImpl.builder()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
+                .linkKeywordCollector()
                 .linkLiteralCollector()
                 .linkLocalMethodInvocationCollector()
                 .linkLocalVariableCollector()

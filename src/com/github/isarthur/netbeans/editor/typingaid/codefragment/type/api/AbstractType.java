@@ -196,6 +196,9 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                 } else {
                     return JavaSourceMaker.makeMethodTree(toString(), request);
                 }
+            case INSTANCE_OF:
+            case PARAMETERIZED_TYPE:
+                return JavaSourceMaker.makeTypeTree(toString(), request);
             case METHOD:
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
@@ -203,8 +206,6 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
                         JavaSourceMaker.makeTypeTree(toString(), request),
                         null,
                         request);
-            case PARAMETERIZED_TYPE:
-                return JavaSourceMaker.makeTypeTree(toString(), request);
             case RETURN:
                 ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
                 return getNewClassOrTypeCastTree(returnTree.getExpression(), request);

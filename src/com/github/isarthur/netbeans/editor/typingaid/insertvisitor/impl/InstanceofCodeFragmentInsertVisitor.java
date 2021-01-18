@@ -19,28 +19,18 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragme
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
-import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.InstanceOfTree;
-import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.Tree;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class ParenthesizedCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVisitor {
+public class InstanceofCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVisitor {
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        if (codeFragment.getKind() == CodeFragment.Kind.INSTANCEOF_KEYWORD) {
-            ParenthesizedTree parenthesizedTree = (ParenthesizedTree) getOriginalTree(codeFragment, request);
-            InstanceOfTree instanceOfTree =
-                    JavaSourceMaker.makeInstanceofTree(
-                            parenthesizedTree.getExpression(),
-                            JavaSourceMaker.makeIdentifierTree("", request), //NOI18N
-                            request);
-            return JavaSourceMaker.makeParenthesizedTree(instanceOfTree, request);
-        }
-        return JavaSourceMaker.makeParenthesizedTree((ExpressionTree) tree, request);
+        InstanceOfTree originalTree = (InstanceOfTree) getOriginalTree(codeFragment, request);
+        return JavaSourceMaker.makeInstanceofTree(originalTree.getExpression(), tree, request);
     }
 }

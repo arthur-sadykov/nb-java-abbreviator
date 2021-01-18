@@ -40,6 +40,7 @@ import com.sun.source.tree.ForLoopTree;
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.ImportTree;
+import com.sun.source.tree.InstanceOfTree;
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -185,6 +186,11 @@ public class JavaSourceMaker {
         return getTreeMaker(request).insertCompUnitTypeDecl(compilationUnit, index, typeDeclaration);
     }
 
+    public static CompilationUnitTree makeCompilationUnitTree(
+            CompilationUnitTree compilationUnit, int index, ImportTree importt, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertCompUnitImport(compilationUnit, index, importt);
+    }
+
     public static CompoundAssignmentTree makeCompoundAssignmentTree(
             Tree.Kind kind, ExpressionTree variableTree, ExpressionTree expressionTree, CodeCompletionRequest request) {
         return getTreeMaker(request).CompoundAssignment(kind, variableTree, expressionTree);
@@ -295,11 +301,6 @@ public class JavaSourceMaker {
         return getTreeMaker(request).Import(qualifiedIdentifier, false);
     }
 
-    public static CompilationUnitTree makeCompilationUnitTree(
-            CompilationUnitTree compilationUnit, int index, ImportTree importt, CodeCompletionRequest request) {
-        return getTreeMaker(request).insertCompUnitImport(compilationUnit, index, importt);
-    }
-
     public static ClassTree makeInterfaceTree(CodeCompletionRequest request) {
         ClassTree interfaceTree = getTreeMaker(request).Interface(
                 makeModifiersTree(Collections.emptySet(), request),
@@ -309,6 +310,12 @@ public class JavaSourceMaker {
                 Collections.emptyList());
         tag(interfaceTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
         return interfaceTree;
+    }
+
+    public static InstanceOfTree makeInstanceofTree(ExpressionTree expression, Tree type, CodeCompletionRequest request) {
+        InstanceOfTree instanceOfTree = getTreeMaker(request).InstanceOf(expression, type);
+        tag(type, ConstantDataManager.EXPRESSION_TAG, request);
+        return instanceOfTree;
     }
 
     public static LiteralTree makeLiteralTree(Object literal, CodeCompletionRequest request) {
