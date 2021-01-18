@@ -65,6 +65,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.SynchronizedModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.TransientModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.VolatileModifier;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.name.api.Name;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl.BooleanPrimitiveType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl.BytePrimitiveType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl.CharPrimitiveType;
@@ -182,6 +183,9 @@ public interface CodeFragmentInsertVisitor {
     }
 
     default void visit(LongPrimitiveType primitiveType, CodeCompletionRequest request) {
+    }
+
+    default void visit(Name name, CodeCompletionRequest request) {
     }
 
     default void visit(NativeModifier modifier, CodeCompletionRequest request) {

@@ -24,6 +24,7 @@ import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import com.sun.source.tree.Scope;
 import com.sun.source.util.TreePath;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -39,16 +40,27 @@ import org.netbeans.api.java.source.WorkingCopy;
 public abstract class LocalElementCollector extends AbstractCodeFragmentCollector {
 
     protected void collect(CodeCompletionRequest request, ElementKind kind) {
+        List<Element> localElements = collectLocalElements(request, kind);
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        Abbreviation abbreviation = request.getAbbreviation();
+        localElements
+                .stream()
+                .filter(element -> StringUtilities.getElementAbbreviation(
+                        element.getSimpleName().toString()).equals(abbreviation.getIdentifier()))
+                .filter(distinctByKey(Element::getSimpleName))
+                .forEach(element -> codeFragments.add(new LocalElementImpl(element)));
+    }
+
+    protected List<Element> collectLocalElements(CodeCompletionRequest request, ElementKind kind) {
         WorkingCopy copy = request.getWorkingCopy();
-        List<Element> localElements = new ArrayList<>();
         TreeUtilities treeUtilities = copy.getTreeUtilities();
         Abbreviation abbreviation = request.getAbbreviation();
         TreePath currentPath = treeUtilities.pathFor(abbreviation.getStartOffset());
         if (currentPath == null) {
-            return;
+            return Collections.emptyList();
         }
         if (TreeUtilities.CLASS_TREE_KINDS.contains(currentPath.getLeaf().getKind())) {
-            return;
+            return Collections.emptyList();
         }
         ElementUtilities elementUtilities = copy.getElementUtilities();
         Elements elements = copy.getElements();
@@ -60,13 +72,8 @@ public abstract class LocalElementCollector extends AbstractCodeFragmentCollecto
                             && !e.getSimpleName().toString().equals(ConstantDataManager.SUPER)
                             && e.getKind() == kind;
                 });
+        List<Element> localElements = new ArrayList<>();
         localMembersAndVars.forEach(localElements::add);
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        localElements
-                .stream()
-                .filter(element -> StringUtilities.getElementAbbreviation(
-                        element.getSimpleName().toString()).equals(abbreviation.getIdentifier()))
-                .filter(distinctByKey(Element::getSimpleName))
-                .forEach(element -> codeFragments.add(new LocalElementImpl(element)));
+        return Collections.unmodifiableList(localElements);
     }
 }

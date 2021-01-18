@@ -55,6 +55,7 @@ public class VariableCodeCompletionContext extends AbstractCodeCompletionContext
                 .linkLocalMethodInvocationCollector()
                 .linkLocalVariableCollector()
                 .linkModifierCollector(VARIABLE)
+                .linkNameCollector()
                 .linkParameterCollector()
                 .linkPrimitiveTypeCollector()
                 .linkResourceVariableCollector()

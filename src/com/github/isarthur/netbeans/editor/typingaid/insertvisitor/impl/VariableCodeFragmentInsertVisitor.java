@@ -24,6 +24,7 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
+import com.sun.source.util.TreePath;
 
 /**
  *
@@ -34,32 +35,59 @@ public class VariableCodeFragmentInsertVisitor extends AbstractCodeFragmentInser
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         VariableTree originalTree = (VariableTree) getOriginalTree(codeFragment, request);
-        switch (tree.getKind()) {
-            case MODIFIERS:
-                ModifiersTree modifiersTree = originalTree.getModifiers();
-                ModifiersTree newModifiersTree = JavaSourceMaker.makeModifiersTree(
-                        modifiersTree, ((ModifiersTree) tree).getFlags().iterator().next(), request);
-                return JavaSourceMaker.makeVariableTree(
-                        newModifiersTree,
-                        originalTree.getName().toString(),
-                        originalTree.getType(),
-                        originalTree.getInitializer(),
-                        request);
-            default:
-                if (ExpressionStatementTree.class.isInstance(tree)) {
+        if (codeFragment.getKind() == CodeFragment.Kind.NAME) {
+            TreePath treePath = request.getCurrentPath();
+            treePath = treePath.getParentPath();
+            if (treePath == null) {
+                return null;
+            }
+            Tree parentTree = treePath.getLeaf();
+            switch (parentTree.getKind()) {
+                case CLASS:
+                    return JavaSourceMaker.makeExpressionStatementTree(
+                            JavaSourceMaker.makeIdentifierTree(
+                                    JavaSourceMaker.makeVariableTree(
+                                            originalTree.getModifiers(),
+                                            tree.toString(),
+                                            originalTree.getType(),
+                                            originalTree.getInitializer(),
+                                            request).toString(), request), request);
+                default:
+                    return JavaSourceMaker.makeVariableTree(
+                            originalTree.getModifiers(),
+                            tree.toString(),
+                            originalTree.getType(),
+                            originalTree.getInitializer(),
+                            request);
+            }
+        } else {
+            switch (tree.getKind()) {
+                case MODIFIERS:
+                    ModifiersTree modifiersTree = originalTree.getModifiers();
+                    ModifiersTree newModifiersTree = JavaSourceMaker.makeModifiersTree(
+                            modifiersTree, ((ModifiersTree) tree).getFlags().iterator().next(), request);
+                    return JavaSourceMaker.makeVariableTree(
+                            newModifiersTree,
+                            originalTree.getName().toString(),
+                            originalTree.getType(),
+                            originalTree.getInitializer(),
+                            request);
+                default:
+                    if (ExpressionStatementTree.class.isInstance(tree)) {
+                        return JavaSourceMaker.makeVariableTree(
+                                originalTree.getModifiers(),
+                                originalTree.getName().toString(),
+                                originalTree.getType(),
+                                JavaSourceMaker.makeIdentifierTree(tree.toString(), request),
+                                request);
+                    }
                     return JavaSourceMaker.makeVariableTree(
                             originalTree.getModifiers(),
                             originalTree.getName().toString(),
                             originalTree.getType(),
-                            JavaSourceMaker.makeIdentifierTree(tree.toString(), request),
+                            (ExpressionTree) tree,
                             request);
-                }
-                return JavaSourceMaker.makeVariableTree(
-                        originalTree.getModifiers(),
-                        originalTree.getName().toString(),
-                        originalTree.getType(),
-                        (ExpressionTree) tree,
-                        request);
+            }
         }
     }
 }

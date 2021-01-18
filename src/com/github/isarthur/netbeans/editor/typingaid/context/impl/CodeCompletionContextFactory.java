@@ -24,6 +24,9 @@ import com.sun.source.tree.Tree;
  */
 public class CodeCompletionContextFactory {
 
+    private CodeCompletionContextFactory() {
+    }
+
     public static CodeCompletionContext getCodeCompletionContext(Tree.Kind kind) {
         switch (kind) {
             case AND:

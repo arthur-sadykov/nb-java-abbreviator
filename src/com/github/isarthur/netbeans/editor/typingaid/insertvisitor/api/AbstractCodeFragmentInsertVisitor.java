@@ -66,6 +66,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.SynchronizedModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.TransientModifier;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.modifier.impl.VolatileModifier;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.name.api.Name;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl.BooleanPrimitiveType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl.BytePrimitiveType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.primitivetype.impl.CharPrimitiveType;
@@ -249,6 +250,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     @Override
     public void visit(LongPrimitiveType primitiveType, CodeCompletionRequest request) {
         insertTree(primitiveType, request);
+    }
+
+    @Override
+    public void visit(Name name, CodeCompletionRequest request) {
+        insertTree(name, request);
     }
 
     @Override

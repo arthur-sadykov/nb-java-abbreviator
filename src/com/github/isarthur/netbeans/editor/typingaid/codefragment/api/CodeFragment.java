@@ -71,6 +71,7 @@ public interface CodeFragment {
         LOCAL_FIELD_ACCESS,
         LOCAL_METHOD_INVOCATION,
         LONG_PRIMITIVE_TYPE,
+        NAME,
         NATIVE_MODIFIER,
         NEW_KEYWORD,
         NORMAL_METHOD_INVOCATION,

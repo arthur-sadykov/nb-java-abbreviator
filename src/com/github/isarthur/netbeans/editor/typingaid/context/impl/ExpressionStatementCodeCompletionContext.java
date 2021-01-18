@@ -18,7 +18,7 @@ package com.github.isarthur.netbeans.editor.typingaid.context.impl;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.NullCodeFragmentInsertVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.ExpressionStatementCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import javax.lang.model.type.TypeMirror;
 
@@ -30,13 +30,18 @@ public class ExpressionStatementCodeCompletionContext extends AbstractCodeComple
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
+        if (request.getAbbreviation().isSimple()) {
+            return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkNameCollector()
+                    .build();
+        }
         return CodeFragmentCollectorLinkerImpl.builder()
                 .build();
     }
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return new ExpressionStatementCodeFragmentInsertVisitor();
     }
 
     @Override

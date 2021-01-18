@@ -315,35 +315,6 @@ public class JavaSourceUtilities {
         Element currentElement;
         int insertIndex;
         switch (currentTree.getKind()) {
-            case ASSIGNMENT:
-                AssignmentTree assignmentTree = (AssignmentTree) currentTree;
-                ExpressionTree variable = assignmentTree.getVariable();
-                path = TreePath.getPath(currentPath, variable);
-                return trees.getElement(path).asType();
-            case BLOCK:
-            case PARENTHESIZED:
-                return null;
-            case CASE:
-                TreePath switchPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
-                if (switchPath == null) {
-                    break;
-                }
-                SwitchTree switchTree = (SwitchTree) switchPath.getLeaf();
-                expression = switchTree.getExpression();
-                TreePath expressionPath = TreePath.getPath(switchPath, expression);
-                return trees.getTypeMirror(expressionPath);
-            case DIVIDE:
-            case EQUAL_TO:
-            case GREATER_THAN:
-            case GREATER_THAN_EQUAL:
-            case LESS_THAN:
-            case LESS_THAN_EQUAL:
-            case MINUS:
-            case MULTIPLY:
-            case NOT_EQUAL_TO:
-            case PLUS:
-            case REMAINDER:
-                return types.getPrimitiveType(TypeKind.DOUBLE);
             case AND:
             case AND_ASSIGNMENT:
             case ARRAY_ACCESS:
@@ -363,10 +334,52 @@ public class JavaSourceUtilities {
             case XOR:
             case XOR_ASSIGNMENT:
                 return types.getPrimitiveType(TypeKind.LONG);
+            case ASSIGNMENT:
+                AssignmentTree assignmentTree = (AssignmentTree) currentTree;
+                ExpressionTree variable = assignmentTree.getVariable();
+                path = TreePath.getPath(currentPath, variable);
+                return trees.getElement(path).asType();
+            case BLOCK:
+            case PARENTHESIZED:
+                return null;
+            case CASE:
+                TreePath switchPath = treeUtilities.getPathElementOfKind(Tree.Kind.SWITCH, currentPath);
+                if (switchPath == null) {
+                    break;
+                }
+                SwitchTree switchTree = (SwitchTree) switchPath.getLeaf();
+                expression = switchTree.getExpression();
+                TreePath expressionPath = TreePath.getPath(switchPath, expression);
+                return trees.getTypeMirror(expressionPath);
             case CONDITIONAL_AND:
             case CONDITIONAL_OR:
             case LOGICAL_COMPLEMENT:
                 return types.getPrimitiveType(TypeKind.BOOLEAN);
+            case DIVIDE:
+            case EQUAL_TO:
+            case GREATER_THAN:
+            case GREATER_THAN_EQUAL:
+            case LESS_THAN:
+            case LESS_THAN_EQUAL:
+            case MINUS:
+            case MULTIPLY:
+            case NOT_EQUAL_TO:
+            case PLUS:
+            case REMAINDER:
+                return types.getPrimitiveType(TypeKind.DOUBLE);
+            case EXPRESSION_STATEMENT:
+                TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+                tokenSequence.moveStart();
+                if (tokenSequence.moveNext()) {
+                    if (tokenSequence.token().id() == JavaTokenId.IDENTIFIER) {
+                        TreePath typeTreePath = treeUtilities.pathFor(tokenSequence.offset() + 1);
+                        if (typeTreePath == null) {
+                            return null;
+                        }
+                        return trees.getTypeMirror(typeTreePath);
+                    }
+                }
+                return null;
             case MEMBER_SELECT:
                 expression = ((MemberSelectTree) currentTree).getExpression();
                 path = TreePath.getPath(currentPath, expression);
@@ -395,13 +408,13 @@ public class JavaSourceUtilities {
                     return typeUtilities.getDenotableType(parameter.asType());
                 }
                 return null;
+            case RETURN:
+                return type(owningMethodType(request), request);
             case VARIABLE:
                 VariableTree variableTree = (VariableTree) currentTree;
                 Tree type = variableTree.getType();
                 path = TreePath.getPath(currentPath, type);
                 return trees.getElement(path).asType();
-            case RETURN:
-                return type(owningMethodType(request), request);
         }
         return null;
     }

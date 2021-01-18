@@ -36,6 +36,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalMethodI
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LocalVariableCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.MethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ModifierCollectorFactory;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.NameCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.NullCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.PrimitiveTypeCollector;
@@ -48,6 +49,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.linker.api.CodeFr
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import com.sun.source.tree.Tree;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,7 +61,7 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
     private List<CodeFragmentCollector> collectors = new ArrayList<>();
 
     private CodeFragmentCollectorLinkerImpl(CodeFragmentCollectorLinkerBuilder builder) {
-        this.collectors = builder.collectors;
+        this.collectors = builder.getCollectors();
     }
 
     public static CodeFragmentCollectorLinkerBuilder builder() {
@@ -76,7 +78,7 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
 
     public static class CodeFragmentCollectorLinkerBuilder {
 
-        private List<CodeFragmentCollector> collectors = new ArrayList<>();
+        private final List<CodeFragmentCollector> collectors = new ArrayList<>();
 
         public CodeFragmentCollectorLinkerImpl build() {
             return new CodeFragmentCollectorLinkerImpl(this);
@@ -222,6 +224,11 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkNameCollector() {
+            collectors.add(new NameCollector());
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkParameterCollector() {
             if (Preferences.getParameterFlag()) {
                 collectors.add(new ParameterCollector());
@@ -263,6 +270,10 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
                 }
             }
             return this;
+        }
+
+        private List<CodeFragmentCollector> getCollectors() {
+            return Collections.unmodifiableList(collectors);
         }
     }
 }
