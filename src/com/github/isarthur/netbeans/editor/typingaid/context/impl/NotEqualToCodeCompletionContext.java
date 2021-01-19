@@ -41,6 +41,7 @@ public class NotEqualToCodeCompletionContext extends AbstractCodeCompletionConte
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
+                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkLiteralCollector()

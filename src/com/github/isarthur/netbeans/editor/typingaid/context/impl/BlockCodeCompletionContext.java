@@ -40,6 +40,7 @@ public class BlockCodeCompletionContext extends AbstractCodeCompletionContext {
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
+                .linkEnumConstantCollector()
                 .linkExternalTypeCollector()
                 .linkFieldCollector()
                 .linkGlobalTypeCollector()

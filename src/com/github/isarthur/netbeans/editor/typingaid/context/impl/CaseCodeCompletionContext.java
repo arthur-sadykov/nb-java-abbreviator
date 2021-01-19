@@ -65,6 +65,7 @@ public class CaseCodeCompletionContext extends AbstractCodeCompletionContext {
                         .build();
             }
             return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkEnumConstantCollector()
                     .linkExceptionParameterCollector()
                     .linkExternalTypeCollector()
                     .linkFieldCollector()

@@ -50,6 +50,7 @@ public class MethodInvocationCodeCompletionContext extends AbstractCodeCompletio
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
+                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkFieldCollector()
                 .linkKeywordCollector()

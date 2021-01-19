@@ -62,6 +62,7 @@ public abstract class AbstractCodeCompletionContext implements CodeCompletionCon
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()
+                .linkEnumConstantCollector()
                 .linkExceptionParameterCollector()
                 .linkExternalTypeCollector()
                 .linkFieldCollector()
