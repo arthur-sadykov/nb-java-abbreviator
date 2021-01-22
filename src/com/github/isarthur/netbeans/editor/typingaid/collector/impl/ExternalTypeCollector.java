@@ -15,41 +15,25 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.ExternalType;
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.TypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.lang.model.element.TypeElement;
-import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class ExternalTypeCollector extends AbstractCodeFragmentCollector {
-
-    private final Filter[] filters;
+public class ExternalTypeCollector extends TypeCollector {
 
     public ExternalTypeCollector(Filter... filters) {
-        this.filters = filters;
+        super(filters);
     }
 
     @Override
-    public void collect(CodeCompletionRequest request) {
-        List<TypeElement> externalTypes = JavaSourceUtilities.collectExternalTypeElements(request);
-        for (Filter filter : filters) {
-            externalTypes = filter.meetCriteria(externalTypes);
-        }
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        codeFragments.addAll(
-                externalTypes.stream()
-                        .map(externalType -> new ExternalType(
-                                ElementHandle.create(externalType), externalType.getTypeParameters().size()))
-                        .collect(Collectors.toList()));
-        super.collect(request);
+    protected List<TypeElement> collectTypes(CodeCompletionRequest request) {
+        return JavaSourceUtilities.collectExternalTypeElements(request);
     }
 }

@@ -36,9 +36,7 @@ public class CatchCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         switch (codeFragment.getKind()) {
-            case EXTERNAL_TYPE:
-            case GLOBAL_TYPE:
-            case INTERNAL_TYPE:
+            case TYPE:
                 WorkingCopy copy = request.getWorkingCopy();
                 CatchTree originalTree = (CatchTree) request.getCurrentTree();
                 VariableTree parameter = originalTree.getParameter();

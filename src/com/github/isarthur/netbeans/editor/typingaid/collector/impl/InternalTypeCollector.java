@@ -15,41 +15,25 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.InternalType;
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.TypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.lang.model.element.TypeElement;
-import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class InternalTypeCollector extends AbstractCodeFragmentCollector {
-
-    private final Filter[] filters;
+public class InternalTypeCollector extends TypeCollector {
 
     public InternalTypeCollector(Filter... filters) {
-        this.filters = filters;
+        super(filters);
     }
 
     @Override
-    public void collect(CodeCompletionRequest request) {
-        List<TypeElement> internalTypes = JavaSourceUtilities.collectInternalTypeElements(request);
-        for (Filter filter : filters) {
-            internalTypes = filter.meetCriteria(internalTypes);
-        }
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        codeFragments.addAll(
-                internalTypes.stream()
-                        .map(internalType ->
-                                new InternalType(ElementHandle.create(internalType), internalType.getTypeParameters().size()))
-                        .collect(Collectors.toList()));
-        super.collect(request);
+    protected List<TypeElement> collectTypes(CodeCompletionRequest request) {
+        return JavaSourceUtilities.collectInternalTypeElements(request);
     }
 }

@@ -47,16 +47,12 @@ public class CodeFragmentSelectorFactory {
             case CHAR_PRIMITIVE_TYPE:
             case CLASS_KEYWORD:
             case ENUM_KEYWORD:
-            case EXTERNAL_INNER_TYPE:
-            case EXTERNAL_TYPE:
             case DOUBLE_PRIMITIVE_TYPE:
             case FLOAT_PRIMITIVE_TYPE:
-            case GLOBAL_INNER_TYPE:
-            case GLOBAL_TYPE:
+            case INNER_TYPE:
             case INSTANCEOF_KEYWORD:
             case INT_PRIMITIVE_TYPE:
             case INTERFACE_KEYWORD:
-            case INTERNAL_TYPE:
             case LOCAL_ELEMENT:
             case LONG_PRIMITIVE_TYPE:
             case NEW_KEYWORD:
@@ -65,6 +61,7 @@ public class CodeFragmentSelectorFactory {
             case SHORT_PRIMITIVE_TYPE:
             case STATIC_METHOD_INVOCATION:
             case TRY_KEYWORD:
+            case TYPE:
             case VOID_KEYWORD:
                 return new IdentifierCodeFragmentSelector();
             case CHAINED_METHOD_INVOCATION:

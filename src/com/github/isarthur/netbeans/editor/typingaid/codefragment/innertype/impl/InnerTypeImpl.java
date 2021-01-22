@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api;
+package com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
+import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.INNER_TYPE;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api.InnerType;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
@@ -39,12 +42,12 @@ import org.netbeans.api.lexer.TokenSequence;
  *
  * @author Arthur Sadykov
  */
-public abstract class AbstractInnerType implements InnerType {
+public class InnerTypeImpl implements InnerType {
 
     private final ElementHandle<TypeElement> scope;
     private final ElementHandle<TypeElement> identifier;
 
-    protected AbstractInnerType(ElementHandle<TypeElement> scope, ElementHandle<TypeElement> identifier) {
+    public InnerTypeImpl(ElementHandle<TypeElement> scope, ElementHandle<TypeElement> identifier) {
         this.scope = scope;
         this.identifier = identifier;
     }
@@ -150,6 +153,16 @@ public abstract class AbstractInnerType implements InnerType {
                         scope.resolve(copy), identifier.resolve(copy), request);
         }
         return null;
+    }
+
+    @Override
+    public Kind getKind() {
+        return INNER_TYPE;
+    }
+
+    @Override
+    public void accept(CodeFragmentInsertVisitor visitor, CodeCompletionRequest request) {
+        visitor.visit(this, request);
     }
 
     @Override

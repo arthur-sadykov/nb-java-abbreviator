@@ -15,44 +15,21 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.InnerTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.TypeElement;
-import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class ExternalInnerTypeCollector extends AbstractCodeFragmentCollector {
-
-    private final Filter[] filters;
-
-    public ExternalInnerTypeCollector(Filter... filters) {
-        this.filters = filters;
-    }
+public class ExternalInnerTypeCollector extends InnerTypeCollector {
 
     @Override
-    public void collect(CodeCompletionRequest request) {
-        Map<TypeElement, List<TypeElement>> innerTypesByExternalTypes =
-                JavaSourceUtilities.collectExternalInnerTypeElements(request);
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        innerTypesByExternalTypes.entrySet().forEach(entry -> {
-            TypeElement externalType = entry.getKey();
-            List<TypeElement> innerTypes = entry.getValue();
-            for (Filter filter : filters) {
-                innerTypes = filter.meetCriteria(innerTypes);
-            }
-            innerTypes.forEach(innerType -> {
-                codeFragments.add(new GlobalInnerType(ElementHandle.create(externalType), ElementHandle.create(innerType)));
-            });
-        });
-        super.collect(request);
+    protected Map<TypeElement, List<TypeElement>> collectInnerTypesByTopLevelTypes(CodeCompletionRequest request) {
+        return JavaSourceUtilities.collectExternalInnerTypeElements(request);
     }
 }

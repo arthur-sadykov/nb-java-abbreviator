@@ -105,9 +105,7 @@ public class BlockCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                         return variableTree.getModifiers();
                 }
                 return request.getCurrentTree();
-            case EXTERNAL_TYPE:
-            case GLOBAL_TYPE:
-            case INTERNAL_TYPE:
+            case TYPE:
                 tokenSequence.move(abbreviation.getStartOffset());
                 while (tokenSequence.moveNext() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
                 }

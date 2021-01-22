@@ -18,8 +18,6 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.StaticFieldAccess;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.ExternalInnerType;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.BreakKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.CaseKeyword;
@@ -175,11 +173,6 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     }
 
     @Override
-    public void visit(ExternalInnerType innerType, CodeCompletionRequest request) {
-        insertTree(innerType, request);
-    }
-
-    @Override
     public void visit(FalseLiteral literal, CodeCompletionRequest request) {
         insertTree(literal, request);
     }
@@ -202,11 +195,6 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     @Override
     public void visit(ForKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
-    }
-
-    @Override
-    public void visit(GlobalInnerType innerType, CodeCompletionRequest request) {
-        insertTree(innerType, request);
     }
 
     @Override

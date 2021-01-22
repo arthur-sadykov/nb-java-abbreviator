@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Arthur Sadykov.
+ * Copyright 2021 Arthur Sadykov.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api;
+package com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
+import static com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment.Kind.TYPE;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.api.Type;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
@@ -51,12 +53,12 @@ import org.netbeans.api.lexer.TokenSequence;
  *
  * @author Arthur Sadykov
  */
-public abstract class AbstractType implements Type, Comparable<AbstractType> {
+public class TypeImpl implements Type, Comparable<TypeImpl> {
 
     protected ElementHandle<TypeElement> identifier;
     private final int typeParametersCount;
 
-    protected AbstractType(ElementHandle<TypeElement> identifier, int typeParametersCount) {
+    public TypeImpl(ElementHandle<TypeElement> identifier, int typeParametersCount) {
         this.identifier = identifier;
         this.typeParametersCount = typeParametersCount;
     }
@@ -72,7 +74,7 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
     }
 
     @Override
-    public int compareTo(AbstractType other) {
+    public int compareTo(TypeImpl other) {
         return toString().compareTo(other.toString());
     }
 
@@ -248,6 +250,11 @@ public abstract class AbstractType implements Type, Comparable<AbstractType> {
             }
         }
         return null;
+    }
+
+    @Override
+    public Kind getKind() {
+        return TYPE;
     }
 
     @Override

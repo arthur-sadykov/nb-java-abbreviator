@@ -15,41 +15,25 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.GlobalType;
-import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.api.TypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.lang.model.element.TypeElement;
-import org.netbeans.api.java.source.ElementHandle;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public class GlobalTypeCollector extends AbstractCodeFragmentCollector {
-
-    private final Filter[] filters;
+public class GlobalTypeCollector extends TypeCollector {
 
     public GlobalTypeCollector(Filter... filters) {
-        this.filters = filters;
+        super(filters);
     }
 
     @Override
-    public void collect(CodeCompletionRequest request) {
-        List<TypeElement> globalTypes = JavaSourceUtilities.collectGlobalTypeElements(request);
-        for (Filter filter : filters) {
-            globalTypes = filter.meetCriteria(globalTypes);
-        }
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        codeFragments.addAll(
-                globalTypes.stream()
-                        .map(globalType ->
-                                new GlobalType(ElementHandle.create(globalType), globalType.getTypeParameters().size()))
-                        .collect(Collectors.toList()));
-        super.collect(request);
+    protected List<TypeElement> collectTypes(CodeCompletionRequest request) {
+        return JavaSourceUtilities.collectGlobalTypeElements(request);
     }
 }
