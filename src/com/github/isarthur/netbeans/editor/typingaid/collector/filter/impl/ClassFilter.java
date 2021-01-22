@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Arthur Sadykov.
+ * Copyright 2021 Arthur Sadykov.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.isarthur.netbeans.editor.typingaid.collector.api;
+package com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
+import java.util.List;
+import java.util.stream.Collectors;
+import static javax.lang.model.element.ElementKind.CLASS;
+import javax.lang.model.element.TypeElement;
 
 /**
  *
  * @author Arthur Sadykov
  */
-public abstract class AbstractCodeFragmentCollector implements CodeFragmentCollector {
-
-    protected CodeFragmentCollector nextCollector;
+public class ClassFilter implements Filter {
 
     @Override
-    public void collect(CodeCompletionRequest request) {
-        if (nextCollector != null) {
-            nextCollector.collect(request);
-        }
-    }
-
-    @Override
-    public void setNext(CodeFragmentCollector nextCollector) {
-        this.nextCollector = nextCollector;
+    public List<TypeElement> meetCriteria(List<TypeElement> typeElements) {
+        return typeElements.stream().filter(typeElement -> typeElement.getKind() == CLASS).collect(Collectors.toList());
     }
 }

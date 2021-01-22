@@ -15,24 +15,16 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.type.impl.ExternalType;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
-import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-import org.netbeans.api.java.source.ClassIndex;
-import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -40,47 +32,24 @@ import org.netbeans.api.java.source.WorkingCopy;
  */
 public class ExternalTypeCollector extends AbstractCodeFragmentCollector {
 
-    @Override
-    public void collect(CodeCompletionRequest request) {
-        List<TypeElement> types = new ArrayList<>();
-        types.addAll(collectExternalTypeElements(request));
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        codeFragments.addAll(
-                types.stream()
-                        .filter(distinctByKey(element -> element.getSimpleName().toString()))
-                        .map(element -> new ExternalType(
-                                ElementHandle.create(element), element.getTypeParameters().size()))
-                        .sorted()
-                        .collect(Collectors.toList()));
-        super.collect(request);
+    private final Filter[] filters;
+
+    public ExternalTypeCollector(Filter... filters) {
+        this.filters = filters;
     }
 
-    protected List<TypeElement> collectExternalTypeElements(CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        Abbreviation abbreviation = request.getAbbreviation();
-        ClasspathInfo classpathInfo = copy.getClasspathInfo();
-        ClassIndex classIndex = classpathInfo.getClassIndex();
-        Set<ElementHandle<TypeElement>> declaredTypes = classIndex.getDeclaredTypes(
-                abbreviation.getScope().toUpperCase(),
-                ClassIndex.NameKind.CAMEL_CASE,
-                EnumSet.of(ClassIndex.SearchScope.SOURCE, ClassIndex.SearchScope.DEPENDENCIES));
-        List<TypeElement> typeElements = new ArrayList<>();
-        Elements elements = copy.getElements();
-        declaredTypes.forEach(type -> {
-            TypeElement typeElement = type.resolve(copy);
-            if (typeElement == null) {
-                return;
-            }
-            if (elements.isDeprecated(typeElement)) {
-                return;
-            }
-            String typeName = typeElement.getSimpleName().toString();
-            String typeAbbreviation = StringUtilities.getElementAbbreviation(typeName);
-            if (!typeAbbreviation.equals(abbreviation.getContent())) {
-                return;
-            }
-            typeElements.add(typeElement);
-        });
-        return Collections.unmodifiableList(typeElements);
+    @Override
+    public void collect(CodeCompletionRequest request) {
+        List<TypeElement> externalTypes = JavaSourceUtilities.collectExternalTypeElements(request);
+        for (Filter filter : filters) {
+            externalTypes = filter.meetCriteria(externalTypes);
+        }
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        codeFragments.addAll(
+                externalTypes.stream()
+                        .map(externalType -> new ExternalType(
+                                ElementHandle.create(externalType), externalType.getTypeParameters().size()))
+                        .collect(Collectors.toList()));
+        super.collect(request);
     }
 }

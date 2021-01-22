@@ -16,19 +16,17 @@
 package com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl.ThrowableFilter;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedEnumConstantAccessCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedFieldAccessCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedMethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.EnumConstantCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExceptionParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalInnerTypeCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.FieldCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalInnerTypeCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalTypeCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalThrowableTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.KeywordCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LiteralCollector;
@@ -47,6 +45,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.StaticMethod
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.StaticMethodInvocationForGlobalTypesCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.api.CodeFragmentCollectorLinker;
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
+import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.sun.source.tree.Tree;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -126,9 +125,9 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkExternalThrowableTypeCollector() {
+        public CodeFragmentCollectorLinkerBuilder linkExternalThrowableTypeCollector(CodeCompletionRequest request) {
             if (Preferences.getExternalTypeFlag()) {
-                collectors.add(new ExternalThrowableTypeCollector());
+                collectors.add(new ExternalTypeCollector(new ThrowableFilter(request)));
             }
             return this;
         }
@@ -154,9 +153,9 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkGlobalThrowableTypeCollector() {
+        public CodeFragmentCollectorLinkerBuilder linkGlobalThrowableTypeCollector(CodeCompletionRequest request) {
             if (Preferences.getGlobalTypeFlag()) {
-                collectors.add(new GlobalThrowableTypeCollector());
+                collectors.add(new GlobalTypeCollector(new ThrowableFilter(request)));
             }
             return this;
         }
@@ -168,9 +167,9 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
-        public CodeFragmentCollectorLinkerBuilder linkInternalThrowableTypeCollector() {
+        public CodeFragmentCollectorLinkerBuilder linkInternalThrowableTypeCollector(CodeCompletionRequest request) {
             if (Preferences.getInternalTypeFlag()) {
-                collectors.add(new InternalThrowableTypeCollector());
+                collectors.add(new InternalTypeCollector(new ThrowableFilter(request)));
             }
             return this;
         }

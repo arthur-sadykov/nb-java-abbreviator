@@ -15,22 +15,16 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
-import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.impl.GlobalInnerType;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
-import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import java.util.List;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
+import java.util.Map;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 import org.netbeans.api.java.source.ElementHandle;
-import org.netbeans.api.java.source.ElementUtilities;
-import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -38,68 +32,27 @@ import org.netbeans.api.java.source.WorkingCopy;
  */
 public class GlobalInnerTypeCollector extends AbstractCodeFragmentCollector {
 
-    @Override
-    public void collect(CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        Iterable<? extends TypeElement> globalTypes = collectGlobalTypeElements(request);
-        Elements elements = copy.getElements();
-        ElementUtilities elementUtilities = copy.getElementUtilities();
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        Abbreviation abbreviation = request.getAbbreviation();
-        for (TypeElement globalType : globalTypes) {
-            Iterable<? extends Element> innerTypeElements =
-                    elementUtilities.getMembers(globalType.asType(), (element, type) -> {
-                        if (elements.isDeprecated(element)) {
-                            return false;
-                        }
-                        if (element.getKind() != ElementKind.ENUM && element.getKind() != ElementKind.CLASS) {
-                            return false;
-                        }
-                        String innerTypeAbbreviation =
-                                StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-                        if (!innerTypeAbbreviation.equals(abbreviation.getIdentifier())) {
-                            return false;
-                        }
-                        if (element.getModifiers().contains(Modifier.PUBLIC)) {
-                            return true;
-                        } else if (element.getModifiers().contains(Modifier.PRIVATE)) {
-                            return false;
-                        } else {
-                            if (JavaSourceUtilities.inSamePackageAsCurrentFile(globalType, request)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
-            innerTypeElements.forEach(innerType -> codeFragments.add(
-                    new GlobalInnerType(ElementHandle.create(globalType), ElementHandle.create((TypeElement) innerType))));
-        }
-        super.collect(request);
+    private final Filter[] filters;
+
+    public GlobalInnerTypeCollector(Filter... filters) {
+        this.filters = filters;
     }
 
-    protected Iterable<? extends TypeElement> collectGlobalTypeElements(CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        Elements elements = copy.getElements();
-        Abbreviation abbreviation = request.getAbbreviation();
-        ElementUtilities elementUtilities = copy.getElementUtilities();
-        return elementUtilities.getGlobalTypes((element, type) -> {
-            if (elements.isDeprecated(element)) {
-                return false;
+    @Override
+    public void collect(CodeCompletionRequest request) {
+        Map<TypeElement, List<TypeElement>> innerTypesByGlobalTypes =
+                JavaSourceUtilities.collectGlobalInnerTypeElements(request);
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        innerTypesByGlobalTypes.entrySet().forEach(entry -> {
+            TypeElement externalType = entry.getKey();
+            List<TypeElement> innerTypes = entry.getValue();
+            for (Filter filter : filters) {
+                innerTypes = filter.meetCriteria(innerTypes);
             }
-            String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-            if (!typeAbbreviation.equals(abbreviation.getScope())) {
-                return false;
-            }
-            if (element.getModifiers().contains(Modifier.PUBLIC)) {
-                return true;
-            } else if (element.getModifiers().contains(Modifier.PRIVATE)) {
-                return false;
-            } else {
-                if (JavaSourceUtilities.inSamePackageAsCurrentFile(element, request)) {
-                    return true;
-                }
-            }
-            return false;
+            innerTypes.forEach(innerType -> {
+                codeFragments.add(new GlobalInnerType(ElementHandle.create(externalType), ElementHandle.create(innerType)));
+            });
         });
+        super.collect(request);
     }
 }

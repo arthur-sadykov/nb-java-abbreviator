@@ -60,9 +60,9 @@ public class CatchCodeCompletionContext extends AbstractCodeCompletionContext {
         }
         if (!beforeLeftParenthesis && !afterRightParenthesis) {
             return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkExternalThrowableTypeCollector()
-                    .linkGlobalThrowableTypeCollector()
-                    .linkInternalThrowableTypeCollector()
+                    .linkExternalThrowableTypeCollector(request)
+                    .linkGlobalThrowableTypeCollector(request)
+                    .linkInternalThrowableTypeCollector(request)
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()

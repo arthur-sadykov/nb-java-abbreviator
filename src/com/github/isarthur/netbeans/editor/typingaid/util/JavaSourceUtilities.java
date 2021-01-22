@@ -47,8 +47,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -927,7 +929,7 @@ public class JavaSourceUtilities {
                 || tokenId == JavaTokenId.VOLATILE;
     }
 
-    public static boolean inSamePackageAsCurrentFile(Element element, CodeCompletionRequest request) {
+    public static boolean isInSamePackageAsCurrentFile(Element element, CodeCompletionRequest request) {
         WorkingCopy copy = request.getWorkingCopy();
         ExpressionTree expressionTree = copy.getCompilationUnit().getPackageName();
         if (expressionTree == null) {
@@ -941,5 +943,155 @@ public class JavaSourceUtilities {
             return false;
         }
         return packageElement.equals(currentPackageElement);
+    }
+
+    public static List<TypeElement> collectExternalTypeElements(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        Abbreviation abbreviation = request.getAbbreviation();
+        ClasspathInfo classpathInfo = workingCopy.getClasspathInfo();
+        ClassIndex classIndex = classpathInfo.getClassIndex();
+        Set<ElementHandle<TypeElement>> declaredTypes = classIndex.getDeclaredTypes(
+                abbreviation.getScope().toUpperCase(),
+                ClassIndex.NameKind.CAMEL_CASE,
+                EnumSet.of(ClassIndex.SearchScope.SOURCE, ClassIndex.SearchScope.DEPENDENCIES));
+        List<TypeElement> types = new ArrayList<>();
+        Elements elements = workingCopy.getElements();
+        declaredTypes.forEach(externalType -> {
+            TypeElement typeElement = externalType.resolve(workingCopy);
+            if (typeElement == null) {
+                return;
+            }
+            if (elements.isDeprecated(typeElement)) {
+                return;
+            }
+            String typeName = typeElement.getSimpleName().toString();
+            String typeAbbreviation = StringUtilities.getElementAbbreviation(typeName);
+            if (!typeAbbreviation.equals(abbreviation.getContent())) {
+                return;
+            }
+            if (typeElement.getModifiers().contains(Modifier.PRIVATE)) {
+                return;
+            } else {
+                if (!typeElement.getModifiers().contains(Modifier.PUBLIC)) {
+                    if (!JavaSourceUtilities.isInSamePackageAsCurrentFile(typeElement, request)) {
+                        return;
+                    }
+                }
+            }
+            types.add(typeElement);
+        });
+        return Collections.unmodifiableList(types);
+    }
+
+    public static List<TypeElement> collectGlobalTypeElements(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        Elements elements = workingCopy.getElements();
+        Abbreviation abbreviation = request.getAbbreviation();
+        ElementUtilities elementUtilities = workingCopy.getElementUtilities();
+        Iterable<? extends TypeElement> globalTypes =
+                elementUtilities.getGlobalTypes((element, type) -> {
+                    if (elements.isDeprecated(element)) {
+                        return false;
+                    }
+                    String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+                    if (!typeAbbreviation.equals(abbreviation.getContent())) {
+                        return false;
+                    }
+                    if (element.getModifiers().contains(Modifier.PUBLIC)) {
+                        return true;
+                    } else if (element.getModifiers().contains(Modifier.PRIVATE)) {
+                        return false;
+                    } else {
+                        if (JavaSourceUtilities.isInSamePackageAsCurrentFile(element, request)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+        List<TypeElement> types = new ArrayList<>();
+        globalTypes.forEach(types::add);
+        return Collections.unmodifiableList(types);
+    }
+
+    public static List<TypeElement> collectInternalTypeElements(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        ElementUtilities elementUtilities = workingCopy.getElementUtilities();
+        Elements elements = workingCopy.getElements();
+        CompilationUnitTree compilationUnit = workingCopy.getCompilationUnit();
+        List<? extends Tree> typeDecls = compilationUnit.getTypeDecls();
+        Tree topLevelClassInterfaceOrEnumTree = typeDecls.get(0);
+        Element topLevelElement = workingCopy.getTrees().getElement(
+                TreePath.getPath(compilationUnit, topLevelClassInterfaceOrEnumTree));
+        List<TypeElement> types = new ArrayList<>();
+        types.add((TypeElement) topLevelElement);
+        Abbreviation abbreviation = request.getAbbreviation();
+        Iterable<? extends Element> internalTypes =
+                elementUtilities.getMembers(topLevelElement.asType(), (element, type) -> {
+                    if (elements.isDeprecated(element)) {
+                        return false;
+                    }
+                    String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+                    if (!typeAbbreviation.equals(abbreviation.getContent())) {
+                        return false;
+                    }
+                    return element.getKind() == ElementKind.CLASS
+                            || element.getKind() == ElementKind.ENUM
+                            || element.getKind() == ElementKind.INTERFACE;
+                });
+        internalTypes.forEach(internalType -> types.add((TypeElement) internalType));
+        return Collections.unmodifiableList(types);
+    }
+
+    public static Map<TypeElement, List<TypeElement>> collectExternalInnerTypeElements(CodeCompletionRequest request) {
+        return collectInnerTypeElements(true, request);
+    }
+
+    public static Map<TypeElement, List<TypeElement>> collectGlobalInnerTypeElements(CodeCompletionRequest request) {
+        return collectInnerTypeElements(false, request);
+    }
+
+    public static Map<TypeElement, List<TypeElement>> collectInnerTypeElements(
+            boolean external, CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        Elements elements = workingCopy.getElements();
+        ElementUtilities elementUtilities = workingCopy.getElementUtilities();
+        Abbreviation abbreviation = request.getAbbreviation();
+        List<TypeElement> types;
+        if (external) {
+            types = collectExternalTypeElements(request);
+        } else {
+            types = collectGlobalTypeElements(request);
+        }
+        Map<TypeElement, List<TypeElement>> innerTypeElementsByTopLevelTypeElements = new HashMap<>();
+        for (TypeElement type : types) {
+            Iterable<? extends Element> innerTypeElements =
+                    elementUtilities.getMembers(type.asType(), (element, typeMirror) -> {
+                        if (elements.isDeprecated(element)) {
+                            return false;
+                        }
+                        if (element.getKind() != ElementKind.ENUM && element.getKind() != ElementKind.CLASS) {
+                            return false;
+                        }
+                        String innerTypeAbbreviation =
+                                StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+                        if (!innerTypeAbbreviation.equals(abbreviation.getIdentifier())) {
+                            return false;
+                        }
+                        if (element.getModifiers().contains(Modifier.PUBLIC)) {
+                            return true;
+                        } else if (element.getModifiers().contains(Modifier.PRIVATE)) {
+                            return false;
+                        } else {
+                            if (JavaSourceUtilities.isInSamePackageAsCurrentFile(type, request)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+            List<TypeElement> innerTypes = new ArrayList<>();
+            innerTypeElements.forEach(innerTypeElement -> innerTypes.add((TypeElement) innerTypeElement));
+            innerTypeElementsByTopLevelTypeElements.put(type, innerTypes);
+        }
+        return Collections.unmodifiableMap(innerTypeElementsByTopLevelTypeElements);
     }
 }
