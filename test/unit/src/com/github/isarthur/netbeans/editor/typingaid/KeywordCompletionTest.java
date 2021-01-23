@@ -555,15 +555,26 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("enum"));
     }
 
-//    public void testExtendsKeywordCompletionForClass() throws IOException {
-//        doAbbreviationInsert(
-//                "e",
-//                "class Test |{\n"
-//                + "}",
-//                "class Test extends  {\n"
-//                + "}",
-//                Collections.singletonList("extends"));
-//    }
+    public void testExtendsKeywordCompletionInClassDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "class Test |{\n"
+                + "}",
+                "class Test extends Object {\n"
+                + "}",
+                Collections.singletonList("extends"));
+    }
+
+    public void testExtendsKeywordCompletionInClassDeclarationWithImplementsClause() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "class Test |implements Cloneable {\n"
+                + "}",
+                "class Test extends Object implements Cloneable {\n"
+                + "}",
+                Collections.singletonList("extends"));
+    }
+
 //    public void testExtendsKeywordCompletionForInterface() throws IOException {
 //        doAbbreviationInsert(
 //                "e",

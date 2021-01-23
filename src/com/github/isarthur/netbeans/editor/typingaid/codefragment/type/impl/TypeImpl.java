@@ -89,6 +89,7 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
         Types types = copy.getTypes();
         DeclaredType declaredType = types.getDeclaredType(identifier.resolve(copy));
         ExpressionTree initializer;
+        ClassTree classTree;
         switch (request.getCurrentKind()) {
             case AND:
             case CONDITIONAL_AND:
@@ -185,8 +186,25 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
             case CATCH:
                 return JavaSourceMaker.makeTypeTree(declaredType, request);
             case CLASS:
+                classTree = (ClassTree) request.getCurrentTree();
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                } else if (JavaSourceUtilities.isInsideClassBodySpan(classTree, request)) {
+                    if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
+                        return JavaSourceMaker.makeVariableTree(
+                                JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
+                                JavaSourceUtilities.getVariableName(declaredType, request),
+                                JavaSourceMaker.makeTypeTree(toString(), request),
+                                null,
+                                request);
+                    } else {
+                        return JavaSourceMaker.makeMethodTree(toString(), request);
+                    }
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
+                }
             case ENUM:
-                ClassTree classTree = (ClassTree) request.getCurrentTree();
+                classTree = (ClassTree) request.getCurrentTree();
                 if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
                     return JavaSourceMaker.makeVariableTree(
                             JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),

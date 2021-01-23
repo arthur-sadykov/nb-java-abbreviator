@@ -22,6 +22,7 @@ import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionR
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
@@ -102,14 +103,43 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        switch (tree.getKind()) {
-            case MODIFIERS:
+        ClassTree originalTree;
+        switch (codeFragment.getKind()) {
+            case ABSTRACT_MODIFIER:
+            case FINAL_MODIFIER:
+            case NATIVE_MODIFIER:
+            case PRIVATE_MODIFIER:
+            case PROTECTED_MODIFIER:
+            case PUBLIC_MODIFIER:
+            case STATIC_MODIFIER:
+            case STRICTFP_MODIFIER:
+            case TRANSIENT_MODIFIER:
+            case VOLATILE_MODIFIER:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
                 return JavaSourceMaker.makeModifiersTree(
                         originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
+            case EXTENDS_KEYWORD:
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                return JavaSourceMaker.makeClassTree(originalTree, (ExpressionTree) tree, request);
+            case INNER_TYPE:
+            case TYPE:
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                    return JavaSourceMaker.makeClassTree(originalTree,
+                            (ExpressionTree) tree,
+                            request);
+                } else if (JavaSourceUtilities.isInsideClassBodySpan(originalTree, request)) {
+                    Abbreviation abbreviation = request.getAbbreviation();
+                    WorkingCopy copy = request.getWorkingCopy();
+                    int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
+                            abbreviation.getStartOffset(), originalTree.getMembers(), copy);
+                    return JavaSourceMaker.makeClassTree(originalTree, insertIndex, tree, request);
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
+                }
             default:
-                ClassTree originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 Abbreviation abbreviation = request.getAbbreviation();
                 WorkingCopy copy = request.getWorkingCopy();
                 int insertIndex = JavaSourceUtilities.findInsertIndexForTree(

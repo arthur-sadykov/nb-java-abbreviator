@@ -21,13 +21,11 @@ import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCom
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.ClassCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ClassTree;
 import static com.sun.source.tree.Tree.Kind.CLASS;
 import javax.lang.model.type.TypeMirror;
 import org.netbeans.api.java.lexer.JavaTokenId;
-import org.netbeans.api.java.source.TreeUtilities;
-import org.netbeans.api.java.source.WorkingCopy;
-import org.netbeans.api.lexer.TokenSequence;
 
 /**
  *
@@ -37,17 +35,24 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
-        WorkingCopy copy = request.getWorkingCopy();
-        TreeUtilities treeUtilities = copy.getTreeUtilities();
-        int[] bodySpan = treeUtilities.findBodySpan((ClassTree) request.getCurrentTree());
-        Abbreviation abbreviation = request.getAbbreviation();
         CodeFragmentCollectorLinkerImpl.CodeFragmentCollectorLinkerBuilder builder =
                 CodeFragmentCollectorLinkerImpl.builder();
-        if (bodySpan[0] < abbreviation.getStartOffset()) {
-            TokenSequence<?> tokenSequence = copy.getTokenHierarchy().tokenSequence();
-            tokenSequence.move(abbreviation.getStartOffset());
-            tokenSequence.moveNext();
-            if (tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+        Abbreviation abbreviation = request.getAbbreviation();
+        if (JavaSourceUtilities.isAdjacentToModifiersTreeSpan(request)) {
+            builder.linkModifierCollector(CLASS);
+        } else if (JavaSourceUtilities.isPositionOfExtendsKeywordInClassDeclaration(request)) {
+            builder.linkKeywordCollector();
+        } else if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+            if (!abbreviation.isSimple()) {
+                builder.linkExternalInnerClassCollector()
+                        .linkGlobalInnerClassCollector();
+            } else {
+                builder.linkExternalClassCollector()
+                        .linkGlobalClassCollector()
+                        .linkInternalClassCollector();
+            }
+        } else if (JavaSourceUtilities.isInsideClassBodySpan((ClassTree) request.getCurrentTree(), request)) {
+            if (JavaSourceUtilities.isNextToken(JavaTokenId.WHITESPACE, request)) {
                 if (!abbreviation.isSimple()) {
                     builder.linkExternalInnerTypeCollector()
                             .linkGlobalInnerTypeCollector();
@@ -62,7 +67,7 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
                 builder.linkModifierCollector(CLASS);
             }
         } else {
-            builder.linkModifierCollector(CLASS);
+            throw new RuntimeException("Cannot find location in the class declaration."); //NOI18N
         }
         return builder.build();
     }

@@ -187,48 +187,11 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
         if (!keyword.isAbbreviationEqualTo(request.getAbbreviation().getContent())) {
             return;
         }
-        Tree.Kind currentContext = JavaSourceUtilities.getCurrentTreeKind(request);
-        if (currentContext == null) {
-            return;
-        }
-        WorkingCopy copy = request.getWorkingCopy();
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        switch (currentContext) {
+        switch (request.getCurrentKind()) {
             case CLASS:
             case INTERFACE:
-                Supplier<Boolean> insideExtendsTree = () -> {
-                    Tree currentTree = JavaSourceUtilities.getCurrentTree(request);
-                    if (currentTree == null) {
-                        return false;
-                    }
-                    TreeUtilities treeUtilities = copy.getTreeUtilities();
-                    TokenSequence<JavaTokenId> tokens = treeUtilities.tokensFor(currentTree);
-                    tokens.moveStart();
-                    int identifierEndOffset = Integer.MAX_VALUE;
-                    while (tokens.moveNext()) {
-                        if (tokens.token().id() == JavaTokenId.IDENTIFIER) {
-                            int endOffset = tokens.offset() + tokens.token().length();
-                            if (endOffset <= request.getAbbreviation().getStartOffset()) {
-                                identifierEndOffset = endOffset;
-                                break;
-                            }
-                        }
-                    }
-                    if (identifierEndOffset < request.getAbbreviation().getStartOffset()) {
-                        tokens.move(identifierEndOffset);
-                        while (tokens.moveNext()) {
-                            if (tokens.token().id() == JavaTokenId.LBRACE) {
-                                if (request.getAbbreviation().getStartOffset() <= tokens.offset()) {
-                                    return true;
-                                }
-                            } else if (tokens.token().id() != JavaTokenId.WHITESPACE) {
-                                return false;
-                            }
-                        }
-                    }
-                    return false;
-                };
-                if (insideExtendsTree.get()) {
+                if (JavaSourceUtilities.isPositionOfExtendsKeywordInClassDeclaration(request)) {
                     codeFragments.add(keyword);
                 }
                 break;

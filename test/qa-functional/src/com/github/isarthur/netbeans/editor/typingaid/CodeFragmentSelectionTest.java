@@ -272,11 +272,16 @@ public class CodeFragmentSelectionTest extends JellyTestCase {
         doAbbreviationInsert(1683, new char[]{'i'}, null);
         assertEquals(1695, editorOperator.txtEditorPane().getCaretPosition());
     }
-    
+
     public void testShouldSelectExpressionInSynchronizedStatement() {
         Preferences.setKeywordFlag(true);
         doAbbreviationInsertExpectingClashes(1746, new char[]{'s'}, "synchronized", null);
         assertEquals(1760, editorOperator.txtEditorPane().getCaretPosition());
+    }
+
+    public void testShouldSelectTypeInExtendsClause() {
+        Preferences.setKeywordFlag(true);
+        doAbbreviationInsert(670, new char[]{'e'}, "Object");
     }
 
     private void doAbbreviationInsert(int caretPosition, char[] chars, String expected) {

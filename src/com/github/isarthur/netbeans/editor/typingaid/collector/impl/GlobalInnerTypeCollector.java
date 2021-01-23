@@ -16,6 +16,7 @@
 package com.github.isarthur.netbeans.editor.typingaid.collector.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.InnerTypeCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.filter.api.Filter;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import java.util.List;
@@ -27,6 +28,10 @@ import javax.lang.model.element.TypeElement;
  * @author Arthur Sadykov
  */
 public class GlobalInnerTypeCollector extends InnerTypeCollector {
+
+    public GlobalInnerTypeCollector(Filter... filters) {
+        super(filters);
+    }
 
     @Override
     protected Map<TypeElement, List<TypeElement>> collectInnerTypesByTopLevelTypes(CodeCompletionRequest request) {

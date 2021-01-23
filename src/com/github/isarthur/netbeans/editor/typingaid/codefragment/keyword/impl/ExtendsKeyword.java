@@ -20,8 +20,12 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.api.Ab
 import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.KeywordCollectVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.OTHER;
+import com.sun.source.util.Trees;
+import javax.lang.model.element.Element;
+import org.netbeans.api.java.source.WorkingCopy;
 
 /**
  *
@@ -51,7 +55,20 @@ public class ExtendsKeyword extends AbstractKeyword {
 
     @Override
     public Tree getTreeToInsert(CodeCompletionRequest request) {
-        return null;
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        Trees trees = workingCopy.getTrees();
+        Element element = trees.getElement(request.getCurrentPath());
+        if (element == null) {
+            return JavaSourceMaker.makeExtendsTree("Object", request); //NOI18N
+        }
+        switch (element.getKind()) {
+            case CLASS:
+                return JavaSourceMaker.makeExtendsTree("Object", request); //NOI18N
+            case INTERFACE:
+                return JavaSourceMaker.makeExtendsTree("Cloneable", request); //NOI18N
+            default:
+                return JavaSourceMaker.makeExtendsTree("Object", request); //NOI18N
+        }
     }
 
     @Override
