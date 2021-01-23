@@ -583,6 +583,18 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("java.lang.AbstractMethodError"));
     }
 
+    public void testGlobalTypeCompletionInExtendsClauseOfClassDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "ame",
+                "package test;\n"
+                + "class Test extends |{\n"
+                + "}",
+                "package test;\n"
+                + "class Test extends AbstractMethodError{\n"
+                + "}",
+                Arrays.asList("java.lang.AbstractMethodError"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

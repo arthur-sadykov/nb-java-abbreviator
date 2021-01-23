@@ -76,6 +76,7 @@ public class InnerTypeImpl implements InnerType {
         DeclaredType declaredType = types.getDeclaredType(identifier.resolve(copy));
         Abbreviation abbreviation = request.getAbbreviation();
         TokenSequence<?> tokensSequence;
+        ClassTree classTree;
         switch (request.getCurrentKind()) {
             case BLOCK:
                 return JavaSourceMaker.makeVariableTree(
@@ -86,9 +87,25 @@ public class InnerTypeImpl implements InnerType {
                                 scope.resolve(copy), identifier.resolve(copy), request),
                         request);
             case CLASS:
+                classTree = (ClassTree) request.getCurrentTree();
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                } else if (JavaSourceUtilities.isInsideClassBodySpan(classTree, request)) {
+                    if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
+                        return JavaSourceMaker.makeVariableTree(
+                                JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
+                                JavaSourceUtilities.getVariableName(declaredType, request),
+                                JavaSourceMaker.makeTypeTree(toString(), request),
+                                null,
+                                request);
+                    } else {
+                        return JavaSourceMaker.makeMethodTree(toString(), request);
+                    }
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
+                }
             case ENUM:
-            case INTERFACE:
-                ClassTree classTree = (ClassTree) request.getCurrentTree();
+                classTree = (ClassTree) request.getCurrentTree();
                 if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
                     return JavaSourceMaker.makeVariableTree(
                             JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
@@ -99,6 +116,17 @@ public class InnerTypeImpl implements InnerType {
                 } else {
                     return JavaSourceMaker.makeMethodTree(toString(), request);
                 }
+            case INTERFACE:
+                return JavaSourceMaker.makeMethodTree(
+                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                        "method", //NOI18N
+                        JavaSourceMaker.makeTypeTree(toString(), request),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        null,
+                        null,
+                        request);
             case METHOD:
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),

@@ -1028,8 +1028,12 @@ public class JavaSourceUtilities {
         Element topLevelElement = workingCopy.getTrees().getElement(
                 TreePath.getPath(compilationUnit, topLevelClassInterfaceOrEnumTree));
         List<TypeElement> types = new ArrayList<>();
-        types.add((TypeElement) topLevelElement);
         Abbreviation abbreviation = request.getAbbreviation();
+        String topLevelElementAbbreviation =
+                StringUtilities.getElementAbbreviation(topLevelElement.getSimpleName().toString());
+        if (topLevelElementAbbreviation.equals(abbreviation.getContent())) {
+            types.add((TypeElement) topLevelElement);
+        }
         Iterable<? extends Element> internalTypes =
                 elementUtilities.getMembers(topLevelElement.asType(), (element, type) -> {
                     if (elements.isDeprecated(element)) {

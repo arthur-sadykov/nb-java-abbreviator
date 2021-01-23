@@ -44,12 +44,12 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
             builder.linkKeywordCollector();
         } else if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
             if (!abbreviation.isSimple()) {
-                builder.linkExternalInnerClassCollector()
-                        .linkGlobalInnerClassCollector();
+                builder.linkExternalNonFinalInnerClassCollector()
+                        .linkGlobalNonFinalInnerClassCollector();
             } else {
-                builder.linkExternalClassCollector()
-                        .linkGlobalClassCollector()
-                        .linkInternalClassCollector();
+                builder.linkExternalNonFinalClassCollector()
+                        .linkGlobalNonFinalClassCollector()
+                        .linkInternalNonFinalClassCollector();
             }
         } else if (JavaSourceUtilities.isInsideClassBodySpan((ClassTree) request.getCurrentTree(), request)) {
             if (JavaSourceUtilities.isNextToken(JavaTokenId.WHITESPACE, request)) {
