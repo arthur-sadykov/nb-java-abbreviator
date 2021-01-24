@@ -1206,7 +1206,7 @@ public class JavaSourceUtilities {
         return extendsTokenOffset != null && abbreviationStartOffset > extendsTokenOffset;
     }
 
-    public static boolean isInsideClassOrInterfaceBodySpan(ClassTree classOrInterface, CodeCompletionRequest request) {
+    public static boolean isInsideClassEnumOrInterfaceBodySpan(ClassTree classOrInterface, CodeCompletionRequest request) {
         WorkingCopy workingCopy = request.getWorkingCopy();
         TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
         Abbreviation abbreviation = request.getAbbreviation();

@@ -90,7 +90,7 @@ public class InnerTypeImpl implements InnerType {
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
-                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
                     if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                         return JavaSourceMaker.makeVariableTree(
                                 JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
@@ -120,7 +120,7 @@ public class InnerTypeImpl implements InnerType {
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
-                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
                     return JavaSourceMaker.makeMethodTree(
                             JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
                             "method", //NOI18N

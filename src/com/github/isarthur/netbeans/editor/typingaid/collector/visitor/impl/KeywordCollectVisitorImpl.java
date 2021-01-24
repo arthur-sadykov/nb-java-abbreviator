@@ -51,6 +51,7 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.visitor.api.Keywo
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.Tree;
 import static com.sun.source.tree.Tree.Kind.ASSIGNMENT;
 import static com.sun.source.tree.Tree.Kind.BLOCK;
@@ -352,8 +353,10 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
             return;
         }
         if (JavaSourceUtilities.getCurrentTreeOfKind(EnumSet.of(CLASS, ENUM), request)) {
-            List<CodeFragment> codeFragments = request.getCodeFragments();
-            codeFragments.add(keyword);
+            if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan((ClassTree) request.getCurrentTree(), request)) {
+                List<CodeFragment> codeFragments = request.getCodeFragments();
+                codeFragments.add(keyword);
+            }
         }
     }
 

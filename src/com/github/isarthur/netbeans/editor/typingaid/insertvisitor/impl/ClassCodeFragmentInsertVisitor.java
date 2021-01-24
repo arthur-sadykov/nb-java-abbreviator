@@ -127,7 +127,7 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                 originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeClassTree(originalTree, (ExpressionTree) tree, request);
-                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(originalTree, request)) {
+                } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(originalTree, request)) {
                     Abbreviation abbreviation = request.getAbbreviation();
                     WorkingCopy copy = request.getWorkingCopy();
                     int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
