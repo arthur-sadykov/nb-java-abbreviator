@@ -136,6 +136,9 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                 } else {
                     throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
                 }
+            case IMPLEMENTS_KEYWORD:
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                return JavaSourceMaker.makeClassTree(originalTree, tree, request);
             default:
                 originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 Abbreviation abbreviation = request.getAbbreviation();

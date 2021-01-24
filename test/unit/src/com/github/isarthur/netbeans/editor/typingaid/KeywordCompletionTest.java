@@ -340,15 +340,26 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("throw", "try"));
     }
 
-//    public void testImplementsKeywordCompletionForClass() throws IOException {
-//        doAbbreviationInsert(
-//                "i",
-//                "class Test |{\n"
-//                + "}",
-//                "class Test implements  {\n"
-//                + "}",
-//                Collections.singletonList("implements"));
-//    }
+    public void testImplementsKeywordCompletionInClassDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test |{\n"
+                + "}",
+                "class Test implements Cloneable {\n"
+                + "}",
+                Collections.singletonList("implements"));
+    }
+
+    public void testImplementsKeywordCompletionInClassDeclarationWithExtendsClause() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "class Test extends Object |{\n"
+                + "}",
+                "class Test extends Object implements Cloneable {\n"
+                + "}",
+                Collections.singletonList("implements"));
+    }
+
 //    public void testImplementsKeywordCompletionForEnum() throws IOException {
 //        doAbbreviationInsert(
 //                "i",

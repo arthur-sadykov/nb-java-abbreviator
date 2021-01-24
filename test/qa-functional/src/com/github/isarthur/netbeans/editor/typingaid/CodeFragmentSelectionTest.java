@@ -289,6 +289,11 @@ public class CodeFragmentSelectionTest extends JellyTestCase {
         doAbbreviationInsert(1778, new char[]{'e'}, "Cloneable");
     }
 
+    public void testShouldSelectTypeInImplementsClauseOfClassDeclaration() {
+        Preferences.setKeywordFlag(true);
+        doAbbreviationInsert(670, new char[]{'i'}, "Cloneable");
+    }
+
     private void doAbbreviationInsert(int caretPosition, char[] chars, String expected) {
         typeAbbreviation(caretPosition, chars);
         new EventTool().waitNoEvent(1000);

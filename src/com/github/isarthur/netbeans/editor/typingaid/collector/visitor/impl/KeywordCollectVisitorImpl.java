@@ -222,48 +222,11 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
         if (!keyword.isAbbreviationEqualTo(request.getAbbreviation().getContent())) {
             return;
         }
-        Tree.Kind currentContext = JavaSourceUtilities.getCurrentTreeKind(request);
-        if (currentContext == null) {
-            return;
-        }
-        switch (currentContext) {
+        List<CodeFragment> codeFragments = request.getCodeFragments();
+        switch (request.getCurrentKind()) {
             case CLASS:
             case ENUM:
-                Supplier<Boolean> insideImplementsTree = () -> {
-                    Tree currentTree = JavaSourceUtilities.getCurrentTree(request);
-                    if (currentTree == null) {
-                        return false;
-                    }
-                    WorkingCopy copy = request.getWorkingCopy();
-                    TreeUtilities treeUtilities = copy.getTreeUtilities();
-                    TokenSequence<JavaTokenId> tokens = treeUtilities.tokensFor(currentTree);
-                    tokens.moveStart();
-                    int identifierEndOffset = Integer.MAX_VALUE;
-                    while (tokens.moveNext()) {
-                        if (tokens.token().id() == JavaTokenId.IDENTIFIER) {
-                            int endOffset = tokens.offset() + tokens.token().length();
-                            if (endOffset <= request.getAbbreviation().getStartOffset()) {
-                                identifierEndOffset = endOffset;
-                                break;
-                            }
-                        }
-                    }
-                    if (identifierEndOffset < request.getAbbreviation().getStartOffset()) {
-                        tokens.move(identifierEndOffset);
-                        while (tokens.moveNext()) {
-                            if (tokens.token().id() == JavaTokenId.LBRACE) {
-                                if (request.getAbbreviation().getStartOffset() <= tokens.offset()) {
-                                    return true;
-                                }
-                            } else if (tokens.token().id() != JavaTokenId.WHITESPACE) {
-                                return false;
-                            }
-                        }
-                    }
-                    return false;
-                };
-                if (insideImplementsTree.get()) {
-                    List<CodeFragment> codeFragments = request.getCodeFragments();
+                if (JavaSourceUtilities.isPositionOfImplementsKeywordInClassOrEnumDeclaration(request)) {
                     codeFragments.add(keyword);
                 }
                 break;

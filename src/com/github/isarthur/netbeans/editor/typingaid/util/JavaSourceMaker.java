@@ -188,6 +188,11 @@ public class JavaSourceMaker {
         return getTreeMaker(request).setExtends(clazz, extendz);
     }
 
+    public static ClassTree makeClassTree(ClassTree clazz, Tree implementz, CodeCompletionRequest request) {
+        tag(implementz, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).addClassImplementsClause(clazz, implementz);
+    }
+
     public static CompilationUnitTree makeCompilationUnitTree(
             CompilationUnitTree compilationUnit, int index, Tree typeDeclaration, CodeCompletionRequest request) {
         return getTreeMaker(request).insertCompUnitTypeDecl(compilationUnit, index, typeDeclaration);
@@ -304,6 +309,10 @@ public class JavaSourceMaker {
     public static IfTree makeIfTree(ExpressionTree condition, StatementTree thenStatement, StatementTree elseStatement,
             CodeCompletionRequest request) {
         return getTreeMaker(request).If(condition, thenStatement, elseStatement);
+    }
+
+    public static ExpressionTree makeImplementsTree(String type, CodeCompletionRequest request) {
+        return getTreeMaker(request).QualIdent(type);
     }
 
     public static ImportTree makeImportTree(CodeCompletionRequest request) {

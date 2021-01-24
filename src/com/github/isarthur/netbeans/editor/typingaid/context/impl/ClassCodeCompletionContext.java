@@ -51,6 +51,8 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
                         .linkGlobalNonFinalClassCollector()
                         .linkInternalNonFinalClassCollector();
             }
+        } else if (JavaSourceUtilities.isPositionOfImplementsKeywordInClassOrEnumDeclaration(request)) {
+            builder.linkKeywordCollector();
         } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan((ClassTree) request.getCurrentTree(), request)) {
             if (JavaSourceUtilities.isNextToken(JavaTokenId.WHITESPACE, request)) {
                 if (!abbreviation.isSimple()) {

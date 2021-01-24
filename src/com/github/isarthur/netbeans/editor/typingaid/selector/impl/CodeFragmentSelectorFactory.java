@@ -35,6 +35,7 @@ public class CodeFragmentSelectorFactory {
             case ELSE_KEYWORD:
             case EXTENDS_KEYWORD:
             case IF_KEYWORD:
+            case IMPLEMENTS_KEYWORD:
             case IMPORT_KEYWORD:
             case RETURN_KEYWORD:
             case SWITCH_KEYWORD:
