@@ -595,6 +595,18 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("java.lang.AbstractMethodError"));
     }
 
+    public void testGlobalTypeCompletionInExtendsClauseOfInterfaceDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "ac",
+                "package test;\n"
+                + "interface Test extends |{\n"
+                + "}",
+                "package test;\n"
+                + "interface Test extends AutoCloseable{\n"
+                + "}",
+                Arrays.asList("java.lang.AutoCloseable"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

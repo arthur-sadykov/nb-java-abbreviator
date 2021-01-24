@@ -76,7 +76,7 @@ public class InnerTypeImpl implements InnerType {
         DeclaredType declaredType = types.getDeclaredType(identifier.resolve(copy));
         Abbreviation abbreviation = request.getAbbreviation();
         TokenSequence<?> tokensSequence;
-        ClassTree classTree;
+        ClassTree classEnumOrInterfaceTree;
         switch (request.getCurrentKind()) {
             case BLOCK:
                 return JavaSourceMaker.makeVariableTree(
@@ -87,11 +87,11 @@ public class InnerTypeImpl implements InnerType {
                                 scope.resolve(copy), identifier.resolve(copy), request),
                         request);
             case CLASS:
-                classTree = (ClassTree) request.getCurrentTree();
+                classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
-                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classTree, request)) {
-                    if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                    if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                         return JavaSourceMaker.makeVariableTree(
                                 JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
                                 JavaSourceUtilities.getVariableName(declaredType, request),
@@ -105,8 +105,8 @@ public class InnerTypeImpl implements InnerType {
                     throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
                 }
             case ENUM:
-                classTree = (ClassTree) request.getCurrentTree();
-                if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
+                classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
+                if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                     return JavaSourceMaker.makeVariableTree(
                             JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
                             JavaSourceUtilities.getVariableName(declaredType, request),
@@ -117,16 +117,23 @@ public class InnerTypeImpl implements InnerType {
                     return JavaSourceMaker.makeMethodTree(toString(), request);
                 }
             case INTERFACE:
-                return JavaSourceMaker.makeMethodTree(
-                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
-                        "method", //NOI18N
-                        JavaSourceMaker.makeTypeTree(toString(), request),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        null,
-                        null,
-                        request);
+                classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                    return JavaSourceMaker.makeMethodTree(
+                            JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                            "method", //NOI18N
+                            JavaSourceMaker.makeTypeTree(toString(), request),
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            null,
+                            null,
+                            request);
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in interface declaration."); //NOI18N
+                }
             case METHOD:
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
