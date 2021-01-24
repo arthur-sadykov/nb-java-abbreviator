@@ -126,15 +126,13 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
             case TYPE:
                 originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
-                    return JavaSourceMaker.makeClassTree(originalTree,
-                            (ExpressionTree) tree,
-                            request);
-                } else if (JavaSourceUtilities.isInsideClassBodySpan(originalTree, request)) {
+                    return JavaSourceMaker.makeClassTree(originalTree, (ExpressionTree) tree, request);
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(originalTree, request)) {
                     Abbreviation abbreviation = request.getAbbreviation();
                     WorkingCopy copy = request.getWorkingCopy();
                     int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
                             abbreviation.getStartOffset(), originalTree.getMembers(), copy);
-                    return JavaSourceMaker.makeClassTree(originalTree, insertIndex, tree, request);
+                    return JavaSourceMaker.makeClassEnumOrInterfaceTree(originalTree, insertIndex, tree, request);
                 } else {
                     throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
                 }
@@ -144,7 +142,7 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                 WorkingCopy copy = request.getWorkingCopy();
                 int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
                         abbreviation.getStartOffset(), originalTree.getMembers(), copy);
-                return JavaSourceMaker.makeClassTree(originalTree, insertIndex, tree, request);
+                return JavaSourceMaker.makeClassEnumOrInterfaceTree(originalTree, insertIndex, tree, request);
         }
     }
 }

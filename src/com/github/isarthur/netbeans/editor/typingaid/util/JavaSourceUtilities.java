@@ -1115,7 +1115,7 @@ public class JavaSourceUtilities {
         return token != null && isModifier(token.id());
     }
 
-    public static boolean isPositionOfExtendsKeywordInClassDeclaration(CodeCompletionRequest request) {
+    public static boolean isPositionOfExtendsKeywordInClassOrInterfaceDeclaration(CodeCompletionRequest request) {
         WorkingCopy workingCopy = request.getWorkingCopy();
         TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
         Tree currentTree = request.getCurrentTree();
@@ -1206,12 +1206,12 @@ public class JavaSourceUtilities {
         return extendsTokenOffset != null && abbreviationStartOffset > extendsTokenOffset;
     }
 
-    public static boolean isInsideClassBodySpan(ClassTree clazz, CodeCompletionRequest request) {
+    public static boolean isInsideClassOrInterfaceBodySpan(ClassTree classOrInterface, CodeCompletionRequest request) {
         WorkingCopy workingCopy = request.getWorkingCopy();
         TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
         Abbreviation abbreviation = request.getAbbreviation();
-        int[] classBodySpan = treeUtilities.findBodySpan(clazz);
-        return classBodySpan[0] < abbreviation.getStartOffset() && abbreviation.getStartOffset() < classBodySpan[1];
+        int[] bodySpan = treeUtilities.findBodySpan(classOrInterface);
+        return bodySpan[0] < abbreviation.getStartOffset() && abbreviation.getStartOffset() < bodySpan[1];
     }
 
     public static boolean isNextToken(TokenId tokenId, CodeCompletionRequest request) {

@@ -22,6 +22,7 @@ import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionR
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
@@ -29,8 +30,6 @@ import static com.sun.source.tree.Tree.Kind.CLASS;
 import static com.sun.source.tree.Tree.Kind.ENUM;
 import static com.sun.source.tree.Tree.Kind.INTERFACE;
 import static com.sun.source.tree.Tree.Kind.METHOD;
-import static com.sun.source.tree.Tree.Kind.VARIABLE;
-import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import java.util.EnumSet;
 import org.netbeans.api.java.lexer.JavaTokenId;
@@ -49,13 +48,9 @@ public class InterfaceCodeFragmentInsertVisitor extends AbstractCodeFragmentInse
     protected Tree getOriginalTree(CodeFragment codeFragment, CodeCompletionRequest request) {
         switch (codeFragment.getKind()) {
             case ABSTRACT_MODIFIER:
-            case FINAL_MODIFIER:
-            case NATIVE_MODIFIER:
             case PUBLIC_MODIFIER:
             case STATIC_MODIFIER:
             case STRICTFP_MODIFIER:
-            case TRANSIENT_MODIFIER:
-            case VOLATILE_MODIFIER:
                 WorkingCopy copy = request.getWorkingCopy();
                 TokenSequence<?> tokens = copy.getTokenHierarchy().tokenSequence();
                 Abbreviation abbreviation = request.getAbbreviation();
@@ -74,7 +69,7 @@ public class InterfaceCodeFragmentInsertVisitor extends AbstractCodeFragmentInse
                 }
                 TreeUtilities treeUtilities = copy.getTreeUtilities();
                 TreePath path = treeUtilities.getPathElementOfKind(
-                        EnumSet.of(CLASS, ENUM, INTERFACE, METHOD, VARIABLE),
+                        EnumSet.of(CLASS, ENUM, INTERFACE, METHOD),
                         treeUtilities.pathFor(tokens.offset()));
                 if (path == null) {
                     return null;
@@ -83,14 +78,11 @@ public class InterfaceCodeFragmentInsertVisitor extends AbstractCodeFragmentInse
                     case CLASS:
                     case ENUM:
                     case INTERFACE:
-                        ClassTree classTree = (ClassTree) path.getLeaf();
-                        return classTree.getModifiers();
+                        ClassTree classEnumOrInterfaceTree = (ClassTree) path.getLeaf();
+                        return classEnumOrInterfaceTree.getModifiers();
                     case METHOD:
                         MethodTree methodTree = (MethodTree) path.getLeaf();
                         return methodTree.getModifiers();
-                    case VARIABLE:
-                        VariableTree variableTree = (VariableTree) path.getLeaf();
-                        return variableTree.getModifiers();
                 }
                 return request.getCurrentTree();
             default:
@@ -100,19 +92,40 @@ public class InterfaceCodeFragmentInsertVisitor extends AbstractCodeFragmentInse
 
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
-        switch (tree.getKind()) {
-            case MODIFIERS:
+        ClassTree originalTree;
+        switch (codeFragment.getKind()) {
+            case ABSTRACT_MODIFIER:
+            case PUBLIC_MODIFIER:
+            case STATIC_MODIFIER:
+            case STRICTFP_MODIFIER:
                 ModifiersTree originalModifiersTree = (ModifiersTree) getOriginalTree(codeFragment, request);
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
                 return JavaSourceMaker.makeModifiersTree(
                         originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
+            case EXTENDS_KEYWORD:
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                return JavaSourceMaker.makeInterfaceTree(originalTree, (ExpressionTree) tree, request);
+            case INNER_TYPE:
+            case TYPE:
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                    return JavaSourceMaker.makeInterfaceTree(originalTree, (ExpressionTree) tree, request);
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(originalTree, request)) {
+                    Abbreviation abbreviation = request.getAbbreviation();
+                    WorkingCopy copy = request.getWorkingCopy();
+                    int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
+                            abbreviation.getStartOffset(), originalTree.getMembers(), copy);
+                    return JavaSourceMaker.makeClassEnumOrInterfaceTree(originalTree, insertIndex, tree, request);
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in interface declaration."); //NOI18N
+                }
             default:
-                ClassTree originalTree = (ClassTree) getOriginalTree(codeFragment, request);
+                originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 Abbreviation abbreviation = request.getAbbreviation();
                 WorkingCopy copy = request.getWorkingCopy();
                 int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
                         abbreviation.getStartOffset(), originalTree.getMembers(), copy);
-                return JavaSourceMaker.makeClassTree(originalTree, insertIndex, tree, request);
+                return JavaSourceMaker.makeClassEnumOrInterfaceTree(originalTree, insertIndex, tree, request);
         }
     }
 }

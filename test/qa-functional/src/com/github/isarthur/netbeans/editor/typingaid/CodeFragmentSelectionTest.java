@@ -279,9 +279,14 @@ public class CodeFragmentSelectionTest extends JellyTestCase {
         assertEquals(1760, editorOperator.txtEditorPane().getCaretPosition());
     }
 
-    public void testShouldSelectTypeInExtendsClause() {
+    public void testShouldSelectTypeInExtendsClauseOfClassDeclaration() {
         Preferences.setKeywordFlag(true);
         doAbbreviationInsert(670, new char[]{'e'}, "Object");
+    }
+
+    public void testShouldSelectTypeInExtendsClauseOfInterfaceDeclaration() {
+        Preferences.setKeywordFlag(true);
+        doAbbreviationInsert(1778, new char[]{'e'}, "Cloneable");
     }
 
     private void doAbbreviationInsert(int caretPosition, char[] chars, String expected) {

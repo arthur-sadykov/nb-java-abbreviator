@@ -18,6 +18,7 @@ package com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.CodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl.AndCriteria;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl.ClassFilter;
+import com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl.InterfaceFilter;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl.NonFinalFilter;
 import com.github.isarthur.netbeans.editor.typingaid.collector.filter.impl.ThrowableFilter;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedEnumConstantAccessCollector;
@@ -135,9 +136,23 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkExternalInnerInterfaceCollector() {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalInnerTypeCollector(new InterfaceFilter()));
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkExternalInnerTypeCollector() {
             if (Preferences.getExternalTypeFlag()) {
                 collectors.add(new ExternalInnerTypeCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkExternalInterfaceCollector() {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalTypeCollector(new InterfaceFilter()));
             }
             return this;
         }
@@ -191,9 +206,23 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkGlobalInnerInterfaceCollector() {
+            if (Preferences.getGlobalTypeFlag()) {
+                collectors.add(new GlobalInnerTypeCollector(new InterfaceFilter()));
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkGlobalInnerTypeCollector() {
             if (Preferences.getGlobalTypeFlag()) {
                 collectors.add(new GlobalInnerTypeCollector());
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkGlobalInterfaceCollector() {
+            if (Preferences.getGlobalTypeFlag()) {
+                collectors.add(new GlobalTypeCollector(new InterfaceFilter()));
             }
             return this;
         }
@@ -229,6 +258,13 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
         public CodeFragmentCollectorLinkerBuilder linkInternalClassCollector() {
             if (Preferences.getInternalTypeFlag()) {
                 collectors.add(new InternalTypeCollector(new ClassFilter()));
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkInternalInterfaceCollector() {
+            if (Preferences.getInternalTypeFlag()) {
+                collectors.add(new InternalTypeCollector(new InterfaceFilter()));
             }
             return this;
         }

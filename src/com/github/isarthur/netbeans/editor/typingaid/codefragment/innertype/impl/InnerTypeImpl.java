@@ -90,7 +90,7 @@ public class InnerTypeImpl implements InnerType {
                 classTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
-                } else if (JavaSourceUtilities.isInsideClassBodySpan(classTree, request)) {
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classTree, request)) {
                     if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
                         return JavaSourceMaker.makeVariableTree(
                                 JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),

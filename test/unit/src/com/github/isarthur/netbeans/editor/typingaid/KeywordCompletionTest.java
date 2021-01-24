@@ -575,15 +575,16 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("extends"));
     }
 
-//    public void testExtendsKeywordCompletionForInterface() throws IOException {
-//        doAbbreviationInsert(
-//                "e",
-//                "interface Test |{\n"
-//                + "}",
-//                "interface Test extends  {\n"
-//                + "}",
-//                Collections.singletonList("extends"));
-//    }
+    public void testExtendsKeywordCompletionInInterfaceDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "e",
+                "interface Test |{\n"
+                + "}",
+                "interface Test extends Cloneable {\n"
+                + "}",
+                Collections.singletonList("extends"));
+    }
+
     public void testElseKeywordCompletion() throws IOException {
         doAbbreviationInsert(
                 "e",

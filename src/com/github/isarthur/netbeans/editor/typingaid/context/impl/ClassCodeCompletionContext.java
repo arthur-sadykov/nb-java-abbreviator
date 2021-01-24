@@ -40,7 +40,7 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
         Abbreviation abbreviation = request.getAbbreviation();
         if (JavaSourceUtilities.isAdjacentToModifiersTreeSpan(request)) {
             builder.linkModifierCollector(CLASS);
-        } else if (JavaSourceUtilities.isPositionOfExtendsKeywordInClassDeclaration(request)) {
+        } else if (JavaSourceUtilities.isPositionOfExtendsKeywordInClassOrInterfaceDeclaration(request)) {
             builder.linkKeywordCollector();
         } else if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
             if (!abbreviation.isSimple()) {
@@ -51,7 +51,7 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
                         .linkGlobalNonFinalClassCollector()
                         .linkInternalNonFinalClassCollector();
             }
-        } else if (JavaSourceUtilities.isInsideClassBodySpan((ClassTree) request.getCurrentTree(), request)) {
+        } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan((ClassTree) request.getCurrentTree(), request)) {
             if (JavaSourceUtilities.isNextToken(JavaTokenId.WHITESPACE, request)) {
                 if (!abbreviation.isSimple()) {
                     builder.linkExternalInnerTypeCollector()

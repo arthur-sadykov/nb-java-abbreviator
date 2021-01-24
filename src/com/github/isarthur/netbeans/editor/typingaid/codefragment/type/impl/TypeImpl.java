@@ -89,7 +89,7 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
         Types types = copy.getTypes();
         DeclaredType declaredType = types.getDeclaredType(identifier.resolve(copy));
         ExpressionTree initializer;
-        ClassTree classTree;
+        ClassTree classEnumOrInterfaceTree;
         switch (request.getCurrentKind()) {
             case AND:
             case CONDITIONAL_AND:
@@ -186,11 +186,11 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
             case CATCH:
                 return JavaSourceMaker.makeTypeTree(declaredType, request);
             case CLASS:
-                classTree = (ClassTree) request.getCurrentTree();
+                classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
-                } else if (JavaSourceUtilities.isInsideClassBodySpan(classTree, request)) {
-                    if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                    if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                         return JavaSourceMaker.makeVariableTree(
                                 JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
                                 JavaSourceUtilities.getVariableName(declaredType, request),
@@ -204,8 +204,8 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
                     throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
                 }
             case ENUM:
-                classTree = (ClassTree) request.getCurrentTree();
-                if (!JavaSourceUtilities.isMethodSection(classTree, request)) {
+                classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
+                if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                     return JavaSourceMaker.makeVariableTree(
                             JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
                             JavaSourceUtilities.getVariableName(declaredType, request),
@@ -219,16 +219,23 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
             case PARAMETERIZED_TYPE:
                 return JavaSourceMaker.makeTypeTree(toString(), request);
             case INTERFACE:
-                return JavaSourceMaker.makeMethodTree(
-                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
-                        "method", //NOI18N
-                        JavaSourceMaker.makeTypeTree(toString(), request),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        null,
-                        null,
-                        request);
+                classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                } else if (JavaSourceUtilities.isInsideClassOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                    return JavaSourceMaker.makeMethodTree(
+                            JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                            "method", //NOI18N
+                            JavaSourceMaker.makeTypeTree(toString(), request),
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            null,
+                            null,
+                            request);
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in interface declaration."); //NOI18N
+                }
             case METHOD:
                 return JavaSourceMaker.makeVariableTree(
                         JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),

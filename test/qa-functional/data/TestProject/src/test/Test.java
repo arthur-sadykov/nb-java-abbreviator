@@ -91,4 +91,8 @@ public class Test {
     void tests10() {
         
     }
+    
+    interface Inner {
+        
+    } 
 }

@@ -178,8 +178,9 @@ public class JavaSourceMaker {
         return classTree;
     }
 
-    public static ClassTree makeClassTree(ClassTree clazz, int index, Tree member, CodeCompletionRequest request) {
-        return getTreeMaker(request).insertClassMember(clazz, index, member);
+    public static ClassTree makeClassEnumOrInterfaceTree(
+            ClassTree classEnumOrInterface, int index, Tree member, CodeCompletionRequest request) {
+        return getTreeMaker(request).insertClassMember(classEnumOrInterface, index, member);
     }
 
     public static ClassTree makeClassTree(ClassTree clazz, ExpressionTree extendz, CodeCompletionRequest request) {
@@ -320,6 +321,16 @@ public class JavaSourceMaker {
                 Collections.emptyList());
         tag(interfaceTree, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
         return interfaceTree;
+    }
+
+    public static ClassTree makeInterfaceTree(ClassTree interfaze, ExpressionTree extendz, CodeCompletionRequest request) {
+        tag(extendz, ConstantDataManager.EXPRESSION_TAG, request);
+        return getTreeMaker(request).Interface(
+                interfaze.getModifiers(),
+                interfaze.getSimpleName(),
+                interfaze.getTypeParameters(),
+                Collections.singletonList(extendz),
+                interfaze.getMembers());
     }
 
     public static InstanceOfTree makeInstanceofTree(ExpressionTree expression, Tree type, CodeCompletionRequest request) {

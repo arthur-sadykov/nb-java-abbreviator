@@ -114,7 +114,7 @@ public class EnumCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVis
                 Abbreviation abbreviation = request.getAbbreviation();
                 int insertIndex = JavaSourceUtilities.findInsertIndexForTree(
                         abbreviation.getStartOffset(), originalTree.getMembers(), copy);
-                return JavaSourceMaker.makeClassTree(originalTree, insertIndex, tree, request);
+                return JavaSourceMaker.makeClassEnumOrInterfaceTree(originalTree, insertIndex, tree, request);
         }
     }
 }

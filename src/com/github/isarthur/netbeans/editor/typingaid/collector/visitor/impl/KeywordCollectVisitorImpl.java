@@ -191,7 +191,7 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
         switch (request.getCurrentKind()) {
             case CLASS:
             case INTERFACE:
-                if (JavaSourceUtilities.isPositionOfExtendsKeywordInClassDeclaration(request)) {
+                if (JavaSourceUtilities.isPositionOfExtendsKeywordInClassOrInterfaceDeclaration(request)) {
                     codeFragments.add(keyword);
                 }
                 break;
