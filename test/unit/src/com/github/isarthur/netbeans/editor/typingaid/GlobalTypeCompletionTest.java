@@ -628,6 +628,27 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("java.lang.CharSequence"));
     }
 
+    public void testGlobalTypeCompletionInImplementsClauseOfEnumDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "ac",
+                "package test;\n"
+                + "enum Test implements |{\n"
+                + "}",
+                "package test;\n"
+                + "enum Test implements AutoCloseable{\n"
+                + "}",
+                Arrays.asList("java.lang.AutoCloseable"));
+        doAbbreviationInsert(
+                "cs",
+                "package test;\n"
+                + "enum Test implements AutoCloseable |{\n"
+                + "}",
+                "package test;\n"
+                + "enum Test implements AutoCloseable, CharSequence {\n"
+                + "}",
+                Arrays.asList("java.lang.CharSequence"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();
