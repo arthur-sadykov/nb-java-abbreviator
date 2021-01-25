@@ -85,6 +85,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import org.netbeans.api.java.source.TreeMaker;
+import org.netbeans.api.java.source.TreeUtilities;
 import org.netbeans.api.java.source.TypeUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
 
@@ -190,7 +191,24 @@ public class JavaSourceMaker {
 
     public static ClassTree makeClassTree(ClassTree clazz, Tree implementz, CodeCompletionRequest request) {
         tag(implementz, ConstantDataManager.EXPRESSION_TAG, request);
-        return getTreeMaker(request).addClassImplementsClause(clazz, implementz);
+        List<? extends Tree> implementsClause = clazz.getImplementsClause();
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        if (implementsClause.size() == 1) {
+            if (treeUtilities.hasError(implementsClause.get(0))) {
+                return getTreeMaker(request).Class(
+                        clazz.getModifiers(),
+                        clazz.getSimpleName(),
+                        clazz.getTypeParameters(),
+                        clazz.getExtendsClause(),
+                        Collections.singletonList(implementz),
+                        clazz.getMembers());
+            } else {
+                return getTreeMaker(request).addClassImplementsClause(clazz, implementz);
+            }
+        } else {
+            return getTreeMaker(request).addClassImplementsClause(clazz, implementz);
+        }
     }
 
     public static CompilationUnitTree makeCompilationUnitTree(

@@ -607,6 +607,27 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("java.lang.AutoCloseable"));
     }
 
+    public void testGlobalTypeCompletionInImplementsClauseOfClassDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "ac",
+                "package test;\n"
+                + "class Test implements |{\n"
+                + "}",
+                "package test;\n"
+                + "class Test implements AutoCloseable{\n"
+                + "}",
+                Arrays.asList("java.lang.AutoCloseable"));
+        doAbbreviationInsert(
+                "cs",
+                "package test;\n"
+                + "class Test implements AutoCloseable |{\n"
+                + "}",
+                "package test;\n"
+                + "class Test implements AutoCloseable, CharSequence {\n"
+                + "}",
+                Arrays.asList("java.lang.CharSequence"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

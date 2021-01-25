@@ -187,7 +187,8 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
                 return JavaSourceMaker.makeTypeTree(declaredType, request);
             case CLASS:
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
-                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
+                if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)
+                        || JavaSourceUtilities.isInsideImplementsTreeSpan(request)) {
                     return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
                 } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
                     if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {

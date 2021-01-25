@@ -1217,6 +1217,50 @@ public class JavaSourceUtilities {
         return true;
     }
 
+    public static boolean isInsideImplementsTreeSpan(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        Tree currentTree = request.getCurrentTree();
+        TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+        tokenSequence.moveStart();
+        Map<JavaTokenId, Integer> offsetsByTokenIds = new HashMap<>();
+        OUTER:
+        while (tokenSequence.moveNext()) {
+            switch (tokenSequence.token().id()) {
+                case EXTENDS:
+                    offsetsByTokenIds.put(EXTENDS, tokenSequence.offset());
+                    break;
+                case IDENTIFIER:
+                    if (offsetsByTokenIds.get(IDENTIFIER) == null) {
+                        offsetsByTokenIds.put(IDENTIFIER, tokenSequence.offset());
+                    }
+                    break;
+                case IMPLEMENTS:
+                    offsetsByTokenIds.put(IMPLEMENTS, tokenSequence.offset());
+                    break;
+                case LBRACE:
+                    offsetsByTokenIds.put(LBRACE, tokenSequence.offset());
+                    break OUTER;
+            }
+        }
+        Abbreviation abbreviation = request.getAbbreviation();
+        int abbreviationStartOffset = abbreviation.getStartOffset();
+        if (abbreviationStartOffset > offsetsByTokenIds.getOrDefault(LBRACE, Integer.MAX_VALUE)) {
+            return false;
+        }
+        if (abbreviationStartOffset < offsetsByTokenIds.getOrDefault(IDENTIFIER, Integer.MIN_VALUE)) {
+            return false;
+        }
+        Integer extendsTokenOffset = offsetsByTokenIds.get(EXTENDS);
+        if (extendsTokenOffset != null) {
+            if (abbreviationStartOffset < extendsTokenOffset) {
+                return false;
+            }
+        }
+        Integer implementsTokenOffset = offsetsByTokenIds.get(IMPLEMENTS);
+        return implementsTokenOffset != null && abbreviation.getStartOffset() > implementsTokenOffset;
+    }
+
     public static boolean isInsideClassEnumOrInterfaceBodySpan(ClassTree classOrInterface, CodeCompletionRequest request) {
         WorkingCopy workingCopy = request.getWorkingCopy();
         TreeUtilities treeUtilities = workingCopy.getTreeUtilities();

@@ -127,6 +127,8 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                 originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
                     return JavaSourceMaker.makeClassTree(originalTree, (ExpressionTree) tree, request);
+                } else if (JavaSourceUtilities.isInsideImplementsTreeSpan(request)) {
+                    return JavaSourceMaker.makeClassTree(originalTree, tree, request);
                 } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(originalTree, request)) {
                     Abbreviation abbreviation = request.getAbbreviation();
                     WorkingCopy copy = request.getWorkingCopy();
@@ -136,6 +138,7 @@ public class ClassCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertVi
                 } else {
                     throw new RuntimeException("Wrong position for type completion in class declaration."); //NOI18N
                 }
+
             case IMPLEMENTS_KEYWORD:
                 originalTree = (ClassTree) getOriginalTree(codeFragment, request);
                 return JavaSourceMaker.makeClassTree(originalTree, tree, request);

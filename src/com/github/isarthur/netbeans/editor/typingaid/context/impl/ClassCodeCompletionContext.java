@@ -53,6 +53,15 @@ public class ClassCodeCompletionContext extends AbstractCodeCompletionContext {
             }
         } else if (JavaSourceUtilities.isPositionOfImplementsKeywordInClassOrEnumDeclaration(request)) {
             builder.linkKeywordCollector();
+        } else if (JavaSourceUtilities.isInsideImplementsTreeSpan(request)) {
+            if (!abbreviation.isSimple()) {
+                builder.linkExternalInnerInterfaceCollector()
+                        .linkGlobalInnerInterfaceCollector();
+            } else {
+                builder.linkExternalInterfaceCollector()
+                        .linkGlobalInterfaceCollector()
+                        .linkInternalInterfaceCollector();
+            }
         } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan((ClassTree) request.getCurrentTree(), request)) {
             if (JavaSourceUtilities.isNextToken(JavaTokenId.WHITESPACE, request)) {
                 if (!abbreviation.isSimple()) {
