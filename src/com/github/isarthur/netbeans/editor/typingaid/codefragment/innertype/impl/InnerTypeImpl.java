@@ -107,15 +107,21 @@ public class InnerTypeImpl implements InnerType {
                 }
             case ENUM:
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
-                if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
-                    return JavaSourceMaker.makeVariableTree(
-                            JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
-                            JavaSourceUtilities.getVariableName(declaredType, request),
-                            JavaSourceMaker.makeTypeTree(toString(), request),
-                            null,
-                            request);
+                if (JavaSourceUtilities.isInsideImplementsTreeSpan(request)) {
+                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
+                    if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
+                        return JavaSourceMaker.makeVariableTree(
+                                JavaSourceMaker.makeModifiersTree(Collections.singleton(Modifier.PRIVATE), request),
+                                JavaSourceUtilities.getVariableName(declaredType, request),
+                                JavaSourceMaker.makeTypeTree(toString(), request),
+                                null,
+                                request);
+                    } else {
+                        return JavaSourceMaker.makeMethodTree(toString(), request);
+                    }
                 } else {
-                    return JavaSourceMaker.makeMethodTree(toString(), request);
+                    throw new RuntimeException("Wrong position for type completion in enum declaration."); //NOI18N
                 }
             case INTERFACE:
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();

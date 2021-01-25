@@ -52,7 +52,7 @@ public class ImplementsKeyword extends AbstractKeyword {
 
     @Override
     public Tree getTreeToInsert(CodeCompletionRequest request) {
-        return JavaSourceMaker.makeExtendsTree("Cloneable", request); //NOI18N
+        return JavaSourceMaker.makeImplementsTree("Cloneable", request); //NOI18N
     }
 
     @Override

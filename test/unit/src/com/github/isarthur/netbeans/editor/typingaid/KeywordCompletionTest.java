@@ -360,15 +360,16 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("implements"));
     }
 
-//    public void testImplementsKeywordCompletionForEnum() throws IOException {
-//        doAbbreviationInsert(
-//                "i",
-//                "enum Test |{\n"
-//                + "}",
-//                "enum Test implements  {\n"
-//                + "}",
-//                Collections.singletonList("implements"));
-//    }
+    public void testImplementsKeywordCompletionInEnumDeclaration() throws IOException {
+        doAbbreviationInsert(
+                "i",
+                "enum Test |{\n"
+                + "}",
+                "enum Test implements Cloneable {\n"
+                + "}",
+                Collections.singletonList("implements"));
+    }
+
     public void testInterfaceKeywordCompletionInClass() throws IOException {
         doAbbreviationInsert(
                 "i",

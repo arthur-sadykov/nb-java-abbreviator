@@ -94,5 +94,9 @@ public class Test {
     
     interface Inner {
         
-    } 
+    }
+    
+    enum Enum {
+        
+    }
 }
