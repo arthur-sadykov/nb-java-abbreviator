@@ -423,6 +423,30 @@ public class JavaSourceMaker {
         return getTreeMaker(request).insertMethodParameter(method, index, parameter);
     }
 
+    public static MethodTree makeMethodTree(MethodTree method, ExpressionTree throwz, CodeCompletionRequest request) {
+        tag(throwz, ConstantDataManager.EXPRESSION_TAG, request);
+        List<? extends ExpressionTree> throwsClause = method.getThrows();
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        if (throwsClause.size() == 1) {
+            if (treeUtilities.hasError(throwsClause.get(0))) {
+                return getTreeMaker(request).Method(
+                        method.getModifiers(),
+                        method.getName(),
+                        method.getReturnType(),
+                        method.getTypeParameters(),
+                        method.getParameters(),
+                        Collections.singletonList(throwz),
+                        method.getBody(),
+                        (ExpressionTree) method.getDefaultValue());
+            } else {
+                return getTreeMaker(request).addMethodThrows(method, throwz);
+            }
+        } else {
+            return getTreeMaker(request).addMethodThrows(method, throwz);
+        }
+    }
+
     public static ExpressionTree makeMethodInvocationExpressionTree(
             MethodInvocation methodInvocation, CodeCompletionRequest request) {
         TreeMaker make = getTreeMaker(request);
@@ -719,6 +743,10 @@ public class JavaSourceMaker {
                 Collections.emptyList(),
                 null,
                 request));
+    }
+
+    public static ExpressionTree makeThrowsTree(String type, CodeCompletionRequest request) {
+        return getTreeMaker(request).QualIdent(type);
     }
 
     public static TryTree makeTryTree(CodeCompletionRequest request) {

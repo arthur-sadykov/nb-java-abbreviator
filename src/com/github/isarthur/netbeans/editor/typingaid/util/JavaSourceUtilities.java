@@ -74,6 +74,7 @@ import static org.netbeans.api.java.lexer.JavaTokenId.EXTENDS;
 import static org.netbeans.api.java.lexer.JavaTokenId.IDENTIFIER;
 import static org.netbeans.api.java.lexer.JavaTokenId.IMPLEMENTS;
 import static org.netbeans.api.java.lexer.JavaTokenId.LBRACE;
+import static org.netbeans.api.java.lexer.JavaTokenId.THROWS;
 import org.netbeans.api.java.source.ClassIndex;
 import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.CodeStyle;
@@ -1320,5 +1321,95 @@ public class JavaSourceUtilities {
             }
         }
         return true;
+    }
+
+    public static boolean isInsideMethodBodySpan(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        Abbreviation abbreviation = request.getAbbreviation();
+        TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(request.getCurrentTree());
+        tokenSequence.moveStart();
+        while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.LBRACE) {
+        }
+        Token<JavaTokenId> token = tokenSequence.token();
+        if (token != null && token.id() == JavaTokenId.LBRACE) {
+            if (tokenSequence.offset() < abbreviation.getStartOffset()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isPositionOfThrowsKeyword(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(request.getCurrentTree());
+        tokenSequence.moveStart();
+        Map<JavaTokenId, Integer> offsetsByTokenIds = new HashMap<>();
+        OUTER:
+        while (tokenSequence.moveNext()) {
+            switch (tokenSequence.token().id()) {
+                case IDENTIFIER:
+                    if (offsetsByTokenIds.get(IDENTIFIER) == null) {
+                        offsetsByTokenIds.put(IDENTIFIER, tokenSequence.offset());
+                    }
+                    break;
+                case THROWS:
+                    return false;
+                case LBRACE:
+                    offsetsByTokenIds.put(LBRACE, tokenSequence.offset());
+                    break OUTER;
+            }
+        }
+        Abbreviation abbreviation = request.getAbbreviation();
+        int abbreviationStartOffset = abbreviation.getStartOffset();
+        if (abbreviationStartOffset > offsetsByTokenIds.getOrDefault(LBRACE, Integer.MAX_VALUE)) {
+            return false;
+        }
+        return abbreviationStartOffset > offsetsByTokenIds.getOrDefault(IDENTIFIER, Integer.MAX_VALUE);
+    }
+
+    public static boolean isInsideThrowsTreeSpan(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        Tree currentTree = request.getCurrentTree();
+        TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(currentTree);
+        tokenSequence.moveStart();
+        Map<JavaTokenId, Integer> offsetsByTokenIds = new HashMap<>();
+        OUTER:
+        while (tokenSequence.moveNext()) {
+            switch (tokenSequence.token().id()) {
+                case IDENTIFIER:
+                    if (offsetsByTokenIds.get(IDENTIFIER) == null) {
+                        offsetsByTokenIds.put(IDENTIFIER, tokenSequence.offset());
+                    }
+                    break;
+                case THROWS:
+                    offsetsByTokenIds.put(THROWS, tokenSequence.offset());
+                    break;
+                case LBRACE:
+                    offsetsByTokenIds.put(LBRACE, tokenSequence.offset());
+                    break OUTER;
+            }
+        }
+        Abbreviation abbreviation = request.getAbbreviation();
+        int abbreviationStartOffset = abbreviation.getStartOffset();
+        if (abbreviationStartOffset > offsetsByTokenIds.getOrDefault(LBRACE, Integer.MAX_VALUE)) {
+            return false;
+        }
+        if (abbreviationStartOffset < offsetsByTokenIds.getOrDefault(IDENTIFIER, Integer.MIN_VALUE)) {
+            return false;
+        }
+        Integer throwsTokenOffset = offsetsByTokenIds.get(THROWS);
+        return throwsTokenOffset != null && abbreviation.getStartOffset() > throwsTokenOffset;
+    }
+
+    public static boolean isInsideMethodParameterTreeSpan(CodeCompletionRequest request) {
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        int[] methodParameterSpan = treeUtilities.findMethodParameterSpan((MethodTree) request.getCurrentTree());
+        Abbreviation abbreviation = request.getAbbreviation();
+        return methodParameterSpan[0] < abbreviation.getStartOffset()
+                && abbreviation.getStartOffset() <= methodParameterSpan[1];
     }
 }

@@ -143,6 +143,13 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkExternalInnerThrowableTypeCollector(CodeCompletionRequest request) {
+            if (Preferences.getExternalTypeFlag()) {
+                collectors.add(new ExternalInnerTypeCollector(new ThrowableFilter(request)));
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkExternalInnerTypeCollector() {
             if (Preferences.getExternalTypeFlag()) {
                 collectors.add(new ExternalInnerTypeCollector());
@@ -209,6 +216,13 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
         public CodeFragmentCollectorLinkerBuilder linkGlobalInnerInterfaceCollector() {
             if (Preferences.getGlobalTypeFlag()) {
                 collectors.add(new GlobalInnerTypeCollector(new InterfaceFilter()));
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkGlobalInnerThrowableTypeCollector(CodeCompletionRequest request) {
+            if (Preferences.getGlobalTypeFlag()) {
+                collectors.add(new GlobalInnerTypeCollector(new ThrowableFilter(request)));
             }
             return this;
         }

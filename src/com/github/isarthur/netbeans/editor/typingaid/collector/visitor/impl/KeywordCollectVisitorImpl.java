@@ -399,44 +399,8 @@ public class KeywordCollectVisitorImpl implements KeywordCollectVisitor {
         if (!keyword.isAbbreviationEqualTo(request.getAbbreviation().getContent())) {
             return;
         }
-        if (!JavaSourceUtilities.getParentTreeOfKind(Collections.singleton(METHOD), request)) {
-            return;
-        }
-        Supplier<Boolean> insideThrowsTree = () -> {
-            Tree currentTree = JavaSourceUtilities.getCurrentTree(request);
-            if (currentTree == null) {
-                return false;
-            }
-            WorkingCopy copy = request.getWorkingCopy();
-            TreeUtilities treeUtilities = copy.getTreeUtilities();
-            TokenSequence<JavaTokenId> tokens = treeUtilities.tokensFor(currentTree);
-            tokens.moveStart();
-            int throwsOffset = Integer.MIN_VALUE;
-            while (tokens.moveNext()) {
-                if (tokens.token().id() == JavaTokenId.THROWS) {
-                    if (tokens.offset() < request.getAbbreviation().getStartOffset()) {
-                        throwsOffset = tokens.offset();
-                        break;
-                    }
-                }
-            }
-            if (throwsOffset < request.getAbbreviation().getStartOffset()) {
-                tokens.move(throwsOffset);
-                while (tokens.moveNext()) {
-                    if (tokens.token().id() == JavaTokenId.LBRACE) {
-                        if (request.getAbbreviation().getStartOffset() < tokens.offset()) {
-                            return true;
-                        }
-                    } else if (tokens.token().id() != JavaTokenId.WHITESPACE
-                            && tokens.token().id() != JavaTokenId.ERROR) {
-                        return false;
-                    }
-                }
-            }
-            return false;
-        };
-        List<CodeFragment> codeFragments = request.getCodeFragments();
-        if (insideThrowsTree.get()) {
+        if (JavaSourceUtilities.isPositionOfThrowsKeyword(request)) {
+            List<CodeFragment> codeFragments = request.getCodeFragments();
             codeFragments.add(keyword);
         }
     }

@@ -41,6 +41,7 @@ public class CodeFragmentSelectorFactory {
             case SWITCH_KEYWORD:
             case SYNCHRONIZED_KEYWORD:
             case THROW_KEYWORD:
+            case THROWS_KEYWORD:
             case WHILE_KEYWORD:
                 return new ExpressionCodeFragmentSelector();
             case BOOLEAN_PRIMITIVE_TYPE:

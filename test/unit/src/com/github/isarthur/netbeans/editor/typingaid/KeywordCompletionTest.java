@@ -992,6 +992,20 @@ public class KeywordCompletionTest extends GeneralCompletionTest {
                 Arrays.asList("static"));
     }
 
+    public void testThrowsKeywordCompletion() throws IOException {
+        doAbbreviationInsert(
+                "t",
+                "class Test {\n"
+                + "    void test() |{\n"
+                + "    }\n"
+                + "}",
+                "class Test {\n"
+                + "    void test() throws IllegalArgumentException {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("throws"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

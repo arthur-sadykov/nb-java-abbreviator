@@ -21,6 +21,7 @@ import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCom
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.MethodCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import static com.sun.source.tree.Tree.Kind.METHOD;
 import javax.lang.model.type.TypeMirror;
 import org.netbeans.api.java.lexer.JavaTokenId;
@@ -41,82 +42,47 @@ public class MethodCodeCompletionContext extends AbstractCodeCompletionContext {
         TokenSequence<JavaTokenId> tokenSequence = treeUtilities.tokensFor(request.getCurrentTree());
         tokenSequence.moveStart();
         Abbreviation abbreviation = request.getAbbreviation();
-        boolean beforeLeftParenthesis = false;
-        boolean beforeRightParenthesis = false;
-        boolean afterLeftBrace = false;
-        OUTER:
-        while (tokenSequence.moveNext()) {
-            switch (tokenSequence.token().id()) {
-                case LPAREN:
-                    if (abbreviation.getStartOffset() < tokenSequence.offset()) {
-                        beforeLeftParenthesis = true;
-                        break OUTER;
-                    }
-                    break;
-                case LBRACE:
-                    if (tokenSequence.offset() < abbreviation.getStartOffset()) {
-                        afterLeftBrace = true;
-                        break OUTER;
-                    } else {
-                        while (tokenSequence.movePrevious()) {
-                            if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
-                                if (abbreviation.getStartOffset() <= tokenSequence.offset()) {
-                                    beforeRightParenthesis = true;
-                                }
-                                break OUTER;
-                            }
-                        }
-                    }
-                    break;
-                case SEMICOLON:
-                    while (tokenSequence.movePrevious()) {
-                        if (tokenSequence.token().id() == JavaTokenId.RPAREN) {
-                            if (abbreviation.getStartOffset() <= tokenSequence.offset()) {
-                                beforeRightParenthesis = true;
-                            }
-                            break OUTER;
-                        }
-                    }
-                    break;
-            }
-        }
-        if (beforeLeftParenthesis) {
-            return CodeFragmentCollectorLinkerImpl.builder()
-                    .linkModifierCollector(METHOD)
-                    .build();
-        } else if (beforeRightParenthesis) {
+        CodeFragmentCollectorLinkerImpl.CodeFragmentCollectorLinkerBuilder builder =
+                CodeFragmentCollectorLinkerImpl.builder();
+        if (JavaSourceUtilities.isAdjacentToModifiersTreeSpan(request)) {
+            builder.linkModifierCollector(METHOD);
+        } else if (JavaSourceUtilities.isInsideMethodParameterTreeSpan(request)) {
             if (!abbreviation.isSimple()) {
-                return CodeFragmentCollectorLinkerImpl.builder()
-                        .linkExternalInnerTypeCollector()
-                        .linkGlobalInnerTypeCollector()
-                        .build();
+                builder.linkExternalInnerTypeCollector()
+                        .linkGlobalInnerTypeCollector();
             } else {
-                return CodeFragmentCollectorLinkerImpl.builder()
-                        .linkExternalTypeCollector()
+                builder.linkExternalTypeCollector()
                         .linkGlobalTypeCollector()
                         .linkInternalTypeCollector()
-                        .linkPrimitiveTypeCollector()
-                        .build();
+                        .linkPrimitiveTypeCollector();
             }
-        } else if (afterLeftBrace) {
+        } else if (JavaSourceUtilities.isPositionOfThrowsKeyword(request)) {
+            builder.linkKeywordCollector();
+        } else if (JavaSourceUtilities.isInsideThrowsTreeSpan(request)) {
             if (!abbreviation.isSimple()) {
-                return CodeFragmentCollectorLinkerImpl.builder()
-                        .linkExternalInnerTypeCollector()
-                        .linkGlobalInnerTypeCollector()
-                        .build();
+                builder.linkExternalInnerThrowableTypeCollector(request)
+                        .linkGlobalInnerThrowableTypeCollector(request);
             } else {
-                return CodeFragmentCollectorLinkerImpl.builder()
+                builder.linkExternalThrowableTypeCollector(request)
+                        .linkGlobalThrowableTypeCollector(request)
+                        .linkInternalThrowableTypeCollector(request);
+            }
+        } else if (JavaSourceUtilities.isInsideMethodBodySpan(request)) {
+            if (!abbreviation.isSimple()) {
+                builder.linkExternalInnerTypeCollector()
+                        .linkGlobalInnerTypeCollector();
+            } else {
+                builder
                         .linkExternalTypeCollector()
                         .linkGlobalTypeCollector()
                         .linkInternalTypeCollector()
                         .linkModifierCollector(METHOD)
-                        .linkPrimitiveTypeCollector()
-                        .build();
+                        .linkPrimitiveTypeCollector();
             }
         } else {
-            return CodeFragmentCollectorLinkerImpl.builder()
-                    .build();
+            throw new RuntimeException("Cannot find location in the method declaration."); //NOI18N
         }
+        return builder.build();
     }
 
     @Override
