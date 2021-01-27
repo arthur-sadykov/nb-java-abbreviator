@@ -44,6 +44,7 @@ public class ConstantDataManager {
     public static final String INT = "int"; //NOI18N
     public static final String JAVA_SOURCE_NOT_ASSOCIATED_TO_DOCUMENT = "The Java source is not associated to document!"; //NOI18N
     public static final String LONG = "long"; //NOI18N
+    public static final String METHOD_NAME_TAG = "methodNameTag"; //NOI18N
     public static final String NULL = "null"; //NOI18N
     public static final String PARENTHESIZED_ERROR = "(ERROR)"; //NOI18N
     public static final String SECOND_IDENTIFIER_OR_LITERAL_TAG = "secondIdentifierOrLiteralTag"; //NOI18N
@@ -55,6 +56,7 @@ public class ConstantDataManager {
     public static final String SUPER = "super"; //NOI18N
     public static final String THIS = "this"; //NOI18N
     public static final String TRUE = "true"; //NOI18N
+    public static final String VARIABLE_NAME_TAG = "variableNameTag"; //NOI18N
     public static final String VOID = "void"; //NOI18N
     public static final String ZERO = "0"; //NOI18N
     public static final String ZERO_DOT_ZERO = "0.0"; //NOI18N

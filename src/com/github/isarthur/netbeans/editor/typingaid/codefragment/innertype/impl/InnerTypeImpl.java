@@ -46,10 +46,13 @@ public class InnerTypeImpl implements InnerType {
 
     private final ElementHandle<TypeElement> scope;
     private final ElementHandle<TypeElement> identifier;
+    private final int typeParametersCount;
 
-    public InnerTypeImpl(ElementHandle<TypeElement> scope, ElementHandle<TypeElement> identifier) {
+    public InnerTypeImpl(
+            ElementHandle<TypeElement> scope, ElementHandle<TypeElement> identifier, int typeParametersCount) {
         this.scope = scope;
         this.identifier = identifier;
+        this.typeParametersCount = typeParametersCount;
     }
 
     @Override
@@ -90,7 +93,7 @@ public class InnerTypeImpl implements InnerType {
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)
                         || JavaSourceUtilities.isInsideImplementsTreeSpan(request)) {
-                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                    return JavaSourceMaker.makeTypeTree(toString(), request);
                 } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
                     if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                         return JavaSourceMaker.makeVariableTree(
@@ -108,7 +111,7 @@ public class InnerTypeImpl implements InnerType {
             case ENUM:
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideImplementsTreeSpan(request)) {
-                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                    return JavaSourceMaker.makeTypeTree(toString(), request);
                 } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
                     if (!JavaSourceUtilities.isMethodSection(classEnumOrInterfaceTree, request)) {
                         return JavaSourceMaker.makeVariableTree(
@@ -126,7 +129,7 @@ public class InnerTypeImpl implements InnerType {
             case INTERFACE:
                 classEnumOrInterfaceTree = (ClassTree) request.getCurrentTree();
                 if (JavaSourceUtilities.isInsideExtendsTreeSpan(request)) {
-                    return JavaSourceMaker.makeTypeTree(identifier.getQualifiedName(), request);
+                    return JavaSourceMaker.makeTypeTree(toString(), request);
                 } else if (JavaSourceUtilities.isInsideClassEnumOrInterfaceBodySpan(classEnumOrInterfaceTree, request)) {
                     return JavaSourceMaker.makeMethodTree(
                             JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
@@ -215,6 +218,15 @@ public class InnerTypeImpl implements InnerType {
 
     @Override
     public String toString() {
-        return scope.getQualifiedName() + "." + identifier.getBinaryName(); //NOI18N
+        if (typeParametersCount == 0) {
+            return identifier.getQualifiedName();
+        } else {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < typeParametersCount; i++) {
+                stringBuilder.append("String, "); //NOI18N
+            }
+            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+            return identifier.getQualifiedName() + "<" + stringBuilder.toString() + ">"; //NOI18N
+        }
     }
 }

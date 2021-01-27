@@ -47,7 +47,10 @@ public abstract class InnerTypeCollector extends AbstractCodeFragmentCollector {
                 innerTypes = filter.meetCriteria(innerTypes);
             }
             innerTypes.forEach(innerType -> {
-                codeFragments.add(new InnerTypeImpl(ElementHandle.create(externalType), ElementHandle.create(innerType)));
+                codeFragments.add(new InnerTypeImpl(
+                        ElementHandle.create(externalType),
+                        ElementHandle.create(innerType),
+                        innerType.getTypeParameters().size()));
             });
         });
         super.collect(request);

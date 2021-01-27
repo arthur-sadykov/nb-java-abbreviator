@@ -972,7 +972,7 @@ public class JavaSourceUtilities {
             }
             String typeName = typeElement.getSimpleName().toString();
             String typeAbbreviation = StringUtilities.getElementAbbreviation(typeName);
-            if (!typeAbbreviation.equals(abbreviation.getContent())) {
+            if (!typeAbbreviation.equals(abbreviation.getScope())) {
                 return;
             }
             if (typeElement.getModifiers().contains(Modifier.PRIVATE)) {
@@ -1000,7 +1000,7 @@ public class JavaSourceUtilities {
                         return false;
                     }
                     String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-                    if (!typeAbbreviation.equals(abbreviation.getContent())) {
+                    if (!typeAbbreviation.equals(abbreviation.getScope())) {
                         return false;
                     }
                     if (element.getModifiers().contains(Modifier.PUBLIC)) {
@@ -1032,7 +1032,7 @@ public class JavaSourceUtilities {
         Abbreviation abbreviation = request.getAbbreviation();
         String topLevelElementAbbreviation =
                 StringUtilities.getElementAbbreviation(topLevelElement.getSimpleName().toString());
-        if (topLevelElementAbbreviation.equals(abbreviation.getContent())) {
+        if (topLevelElementAbbreviation.equals(abbreviation.getScope())) {
             types.add((TypeElement) topLevelElement);
         }
         Iterable<? extends Element> internalTypes =

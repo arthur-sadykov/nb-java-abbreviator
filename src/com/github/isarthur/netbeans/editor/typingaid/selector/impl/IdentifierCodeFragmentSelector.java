@@ -64,6 +64,8 @@ public class IdentifierCodeFragmentSelector extends AbstractCodeFragmentSelector
                 int[] span = modificationResult.getSpan(getTag());
                 boolean argumentSpanTagFound = true;
                 boolean firstIdentifierOrLiteralSpanTagFound = false;
+                boolean secondIdentifierOrLiteralSpanTagFound = false;
+                boolean methodNameSpanTagFound = false;
                 if (span == null) {
                     argumentSpanTagFound = false;
                     span = modificationResult.getSpan(ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG);
@@ -71,7 +73,19 @@ public class IdentifierCodeFragmentSelector extends AbstractCodeFragmentSelector
                         firstIdentifierOrLiteralSpanTagFound = false;
                         span = modificationResult.getSpan(ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG);
                         if (span == null) {
-                            return;
+                            secondIdentifierOrLiteralSpanTagFound = false;
+                            span = modificationResult.getSpan(ConstantDataManager.METHOD_NAME_TAG);
+                            if (span == null) {
+                                methodNameSpanTagFound = false;
+                                span = modificationResult.getSpan(ConstantDataManager.VARIABLE_NAME_TAG);
+                                if (span == null) {
+                                    return;
+                                }
+                            } else {
+                                methodNameSpanTagFound = true;
+                            }
+                        } else {
+                            secondIdentifierOrLiteralSpanTagFound = true;
                         }
                     } else {
                         firstIdentifierOrLiteralSpanTagFound = true;
@@ -87,10 +101,47 @@ public class IdentifierCodeFragmentSelector extends AbstractCodeFragmentSelector
                 } else if (firstIdentifierOrLiteralSpanTagFound) {
                     while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
                     }
-                } else {
+                } else if (secondIdentifierOrLiteralSpanTagFound) {
                     while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
                     }
                     while (tokenSequence.moveNext() && !targetTokeIds.contains(tokenSequence.token().id())) {
+                    }
+                } else if (methodNameSpanTagFound) {
+                    while (tokenSequence.moveNext() && tokenSequence.token().id() != JavaTokenId.LPAREN) {
+                    }
+                    Token<?> token = tokenSequence.token();
+                    if (token != null && token.id() == JavaTokenId.LPAREN) {
+                        while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+                        }
+                        token = tokenSequence.token();
+                        if (token == null) {
+                            return;
+                        }
+                        if (token.id() != JavaTokenId.IDENTIFIER) {
+                            return;
+                        }
+                    }
+                } else {
+                    while (tokenSequence.moveNext()) {
+                        if (tokenSequence.token().id() == JavaTokenId.SEMICOLON
+                                || tokenSequence.token().id() == JavaTokenId.COMMA
+                                || tokenSequence.token().id() == JavaTokenId.RPAREN
+                                || tokenSequence.token().id() == JavaTokenId.EQ) {
+                            break;
+                        }
+                    }
+                    Token<?> token = tokenSequence.token();
+                    if (token != null
+                            && (token.id() == JavaTokenId.SEMICOLON
+                            || token.id() == JavaTokenId.COMMA
+                            || token.id() == JavaTokenId.RPAREN
+                            || tokenSequence.token().id() == JavaTokenId.EQ)) {
+                        while (tokenSequence.movePrevious() && tokenSequence.token().id() == JavaTokenId.WHITESPACE) {
+                        }
+                        token = tokenSequence.token();
+                        if (token == null || token.id() != JavaTokenId.IDENTIFIER) {
+                            return;
+                        }
                     }
                 }
                 Token<?> token = tokenSequence.token();

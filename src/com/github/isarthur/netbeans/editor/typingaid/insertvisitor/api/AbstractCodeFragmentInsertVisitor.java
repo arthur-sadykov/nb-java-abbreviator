@@ -18,6 +18,7 @@ package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.ChainedFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.StaticFieldAccess;
+import com.github.isarthur.netbeans.editor.typingaid.codefragment.innertype.api.InnerType;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.AssertKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.BreakKeyword;
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.keyword.impl.CaseKeyword;
@@ -210,6 +211,11 @@ public abstract class AbstractCodeFragmentInsertVisitor implements CodeFragmentI
     @Override
     public void visit(ImportKeyword keyword, CodeCompletionRequest request) {
         insertTree(keyword, request);
+    }
+
+    @Override
+    public void visit(InnerType innerType, CodeCompletionRequest request) {
+        insertTree(innerType, request);
     }
 
     @Override

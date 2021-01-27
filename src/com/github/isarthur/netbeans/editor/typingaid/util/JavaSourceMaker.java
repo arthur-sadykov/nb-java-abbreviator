@@ -377,7 +377,7 @@ public class JavaSourceMaker {
                         ? JavaSourceMaker.makeIdentifierTree(returnVar, request)
                         : null,
                 request);
-        ExpressionTree methodType = JavaSourceMaker.makeQualIdentTree(type, request);
+        Tree methodType = JavaSourceMaker.makeTypeTree(type, request);
         MethodTree methodTree =
                 getTreeMaker(request).Method(
                         makeModifiersTree(Collections.emptySet(), request),
@@ -388,12 +388,7 @@ public class JavaSourceMaker {
                         Collections.emptyList(),
                         JavaSourceMaker.makeBlockTree(Collections.singletonList(returnTree), false, request),
                         null);
-        boolean primitiveType = methodType.getKind() == Tree.Kind.PRIMITIVE_TYPE;
-        tag(
-                methodTree,
-                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
-                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
-                request);
+        tag(methodTree, ConstantDataManager.METHOD_NAME_TAG, request);
         return methodTree;
     }
 
@@ -409,12 +404,7 @@ public class JavaSourceMaker {
             CodeCompletionRequest request) {
         MethodTree methodTree = getTreeMaker(request).Method(
                 modifiers, name, returnType, typeParameters, parameters, throwsList, body, defaultValue);
-        boolean primitiveType = returnType.getKind() == Tree.Kind.PRIMITIVE_TYPE;
-        tag(
-                methodTree,
-                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
-                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
-                request);
+        tag(methodTree, ConstantDataManager.METHOD_NAME_TAG, request);
         return methodTree;
     }
 
@@ -785,12 +775,7 @@ public class JavaSourceMaker {
     public static VariableTree makeVariableTree(
             ModifiersTree modifiers, String name, Tree type, ExpressionTree initializer, CodeCompletionRequest request) {
         VariableTree variableTree = getTreeMaker(request).Variable(modifiers, name, type, initializer);
-        boolean primitiveType = type.getKind() == Tree.Kind.PRIMITIVE_TYPE;
-        tag(
-                variableTree,
-                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
-                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
-                request);
+        tag(variableTree, ConstantDataManager.VARIABLE_NAME_TAG, request);
         return variableTree;
     }
 
@@ -801,12 +786,7 @@ public class JavaSourceMaker {
                 variableTree.getName(),
                 variableTree.getType(),
                 expressionTree);
-        boolean primitiveType = variableTree.getType().getKind() == Tree.Kind.PRIMITIVE_TYPE;
-        tag(
-                newVariableTree,
-                primitiveType ? ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG
-                        : ConstantDataManager.SECOND_IDENTIFIER_OR_LITERAL_TAG,
-                request);
+        tag(newVariableTree, ConstantDataManager.VARIABLE_NAME_TAG, request);
         return newVariableTree;
     }
 
