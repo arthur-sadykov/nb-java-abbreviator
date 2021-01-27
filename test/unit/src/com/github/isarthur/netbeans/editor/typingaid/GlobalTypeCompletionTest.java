@@ -580,7 +580,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 + "        }\n"
                 + "    }\n"
                 + "}",
-                Arrays.asList("java.lang.AbstractMethodError"));
+                Collections.singletonList("java.lang.AbstractMethodError"));
     }
 
     public void testGlobalTypeCompletionInExtendsClauseOfClassDeclaration() throws IOException {
@@ -592,7 +592,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "package test;\n"
                 + "class Test extends AbstractMethodError{\n"
                 + "}",
-                Arrays.asList("java.lang.AbstractMethodError"));
+                Collections.singletonList("java.lang.AbstractMethodError"));
     }
 
     public void testGlobalTypeCompletionInExtendsClauseOfInterfaceDeclaration() throws IOException {
@@ -604,7 +604,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "package test;\n"
                 + "interface Test extends AutoCloseable{\n"
                 + "}",
-                Arrays.asList("java.lang.AutoCloseable"));
+                Collections.singletonList("java.lang.AutoCloseable"));
     }
 
     public void testGlobalTypeCompletionInImplementsClauseOfClassDeclaration() throws IOException {
@@ -616,7 +616,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "package test;\n"
                 + "class Test implements AutoCloseable{\n"
                 + "}",
-                Arrays.asList("java.lang.AutoCloseable"));
+                Collections.singletonList("java.lang.AutoCloseable"));
         doAbbreviationInsert(
                 "cs",
                 "package test;\n"
@@ -625,7 +625,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "package test;\n"
                 + "class Test implements AutoCloseable, CharSequence {\n"
                 + "}",
-                Arrays.asList("java.lang.CharSequence"));
+                Collections.singletonList("java.lang.CharSequence"));
     }
 
     public void testGlobalTypeCompletionInImplementsClauseOfEnumDeclaration() throws IOException {
@@ -637,7 +637,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "package test;\n"
                 + "enum Test implements AutoCloseable{\n"
                 + "}",
-                Arrays.asList("java.lang.AutoCloseable"));
+                Collections.singletonList("java.lang.AutoCloseable"));
         doAbbreviationInsert(
                 "cs",
                 "package test;\n"
@@ -646,7 +646,36 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 "package test;\n"
                 + "enum Test implements AutoCloseable, CharSequence {\n"
                 + "}",
-                Arrays.asList("java.lang.CharSequence"));
+                Collections.singletonList("java.lang.CharSequence"));
+    }
+
+    public void testGlobalTypeCompletionInThrowsClause() throws IOException {
+        doAbbreviationInsert(
+                "cnfe",
+                "package test;\n"
+                + "class Test {\n"
+                + "    void test() throws |{\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "class Test {\n"
+                + "    void test() throws ClassNotFoundException{\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.lang.ClassNotFoundException"));
+        doAbbreviationInsert(
+                "cnse",
+                "package test;\n"
+                + "class Test {\n"
+                + "    void test() throws ClassNotFoundException |{\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "class Test {\n"
+                + "    void test() throws ClassNotFoundException, CloneNotSupportedException {\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.lang.CloneNotSupportedException"));
     }
 
     @Override

@@ -244,12 +244,18 @@ public class TypeImpl implements Type, Comparable<TypeImpl> {
                     throw new RuntimeException("Wrong position for type completion in interface declaration."); //NOI18N
                 }
             case METHOD:
-                return JavaSourceMaker.makeVariableTree(
-                        JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
-                        JavaSourceUtilities.getVariableName(declaredType, request),
-                        JavaSourceMaker.makeTypeTree(toString(), request),
-                        null,
-                        request);
+                if (JavaSourceUtilities.isInsideMethodParameterTreeSpan(request)) {
+                    return JavaSourceMaker.makeVariableTree(
+                            JavaSourceMaker.makeModifiersTree(Collections.emptySet(), request),
+                            JavaSourceUtilities.getVariableName(declaredType, request),
+                            JavaSourceMaker.makeTypeTree(toString(), request),
+                            null,
+                            request);
+                } else if (JavaSourceUtilities.isInsideThrowsTreeSpan(request)) {
+                    return JavaSourceMaker.makeTypeTree(toString(), request);
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in method declaration."); //NOI18N
+                }
             case RETURN:
                 ReturnTree returnTree = (ReturnTree) request.getCurrentTree();
                 return getNewClassOrTypeCastTree(returnTree.getExpression(), request);

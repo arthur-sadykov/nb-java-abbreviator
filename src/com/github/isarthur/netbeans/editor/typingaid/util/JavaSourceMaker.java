@@ -426,10 +426,8 @@ public class JavaSourceMaker {
     public static MethodTree makeMethodTree(MethodTree method, ExpressionTree throwz, CodeCompletionRequest request) {
         tag(throwz, ConstantDataManager.EXPRESSION_TAG, request);
         List<? extends ExpressionTree> throwsClause = method.getThrows();
-        WorkingCopy workingCopy = request.getWorkingCopy();
-        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
         if (throwsClause.size() == 1) {
-            if (treeUtilities.hasError(throwsClause.get(0))) {
+            if (throwsClause.get(0).toString().equals(ConstantDataManager.ANGLED_ERROR)) {
                 return getTreeMaker(request).Method(
                         method.getModifiers(),
                         method.getName(),

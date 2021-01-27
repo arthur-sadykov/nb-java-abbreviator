@@ -83,6 +83,17 @@ public class MethodCodeFragmentInsertVisitor extends AbstractCodeFragmentInsertV
                 ModifiersTree modifiersTree = (ModifiersTree) tree;
                 return JavaSourceMaker.makeModifiersTree(
                         originalModifiersTree, modifiersTree.getFlags().iterator().next(), request);
+            case INNER_TYPE:
+            case TYPE:
+                originalTree = (MethodTree) getOriginalTree(codeFragment, request);
+                if (JavaSourceUtilities.isInsideMethodParameterTreeSpan(request)) {
+                    int insertIndex = JavaSourceUtilities.findInsertIndexForMethodParameter(originalTree);
+                    return JavaSourceMaker.makeMethodTree(originalTree, insertIndex, (VariableTree) tree, request);
+                } else if (JavaSourceUtilities.isInsideThrowsTreeSpan(request)) {
+                    return JavaSourceMaker.makeMethodTree(originalTree, (ExpressionTree) tree, request);
+                } else {
+                    throw new RuntimeException("Wrong position for type completion in method declaration."); //NOI18N
+                }
             case THROWS_KEYWORD:
                 originalTree = (MethodTree) getOriginalTree(codeFragment, request);
                 return JavaSourceMaker.makeMethodTree(originalTree, (ExpressionTree) tree, request);
