@@ -306,14 +306,14 @@ public class CodeFragmentSelectionTest extends JellyTestCase {
 
     private void doAbbreviationInsert(int caretPosition, char[] chars, String expected) {
         typeAbbreviation(caretPosition, chars);
-        new EventTool().waitNoEvent(1000);
+        new EventTool().waitNoEvent(2000);
         assertEquals(expected, editorOperator.txtEditorPane().getSelectedText());
     }
 
     private void doAbbreviationInsertExpectingClashes(int caretPosition, char[] chars, String item, String expected) {
         typeAbbreviation(caretPosition, chars);
         selectItemInPopupWindow(item);
-        new EventTool().waitNoEvent(1000);
+        new EventTool().waitNoEvent(2000);
         assertEquals(expected, editorOperator.txtEditorPane().getSelectedText());
     }
 
