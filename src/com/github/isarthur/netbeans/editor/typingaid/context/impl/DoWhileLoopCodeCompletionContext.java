@@ -36,7 +36,7 @@ public class DoWhileLoopCodeCompletionContext extends AbstractCodeCompletionCont
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return NullCodeFragmentInsertVisitor.getInstance();
     }
 
     @Override

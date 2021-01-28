@@ -36,7 +36,7 @@ public class ArrayTypeCodeCompletionContext extends AbstractCodeCompletionContex
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return NullCodeFragmentInsertVisitor.getInstance();
     }
 
     @Override

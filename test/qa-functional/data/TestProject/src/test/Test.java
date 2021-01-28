@@ -99,4 +99,16 @@ public class Test {
     enum Enum {
         
     }
+    
+    class TestException extends Exception {
+
+        public TestException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        
+    }
+
+    void test11() {
+        throw ;
+    }
 }

@@ -40,7 +40,6 @@ public class CodeFragmentSelectorFactory {
             case RETURN_KEYWORD:
             case SWITCH_KEYWORD:
             case SYNCHRONIZED_KEYWORD:
-            case THROW_KEYWORD:
             case THROWS_KEYWORD:
             case WHILE_KEYWORD:
                 return new ExpressionCodeFragmentSelector();
@@ -63,6 +62,7 @@ public class CodeFragmentSelectorFactory {
             case LOCAL_METHOD_INVOCATION:
             case SHORT_PRIMITIVE_TYPE:
             case STATIC_METHOD_INVOCATION:
+            case THROW_KEYWORD:
             case TRY_KEYWORD:
             case TYPE:
             case VOID_KEYWORD:

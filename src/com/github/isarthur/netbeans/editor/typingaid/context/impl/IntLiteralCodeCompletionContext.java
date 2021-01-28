@@ -36,7 +36,7 @@ public class IntLiteralCodeCompletionContext extends AbstractCodeCompletionConte
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return NullCodeFragmentInsertVisitor.getInstance();
     }
 
     @Override

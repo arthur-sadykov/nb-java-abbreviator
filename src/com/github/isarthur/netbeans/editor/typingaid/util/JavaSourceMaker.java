@@ -733,6 +733,11 @@ public class JavaSourceMaker {
                 request));
     }
 
+    public static ThrowTree makeThrowTree(ExpressionTree expression, CodeCompletionRequest request) {
+        tag(expression, ConstantDataManager.ARGUMENT_TAG, request);
+        return getTreeMaker(request).Throw(expression);
+    }
+
     public static ExpressionTree makeThrowsTree(String type, CodeCompletionRequest request) {
         return getTreeMaker(request).QualIdent(type);
     }

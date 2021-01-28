@@ -36,7 +36,7 @@ public class AnnotatedTypeCodeCompletionContext extends AbstractCodeCompletionCo
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return NullCodeFragmentInsertVisitor.getInstance();
     }
 
     @Override

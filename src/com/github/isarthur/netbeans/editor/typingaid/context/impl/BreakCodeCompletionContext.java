@@ -36,7 +36,7 @@ public class BreakCodeCompletionContext extends AbstractCodeCompletionContext {
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return NullCodeFragmentInsertVisitor.getInstance();
     }
 
     @Override

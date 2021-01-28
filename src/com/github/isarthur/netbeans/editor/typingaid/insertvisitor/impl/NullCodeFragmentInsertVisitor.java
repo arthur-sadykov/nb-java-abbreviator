@@ -22,4 +22,16 @@ import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragm
  * @author Arthur Sadykov
  */
 public class NullCodeFragmentInsertVisitor implements CodeFragmentInsertVisitor {
+
+    private static NullCodeFragmentInsertVisitor instance;
+
+    private NullCodeFragmentInsertVisitor() {
+    }
+
+    public static NullCodeFragmentInsertVisitor getInstance() {
+        if (instance == null) {
+            instance = new NullCodeFragmentInsertVisitor();
+        }
+        return instance;
+    }
 }

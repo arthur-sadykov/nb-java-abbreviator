@@ -15,10 +15,11 @@
  */
 package com.github.isarthur.netbeans.editor.typingaid.context.impl;
 
+import com.github.isarthur.netbeans.editor.typingaid.abbreviation.api.Abbreviation;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.impl.CodeFragmentCollectorLinkerImpl;
 import com.github.isarthur.netbeans.editor.typingaid.context.api.AbstractCodeCompletionContext;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.CodeFragmentInsertVisitor;
-import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.NullCodeFragmentInsertVisitor;
+import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl.ThrowCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import javax.lang.model.type.TypeMirror;
 
@@ -30,13 +31,23 @@ public class ThrowCodeCompletionContext extends AbstractCodeCompletionContext {
 
     @Override
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
-        return CodeFragmentCollectorLinkerImpl.builder()
-                .build();
+        Abbreviation abbreviation = request.getAbbreviation();
+        CodeFragmentCollectorLinkerImpl.CodeFragmentCollectorLinkerBuilder builder =
+                CodeFragmentCollectorLinkerImpl.builder();
+        if (!abbreviation.isSimple()) {
+            builder.linkExternalInnerThrowableTypeCollector(request)
+                    .linkGlobalInnerThrowableTypeCollector(request);
+        } else {
+            builder.linkExternalThrowableTypeCollector(request)
+                    .linkGlobalThrowableTypeCollector(request)
+                    .linkInternalThrowableTypeCollector(request);
+        }
+        return builder.build();
     }
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return new ThrowCodeFragmentInsertVisitor();
     }
 
     @Override

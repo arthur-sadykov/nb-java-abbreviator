@@ -678,6 +678,24 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("java.lang.CloneNotSupportedException"));
     }
 
+    public void testGlobalTypeCompletionInThrowStatement() throws IOException {
+        doAbbreviationInsert(
+                "npe",
+                "package test;\n"
+                + "class Test extends {\n"
+                + "    void test {\n"
+                + "        throw |;\n"
+                + "    }\n"
+                + "}",
+                "package test;\n"
+                + "class Test extends {\n"
+                + "    void test {\n"
+                + "        throw new NullPointerException();\n"
+                + "    }\n"
+                + "}",
+                Collections.singletonList("java.lang.NullPointerException"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         after();

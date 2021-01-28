@@ -36,7 +36,7 @@ public class ExtendsWildcardCodeCompletionContext extends AbstractCodeCompletion
 
     @Override
     public CodeFragmentInsertVisitor getCodeFragmentInsertVisitor() {
-        return new NullCodeFragmentInsertVisitor();
+        return NullCodeFragmentInsertVisitor.getInstance();
     }
 
     @Override
