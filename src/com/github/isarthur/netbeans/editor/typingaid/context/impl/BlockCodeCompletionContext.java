@@ -34,9 +34,10 @@ public class BlockCodeCompletionContext extends AbstractCodeCompletionContext {
         if (!request.getAbbreviation().isSimple()) {
             return CodeFragmentCollectorLinkerImpl.builder()
                     .linkExternalInnerTypeCollector()
+                    .linkExternalStaticMethodInvocationCollector()
                     .linkGlobalInnerTypeCollector()
+                    .linkGlobalStaticMethodInvocationCollector()
                     .linkMethodInvocationCollector()
-                    .linkStaticMethodInvocationCollector()
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()

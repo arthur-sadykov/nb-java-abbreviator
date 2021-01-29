@@ -33,7 +33,7 @@ import org.netbeans.api.java.source.WorkingCopy;
  *
  * @author Arthur Sadykov
  */
-public class StaticMethodInvocationCollector extends AbstractCodeFragmentCollector {
+public class ExternalStaticMethodInvocationCollector extends AbstractCodeFragmentCollector {
 
     @Override
     public void collect(CodeCompletionRequest request) {

@@ -36,10 +36,13 @@ public class AssignmentCodeCompletionContext extends AbstractCodeCompletionConte
         if (!request.getAbbreviation().isSimple()) {
             return CodeFragmentCollectorLinkerImpl.builder()
                     .linkExternalInnerTypeCollector()
+                    .linkExternalStaticFieldAccessCollector()
+                    .linkExternalStaticMethodInvocationCollector()
                     .linkGlobalInnerTypeCollector()
+                    .linkGlobalStaticFieldAccessCollector()
+                    .linkGlobalStaticMethodInvocationCollector()
+                    .linkInternalStaticFieldAccessCollector()
                     .linkMethodInvocationCollector()
-                    .linkStaticFieldAccessCollector()
-                    .linkStaticMethodInvocationCollector()
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()

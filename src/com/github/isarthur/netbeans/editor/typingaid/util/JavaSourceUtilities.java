@@ -1024,7 +1024,7 @@ public class JavaSourceUtilities {
                         return false;
                     }
                     String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-                    if (!typeAbbreviation.equals(abbreviation.getContent())) {
+                    if (!typeAbbreviation.equals(abbreviation.getScope())) {
                         return false;
                     }
                     return element.getKind() == ElementKind.CLASS

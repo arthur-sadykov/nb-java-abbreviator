@@ -32,9 +32,12 @@ public class ConditionalExpressionCodeCompletionContext extends AbstractCodeComp
     protected CodeFragmentCollectorLinkerImpl getCodeFragmentCollectorLinker(CodeCompletionRequest request) {
         if (!request.getAbbreviation().isSimple()) {
             return CodeFragmentCollectorLinkerImpl.builder()
+                    .linkExternalStaticFieldAccessCollector()
+                    .linkExternalStaticMethodInvocationCollector()
+                    .linkGlobalStaticFieldAccessCollector()
+                    .linkGlobalStaticMethodInvocationCollector()
+                    .linkInternalStaticFieldAccessCollector()
                     .linkMethodInvocationCollector()
-                    .linkStaticFieldAccessCollector()
-                    .linkStaticMethodInvocationCollector()
                     .build();
         }
         return CodeFragmentCollectorLinkerImpl.builder()

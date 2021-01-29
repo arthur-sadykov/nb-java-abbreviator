@@ -20,6 +20,7 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragme
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.impl.StaticFieldAccess;
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
+import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
 import java.util.List;
 import javax.lang.model.element.Element;
@@ -34,43 +35,35 @@ import org.netbeans.api.java.source.WorkingCopy;
  *
  * @author Arthur Sadykov
  */
-public class StaticFieldAccessForGlobalTypesCollector extends AbstractCodeFragmentCollector {
+public class InternalStaticFieldAccessCollector extends AbstractCodeFragmentCollector {
 
     @Override
     public void collect(CodeCompletionRequest request) {
         Abbreviation abbreviation = request.getAbbreviation();
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        Iterable<? extends TypeElement> typeElements = collectGlobalTypeElements(request.getWorkingCopy(), abbreviation);
+        Iterable<? extends TypeElement> typeElements = collectInternalTypeElements(request);
         WorkingCopy workingCopy = request.getWorkingCopy();
         ElementUtilities elementUtilities = workingCopy.getElementUtilities();
         typeElements.forEach(typeElement -> {
-            try {
-                Iterable<? extends Element> members =
-                        elementUtilities.getMembers(typeElement.asType(), (element, type) -> {
-                            return ((element.getKind() == ElementKind.FIELD
-                                    && element.getModifiers().contains(Modifier.PUBLIC)
-                                    && element.getModifiers().contains(Modifier.STATIC)
-                                    && element.getModifiers().contains(Modifier.FINAL))
-                                    || element.getKind() == ElementKind.ENUM_CONSTANT);
-                        });
-                members.forEach(member -> {
-                    String elementName = member.getSimpleName().toString();
-                    String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
-                    if (abbreviation.getIdentifier().equals(elementAbbreviation)) {
-                        codeFragments.add(new StaticFieldAccess(ElementHandle.create(typeElement), member));
-                    }
-                });
-            } catch (AssertionError ex) {
-            }
+            Iterable<? extends Element> members =
+                    elementUtilities.getMembers(typeElement.asType(), (element, type) -> {
+                        return ((element.getKind() == ElementKind.FIELD
+                                && element.getModifiers().contains(Modifier.STATIC)
+                                && element.getModifiers().contains(Modifier.FINAL))
+                                || element.getKind() == ElementKind.ENUM_CONSTANT);
+                    });
+            members.forEach(member -> {
+                String elementName = member.getSimpleName().toString();
+                String elementAbbreviation = StringUtilities.getElementAbbreviation(elementName);
+                if (abbreviation.getIdentifier().equals(elementAbbreviation)) {
+                    codeFragments.add(new StaticFieldAccess(ElementHandle.create(typeElement), member));
+                }
+            });
         });
         super.collect(request);
     }
 
-    private Iterable<? extends TypeElement> collectGlobalTypeElements(WorkingCopy copy, Abbreviation abbreviation) {
-        ElementUtilities elementUtilities = copy.getElementUtilities();
-        return elementUtilities.getGlobalTypes((element, type) -> {
-            String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
-            return typeAbbreviation.equals(abbreviation.getScope());
-        });
+    private Iterable<? extends TypeElement> collectInternalTypeElements(CodeCompletionRequest request) {
+        return JavaSourceUtilities.collectInternalTypeElements(request);
     }
 }

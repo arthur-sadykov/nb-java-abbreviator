@@ -21,18 +21,11 @@ import com.github.isarthur.netbeans.editor.typingaid.codefragment.fieldaccess.im
 import com.github.isarthur.netbeans.editor.typingaid.collector.api.AbstractCodeFragmentCollector;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.StringUtilities;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-import org.netbeans.api.java.source.ClassIndex;
-import org.netbeans.api.java.source.ClasspathInfo;
 import org.netbeans.api.java.source.ElementHandle;
 import org.netbeans.api.java.source.ElementUtilities;
 import org.netbeans.api.java.source.WorkingCopy;
@@ -41,13 +34,13 @@ import org.netbeans.api.java.source.WorkingCopy;
  *
  * @author Arthur Sadykov
  */
-public class StaticFieldAccessCollector extends AbstractCodeFragmentCollector {
+public class GlobalStaticFieldAccessCollector extends AbstractCodeFragmentCollector {
 
     @Override
     public void collect(CodeCompletionRequest request) {
         Abbreviation abbreviation = request.getAbbreviation();
         List<CodeFragment> codeFragments = request.getCodeFragments();
-        List<TypeElement> typeElements = collectTypesByAbbreviation(request.getWorkingCopy(), abbreviation);
+        Iterable<? extends TypeElement> typeElements = collectGlobalTypeElements(request.getWorkingCopy(), abbreviation);
         WorkingCopy workingCopy = request.getWorkingCopy();
         ElementUtilities elementUtilities = workingCopy.getElementUtilities();
         typeElements.forEach(typeElement -> {
@@ -73,27 +66,11 @@ public class StaticFieldAccessCollector extends AbstractCodeFragmentCollector {
         super.collect(request);
     }
 
-    private List<TypeElement> collectTypesByAbbreviation(WorkingCopy copy, Abbreviation abbreviation) {
-        ClasspathInfo classpathInfo = copy.getClasspathInfo();
-        ClassIndex classIndex = classpathInfo.getClassIndex();
-        Set<ElementHandle<TypeElement>> declaredTypes = classIndex.getDeclaredTypes(
-                abbreviation.getScope().toUpperCase(),
-                ClassIndex.NameKind.CAMEL_CASE,
-                EnumSet.of(ClassIndex.SearchScope.SOURCE, ClassIndex.SearchScope.DEPENDENCIES));
-        List<TypeElement> typeElements = new ArrayList<>();
-        Elements elements = copy.getElements();
-        declaredTypes.forEach(type -> {
-            TypeElement typeElement = type.resolve(copy);
-            if (typeElement != null) {
-                String typeName = typeElement.getSimpleName().toString();
-                String typeAbbreviation = StringUtilities.getElementAbbreviation(typeName);
-                if (typeAbbreviation.equals(abbreviation.getScope())) {
-                    if (!elements.isDeprecated(typeElement)) {
-                        typeElements.add(typeElement);
-                    }
-                }
-            }
+    private Iterable<? extends TypeElement> collectGlobalTypeElements(WorkingCopy copy, Abbreviation abbreviation) {
+        ElementUtilities elementUtilities = copy.getElementUtilities();
+        return elementUtilities.getGlobalTypes((element, type) -> {
+            String typeAbbreviation = StringUtilities.getElementAbbreviation(element.getSimpleName().toString());
+            return typeAbbreviation.equals(abbreviation.getScope());
         });
-        return Collections.unmodifiableList(typeElements);
     }
 }

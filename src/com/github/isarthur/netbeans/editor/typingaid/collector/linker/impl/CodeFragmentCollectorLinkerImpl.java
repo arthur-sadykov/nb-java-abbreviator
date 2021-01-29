@@ -27,10 +27,15 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ChainedMetho
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.EnumConstantCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExceptionParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalInnerTypeCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalStaticFieldAccessCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalStaticMethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ExternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.FieldCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalInnerTypeCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalStaticFieldAccessCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalStaticMethodInvocationCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.GlobalTypeCollector;
+import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalStaticFieldAccessCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.InternalTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.KeywordCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.LiteralCollector;
@@ -43,10 +48,6 @@ import com.github.isarthur.netbeans.editor.typingaid.collector.impl.NullCollecto
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ParameterCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.PrimitiveTypeCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.impl.ResourceVariableCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.StaticFieldAccessCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.StaticFieldAccessForGlobalTypesCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.StaticMethodInvocationCollector;
-import com.github.isarthur.netbeans.editor.typingaid.collector.impl.StaticMethodInvocationForGlobalTypesCollector;
 import com.github.isarthur.netbeans.editor.typingaid.collector.linker.api.CodeFragmentCollectorLinker;
 import com.github.isarthur.netbeans.editor.typingaid.preferences.Preferences;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
@@ -178,6 +179,24 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkExternalStaticFieldAccessCollector() {
+            if (Preferences.getStaticFieldAccessFlag()) {
+                if (!Preferences.getStaticFieldAccessGlobalTypesFlag()) {
+                    collectors.add(new ExternalStaticFieldAccessCollector());
+                }
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkExternalStaticMethodInvocationCollector() {
+            if (Preferences.getStaticMethodInvocationFlag()) {
+                if (!Preferences.getStaticMethodInvocationGlobalTypesFlag()) {
+                    collectors.add(new ExternalStaticMethodInvocationCollector());
+                }
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkExternalThrowableTypeCollector(CodeCompletionRequest request) {
             if (Preferences.getExternalTypeFlag()) {
                 collectors.add(new ExternalTypeCollector(new ThrowableFilter(request)));
@@ -255,6 +274,24 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
             return this;
         }
 
+        public CodeFragmentCollectorLinkerBuilder linkGlobalStaticFieldAccessCollector() {
+            if (Preferences.getStaticFieldAccessFlag()) {
+                if (Preferences.getStaticFieldAccessGlobalTypesFlag()) {
+                    collectors.add(new GlobalStaticFieldAccessCollector());
+                }
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkGlobalStaticMethodInvocationCollector() {
+            if (Preferences.getStaticMethodInvocationFlag()) {
+                if (Preferences.getStaticMethodInvocationGlobalTypesFlag()) {
+                    collectors.add(new GlobalStaticMethodInvocationCollector());
+                }
+            }
+            return this;
+        }
+
         public CodeFragmentCollectorLinkerBuilder linkGlobalThrowableTypeCollector(CodeCompletionRequest request) {
             if (Preferences.getGlobalTypeFlag()) {
                 collectors.add(new GlobalTypeCollector(new ThrowableFilter(request)));
@@ -286,6 +323,13 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
         public CodeFragmentCollectorLinkerBuilder linkInternalNonFinalClassCollector() {
             if (Preferences.getInternalTypeFlag()) {
                 collectors.add(new InternalTypeCollector(new AndCriteria(new ClassFilter(), new NonFinalFilter())));
+            }
+            return this;
+        }
+
+        public CodeFragmentCollectorLinkerBuilder linkInternalStaticFieldAccessCollector() {
+            if (Preferences.getStaticFieldAccessFlag()) {
+                collectors.add(new InternalStaticFieldAccessCollector());
             }
             return this;
         }
@@ -368,28 +412,6 @@ public class CodeFragmentCollectorLinkerImpl implements CodeFragmentCollectorLin
         public CodeFragmentCollectorLinkerBuilder linkResourceVariableCollector() {
             if (Preferences.getResourceVariableFlag()) {
                 collectors.add(new ResourceVariableCollector());
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkStaticFieldAccessCollector() {
-            if (Preferences.getStaticFieldAccessFlag()) {
-                if (Preferences.getStaticFieldAccessGlobalTypesFlag()) {
-                    collectors.add(new StaticFieldAccessForGlobalTypesCollector());
-                } else {
-                    collectors.add(new StaticFieldAccessCollector());
-                }
-            }
-            return this;
-        }
-
-        public CodeFragmentCollectorLinkerBuilder linkStaticMethodInvocationCollector() {
-            if (Preferences.getStaticMethodInvocationFlag()) {
-                if (Preferences.getStaticMethodInvocationGlobalTypesFlag()) {
-                    collectors.add(new StaticMethodInvocationForGlobalTypesCollector());
-                } else {
-                    collectors.add(new StaticMethodInvocationCollector());
-                }
             }
             return this;
         }
