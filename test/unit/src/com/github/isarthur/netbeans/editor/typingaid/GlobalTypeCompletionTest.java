@@ -133,7 +133,7 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 + "import com.sun.source.tree.InstanceOfTree;\n"
                 + "java.io.*;\n"
                 + "class Test {\n"
-                + "    void test(int count, InstanceOfTree instanceOfTree, ) {\n"
+                + "    void test(int count, InstanceOfTree instanceOfTree) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("com.sun.source.tree.InstanceOfTree"));
@@ -195,50 +195,50 @@ public class GlobalTypeCompletionTest extends GeneralCompletionTest {
                 Collections.singletonList("java.lang.Float"));
     }
 
-    public void testImportedTypeCompletionInParameterizedTypeInZeroPosition() throws IOException {
+    public void testGlobalTypeCompletionInParameterizedTypeInZeroPosition() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "package test;\n"
                 + "import java.util.Map;\n"
                 + "class InstanceOfTree {\n"
-                + "    private Map<| String> parts;\n"
+                + "    private Map<|, String> parts;\n"
                 + "}",
                 "package test;\n"
                 + "import java.util.Map;\n"
                 + "class InstanceOfTree {\n"
-                + "    private Map< Float, String> parts;\n"
+                + "    private Map<Float, String> parts;\n"
                 + "}",
                 Collections.singletonList("java.lang.Float"));
     }
 
-    public void testImportedTypeCompletionInParameterizedTypeInFirstPosition() throws IOException {
+    public void testGlobalTypeCompletionInParameterizedTypeInFirstPosition() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "package test;\n"
                 + "import java.util.Map;\n"
                 + "class InstanceOfTree {\n"
-                + "    private Map<String |> parts;\n"
+                + "    private Map<String, |> parts;\n"
                 + "}",
                 "package test;\n"
                 + "import java.util.Map;\n"
                 + "class InstanceOfTree {\n"
-                + "    private Map<String, Float > parts;\n"
+                + "    private Map<String, Float> parts;\n"
                 + "}",
                 Collections.singletonList("java.lang.Float"));
     }
 
-    public void testImportedTypeCompletionInParameterizedTypeInSecondPosition() throws IOException {
+    public void testGlobalTypeCompletionInParameterizedTypeInSecondPosition() throws IOException {
         doAbbreviationInsert(
                 "f",
                 "package test;\n"
                 + "import java.util.function.BiFunction;\n"
                 + "class InstanceOfTree {\n"
-                + "    private BiFunction<String, Integer |> function;\n"
+                + "    private BiFunction<String, Integer, |> function;\n"
                 + "}",
                 "package test;\n"
                 + "import java.util.function.BiFunction;\n"
                 + "class InstanceOfTree {\n"
-                + "    private BiFunction<String, Integer, Float > function;\n"
+                + "    private BiFunction<String, Integer, Float> function;\n"
                 + "}",
                 Collections.singletonList("java.lang.Float"));
     }

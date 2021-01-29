@@ -437,7 +437,7 @@ public class MethodInvocationCompletionTest extends GeneralCompletionTest {
                 "public class Test {\n"
                 + "    public void test1() {\n"
                 + "        String branchName = \"\";\n"
-                + "        test2(branchName, branchName.length(), );\n"
+                + "        test2(branchName, branchName.length());\n"
                 + "    }\n"
                 + "    public void test2(String name, int length) {\n"
                 + "    }\n"
@@ -561,7 +561,7 @@ public class MethodInvocationCompletionTest extends GeneralCompletionTest {
                 + "public class Test {\n"
                 + "    public void test() {\n"
                 + "        String branchName = \"\";\n"
-                + "        File file = new File<>(branchName, branchName.intern(), );\n"
+                + "        File file = new File<>(branchName, branchName.intern());\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("branchName.intern()"));

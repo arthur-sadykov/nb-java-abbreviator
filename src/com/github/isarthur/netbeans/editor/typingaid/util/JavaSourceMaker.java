@@ -410,7 +410,12 @@ public class JavaSourceMaker {
 
     public static MethodTree makeMethodTree(
             MethodTree method, int index, VariableTree parameter, CodeCompletionRequest request) {
-        return getTreeMaker(request).insertMethodParameter(method, index, parameter);
+        TreeMaker treeMaker = getTreeMaker(request);
+        if (!method.getParameters().isEmpty()) {
+            MethodTree newMethod = treeMaker.removeMethodParameter(method, index);
+            return treeMaker.insertMethodParameter(newMethod, index, parameter);
+        }
+        return treeMaker.insertMethodParameter(method, 0, parameter);
     }
 
     public static MethodTree makeMethodTree(MethodTree method, ExpressionTree throwz, CodeCompletionRequest request) {
@@ -542,7 +547,12 @@ public class JavaSourceMaker {
 
     public static MethodInvocationTree makeMethodInvocationTree(
             MethodInvocationTree methodInvocation, int index, ExpressionTree argument, CodeCompletionRequest request) {
-        return getTreeMaker(request).insertMethodInvocationArgument(methodInvocation, index, argument);
+        TreeMaker treeMaker = getTreeMaker(request);
+        if (!methodInvocation.getArguments().isEmpty()) {
+            MethodInvocationTree newMethodInvocation = treeMaker.removeMethodInvocationArgument(methodInvocation, index);
+            return treeMaker.insertMethodInvocationArgument(newMethodInvocation, index, argument);
+        }
+        return treeMaker.insertMethodInvocationArgument(methodInvocation, 0, argument);
     }
 
     public static ModifiersTree makeModifiersTree(Set<Modifier> modifiers, CodeCompletionRequest request) {
@@ -592,7 +602,12 @@ public class JavaSourceMaker {
 
     public static NewClassTree makeNewClassTree(
             NewClassTree newClass, int index, ExpressionTree typeArgument, CodeCompletionRequest request) {
-        return getTreeMaker(request).insertNewClassArgument(newClass, index, typeArgument);
+        TreeMaker treeMaker = getTreeMaker(request);
+        if (!newClass.getArguments().isEmpty()) {
+            NewClassTree newNewClass = treeMaker.removeNewClassArgument(newClass, index);
+            return treeMaker.insertNewClassArgument(newNewClass, index, typeArgument);
+        }
+        return treeMaker.insertNewClassArgument(newClass, 0, typeArgument);
     }
 
     public static NewClassTree makeNewClassTree(TypeElement type, CodeCompletionRequest request) {
@@ -657,8 +672,14 @@ public class JavaSourceMaker {
     }
 
     public static ParameterizedTypeTree makeParameterizedTypeTree(
-            Tree type, List<? extends Tree> typeArguments, CodeCompletionRequest request) {
-        return getTreeMaker(request).ParameterizedType(type, typeArguments);
+            ParameterizedTypeTree parameterizedType, int index, ExpressionTree argument, CodeCompletionRequest request) {
+        TreeMaker treeMaker = getTreeMaker(request);
+        if (!parameterizedType.getTypeArguments().isEmpty()) {
+            ParameterizedTypeTree newParameterizedType =
+                    treeMaker.removeParameterizedTypeTypeArgument(parameterizedType, index);
+            return treeMaker.insertParameterizedTypeTypeArgument(newParameterizedType, index, argument);
+        }
+        return treeMaker.insertParameterizedTypeTypeArgument(parameterizedType, 0, argument);
     }
 
     public static ParenthesizedTree makeParenthesizedTree(ExpressionTree expression, CodeCompletionRequest request) {
@@ -724,7 +745,7 @@ public class JavaSourceMaker {
 
     public static ThrowTree makeThrowTree(CodeCompletionRequest request) {
         IdentifierTree identifier = makeIdentifierTree("IllegalArgumentException", request); //NOI18N
-        tag(identifier, ConstantDataManager.EXPRESSION_TAG, request);
+        tag(identifier, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
         return getTreeMaker(request).Throw(makeNewClassTree(
                 Collections.emptyList(),
                 identifier,
@@ -739,7 +760,9 @@ public class JavaSourceMaker {
     }
 
     public static ExpressionTree makeThrowsTree(String type, CodeCompletionRequest request) {
-        return getTreeMaker(request).QualIdent(type);
+        ExpressionTree throwableType = getTreeMaker(request).QualIdent(type);
+        tag(throwableType, ConstantDataManager.FIRST_IDENTIFIER_OR_LITERAL_TAG, request);
+        return throwableType;
     }
 
     public static TryTree makeTryTree(CodeCompletionRequest request) {

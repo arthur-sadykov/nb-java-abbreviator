@@ -196,7 +196,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, char c, ) {\n"
+                + "    void test(int count, char c) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("char"));
@@ -209,7 +209,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test(int count, |);\n"
                 + "}",
                 "interface Test {\n"
-                + "    void test(int count, char c, );\n"
+                + "    void test(int count, char c);\n"
                 + "}",
                 Collections.singletonList("char"));
     }
@@ -289,7 +289,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, int i, ) {\n"
+                + "    void test(int count, int i) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("int"));
@@ -302,7 +302,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test(int count, |);\n"
                 + "}",
                 "interface Test {\n"
-                + "    void test(int count, int i, );\n"
+                + "    void test(int count, int i);\n"
                 + "}",
                 Collections.singletonList("int"));
     }
@@ -382,7 +382,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, long l, ) {\n"
+                + "    void test(int count, long l) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("long"));
@@ -395,7 +395,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test(int count, |);\n"
                 + "}",
                 "interface Test {\n"
-                + "    void test(int count, long l, );\n"
+                + "    void test(int count, long l);\n"
                 + "}",
                 Collections.singletonList("long"));
     }
@@ -475,7 +475,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, short s, ) {\n"
+                + "    void test(int count, short s) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("short"));
@@ -488,7 +488,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test(int count, |);\n"
                 + "}",
                 "interface Test {\n"
-                + "    void test(int count, short s, );\n"
+                + "    void test(int count, short s);\n"
                 + "}",
                 Collections.singletonList("short"));
     }
@@ -568,7 +568,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, float f, ) {\n"
+                + "    void test(int count, float f) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("float"));
@@ -581,7 +581,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test(int count, |);\n"
                 + "}",
                 "interface Test {\n"
-                + "    void test(int count, float f, );\n"
+                + "    void test(int count, float f);\n"
                 + "}",
                 Collections.singletonList("float"));
     }
@@ -661,7 +661,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    }\n"
                 + "}",
                 "class Test {\n"
-                + "    void test(int count, double d, ) {\n"
+                + "    void test(int count, double d) {\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("double"));
@@ -674,7 +674,7 @@ public class PrimitiveTypeCompletionTest extends GeneralCompletionTest {
                 + "    void test(int count, |);\n"
                 + "}",
                 "interface Test {\n"
-                + "    void test(int count, double d, );\n"
+                + "    void test(int count, double d);\n"
                 + "}",
                 Collections.singletonList("double"));
     }

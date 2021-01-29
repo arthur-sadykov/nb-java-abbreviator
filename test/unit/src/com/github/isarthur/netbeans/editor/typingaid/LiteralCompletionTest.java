@@ -92,7 +92,7 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        isValid(0, true, );\n"
+                + "        isValid(0, true);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("true"));
@@ -108,7 +108,7 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Clazz clazz = new Clazz(0, true, );\n"
+                + "        Clazz clazz = new Clazz(0, true);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("true"));
@@ -272,7 +272,7 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        isValid(0, false, );\n"
+                + "        isValid(0, false);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("false"));
@@ -288,7 +288,7 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Clazz clazz = new Clazz(0, false, );\n"
+                + "        Clazz clazz = new Clazz(0, false);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("false"));
@@ -452,7 +452,7 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        isValid(0, null, );\n"
+                + "        isValid(0, null);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("null"));
@@ -468,7 +468,7 @@ public class LiteralCompletionTest extends GeneralCompletionTest {
                 + "}",
                 "class Test {\n"
                 + "    void test() {\n"
-                + "        Clazz clazz = new Clazz(0, null, );\n"
+                + "        Clazz clazz = new Clazz(0, null);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("null"));

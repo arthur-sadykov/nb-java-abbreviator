@@ -138,32 +138,15 @@ public class JavaSourceUtilities {
     public static int findInsertIndexForParameterizedType(
             ParameterizedTypeTree parameterizedTypeTree, CodeCompletionRequest request) {
         List<? extends Tree> typeArguments = parameterizedTypeTree.getTypeArguments();
-        WorkingCopy copy = request.getWorkingCopy();
-        Trees trees = copy.getTrees();
-        SourcePositions sourcePositions = trees.getSourcePositions();
-        CompilationUnitTree compilationUnitTree = copy.getCompilationUnit();
-        Abbreviation abbreviation = request.getAbbreviation();
-        if (typeArguments.size() == 1) {
-            long currentStartPosition = sourcePositions.getStartPosition(compilationUnitTree, typeArguments.get(0));
-            if (abbreviation.getStartOffset() < currentStartPosition) {
-                return 0;
-            } else {
-                return 1;
+        WorkingCopy workingCopy = request.getWorkingCopy();
+        TreeUtilities treeUtilities = workingCopy.getTreeUtilities();
+        int i;
+        for (i = 0; i < typeArguments.size(); i++) {
+            if (treeUtilities.hasError(typeArguments.get(i))) {
+                break;
             }
         }
-        for (int i = 1; i < typeArguments.size(); i++) {
-            long previousStartPosition = sourcePositions.getStartPosition(compilationUnitTree, typeArguments.get(i - 1));
-            long currentStartPosition = sourcePositions.getStartPosition(compilationUnitTree, typeArguments.get(i));
-            if (abbreviation.getStartOffset() < previousStartPosition) {
-                return 0;
-            } else if (previousStartPosition < abbreviation.getStartOffset()
-                    && abbreviation.getStartOffset() < currentStartPosition) {
-                return i;
-            } else if (currentStartPosition < abbreviation.getStartOffset()) {
-                return i + 1;
-            }
-        }
-        return 0;
+        return i != typeArguments.size() ? i : -1;
     }
 
     private static Set<ElementKind> getAllLocalElementKinds() {

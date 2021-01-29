@@ -400,7 +400,7 @@ public class LocalElementCompletionTest extends GeneralCompletionTest {
                 "public class Test {\n"
                 + "    public void test1(int numberOfLines) {\n"
                 + "        String branchName = \"\";\n"
-                + "        test2(branchName, numberOfLines, );\n"
+                + "        test2(branchName, numberOfLines);\n"
                 + "    }\n"
                 + "    public void test2(String name, int length) {\n"
                 + "    }\n"
@@ -516,7 +516,7 @@ public class LocalElementCompletionTest extends GeneralCompletionTest {
                 + "public class Test {\n"
                 + "    public void test() {\n"
                 + "        String branchName = \"\";\n"
-                + "        File file = new File(branchName, branchName, );\n"
+                + "        File file = new File(branchName, branchName);\n"
                 + "    }\n"
                 + "}",
                 Collections.singletonList("branchName"));

@@ -16,16 +16,13 @@
 package com.github.isarthur.netbeans.editor.typingaid.insertvisitor.impl;
 
 import com.github.isarthur.netbeans.editor.typingaid.codefragment.api.CodeFragment;
-import com.github.isarthur.netbeans.editor.typingaid.constants.ConstantDataManager;
 import com.github.isarthur.netbeans.editor.typingaid.insertvisitor.api.AbstractCodeFragmentInsertVisitor;
 import com.github.isarthur.netbeans.editor.typingaid.request.api.CodeCompletionRequest;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceMaker;
 import com.github.isarthur.netbeans.editor.typingaid.util.JavaSourceUtilities;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ParameterizedTypeTree;
 import com.sun.source.tree.Tree;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  *
@@ -36,16 +33,10 @@ public class ParameterizedTypeCodeFragmentInsertVisitor extends AbstractCodeFrag
     @Override
     protected Tree getNewTree(CodeFragment codeFragment, Tree tree, CodeCompletionRequest request) {
         ParameterizedTypeTree originalTree = (ParameterizedTypeTree) getOriginalTree(codeFragment, request);
-        List<? extends Tree> originalTypeArguments = originalTree.getTypeArguments();
-        if (originalTypeArguments.size() == 1) {
-            if (originalTypeArguments.get(0).toString().equals(ConstantDataManager.PARENTHESIZED_ERROR)) {
-                return JavaSourceMaker.makeParameterizedTypeTree(
-                        originalTree.getType(), Collections.singletonList(tree), request);
-            }
-        }
-        List<Tree> newTypeArguments = new ArrayList<>(originalTypeArguments);
         int insertIndex = JavaSourceUtilities.findInsertIndexForParameterizedType(originalTree, request);
-        newTypeArguments.add(insertIndex, tree);
-        return JavaSourceMaker.makeParameterizedTypeTree(originalTree.getType(), newTypeArguments, request);
+        if (insertIndex == -1) {
+            return null;
+        }
+        return JavaSourceMaker.makeParameterizedTypeTree(originalTree, insertIndex, (ExpressionTree) tree, request);
     }
 }
